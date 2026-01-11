@@ -2,10 +2,17 @@ import { createRouter } from '@tanstack/react-router'
 import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query'
 import * as TanstackQuery from './integrations/tanstack-query/root-provider'
 
-// Import the generated route tree
 import { routeTree } from './routeTree.gen'
 
-// Create a new router instance
+function NotFound() {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen">
+      <h1 className="text-4xl font-bold mb-4">404</h1>
+      <p className="text-lg text-gray-600">Page Not Found</p>
+    </div>
+  )
+}
+
 export const getRouter = () => {
   const rqContext = TanstackQuery.getContext()
 
@@ -14,8 +21,8 @@ export const getRouter = () => {
     context: {
       ...rqContext,
     },
-
     defaultPreload: 'intent',
+    defaultNotFoundComponent: NotFound,
   })
 
   setupRouterSsrQueryIntegration({ router, queryClient: rqContext.queryClient })

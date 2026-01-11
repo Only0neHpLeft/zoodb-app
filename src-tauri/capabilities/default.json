@@ -1,0 +1,21 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Default permissions for Zoo Database",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "process:default",
+    "opener:default",
+    "store:default",
+    "clerk:default",
+    "updater:default",
+    {
+      "identifier": "http:default",
+      "allow": [
+        { "url": "https://*.clerk.accounts.dev/*" },
+        { "url": "https://*.clerk.com/*" }
+      ]
+    }
+  ]
+}

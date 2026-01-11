@@ -1,6 +1,5 @@
 import { createRouter } from '@tanstack/react-router'
-import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query'
-import * as TanstackQuery from './integrations/tanstack-query/root-provider'
+import { QueryClient } from '@tanstack/react-query'
 
 import { routeTree } from './routeTree.gen'
 
@@ -13,19 +12,19 @@ function NotFound() {
   )
 }
 
-export const getRouter = () => {
-  const rqContext = TanstackQuery.getContext()
+export const queryClient = new QueryClient()
 
-  const router = createRouter({
-    routeTree,
-    context: {
-      ...rqContext,
-    },
-    defaultPreload: 'intent',
-    defaultNotFoundComponent: NotFound,
-  })
+export const router = createRouter({
+  routeTree,
+  context: {
+    queryClient,
+  },
+  defaultPreload: 'intent',
+  defaultNotFoundComponent: NotFound,
+})
 
-  setupRouterSsrQueryIntegration({ router, queryClient: rqContext.queryClient })
-
-  return router
+declare module '@tanstack/react-router' {
+  interface Register {
+    router: typeof router
+  }
 }

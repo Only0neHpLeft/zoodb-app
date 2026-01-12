@@ -37,40 +37,12 @@ jobs:
         with:
           script: |
             const version = '${{ steps.get-version.outputs.version }}';
-            const releaseBody = `
-## 🦁 Zoo Database v${version}
-
-### 📦 Installation
-
-Download the appropriate installer for your platform from the assets below.
-
-| Platform | File |
-|----------|------|
-| 🍎 macOS (Apple Silicon) | \`.dmg\` |
-| 🍎 macOS (Intel) | \`.dmg\` |
-| 🪟 Windows | \`.msi\` or \`.exe\` |
-| 🐧 Linux | \`.AppImage\` or \`.deb\` |
-
-### ✨ What's New
-
-See the [commit history](https://github.com/${context.repo.owner}/${context.repo.repo}/commits/v${version}) for detailed changes.
-
----
-
-<details>
-<summary>🔐 Verification</summary>
-
-macOS builds are signed and notarized with Apple Developer ID.
-
-</details>
-            `.trim();
-
             const { data } = await github.rest.repos.createRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              tag_name: `v${version}`,
-              name: `🦁 Zoo Database v${version}`,
-              body: releaseBody,
+              tag_name: 'v' + version,
+              name: 'Zoo Database v' + version,
+              body: '## Installation\n\nDownload the installer for your platform from the assets below.\n\n**macOS:** `.dmg` file (signed and notarized)\n\n---\n\n[View changelog](https://github.com/' + context.repo.owner + '/' + context.repo.repo + '/commits/v' + version + ')',
               draft: true,
               prerelease: false
             })

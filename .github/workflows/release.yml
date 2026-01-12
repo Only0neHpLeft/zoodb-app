@@ -80,7 +80,7 @@ macOS builds are signed and notarized with Apple Developer ID.
     needs: create-release
     permissions:
       contents: write
-    timeout-minutes: 30
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -105,29 +105,17 @@ macOS builds are signed and notarized with Apple Developer ID.
         with:
           targets: ${{ matrix.target }}
 
-      # Rust cache with sccache for faster compilation
-      - name: Setup sccache
-        uses: mozilla-actions/sccache-action@v0.0.9
-
-      - name: Configure sccache
-        run: |
-          echo "SCCACHE_GHA_ENABLED=true" >> $GITHUB_ENV
-          echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
-
       - name: Rust cache
         uses: swatinem/rust-cache@v2
         with:
           workspaces: './src-tauri -> target'
           shared-key: v1-${{ matrix.target || 'default' }}
           cache-on-failure: true
-          save-if: ${{ github.ref == 'refs/heads/Development' }}
 
       - name: Cache Bun dependencies
         uses: actions/cache@v5
         with:
-          path: |
-            ~/.bun/install/cache
-            node_modules
+          path: ~/.bun/install/cache
           key: v1-${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
           restore-keys: |
             v1-${{ runner.os }}-bun-

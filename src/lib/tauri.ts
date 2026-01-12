@@ -1,0 +1,6 @@
+/**
+ * Check if the app is running in a Tauri environment
+ */
+export function isTauri(): boolean {
+  return typeof window !== 'undefined' && '__TAURI__' in window
+}

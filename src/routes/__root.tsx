@@ -1,9 +1,13 @@
 import { createRootRouteWithContext, Outlet } from '@tanstack/react-router'
-import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 
-import Header from '../components/Header'
 import ClerkProvider from '../integrations/clerk/provider'
+import { ThemeProvider } from '@/components/theme-provider'
+import { LanguageProvider } from '@/contexts/language-context'
+import { MembershipProvider } from '@/contexts/membership-context'
+import { SidebarProvider } from '@/components/ui/sidebar'
+import { CustomThemeInjector } from '@/components/custom-theme-injector'
+import { UpdateChecker } from '@/components/update-checker'
+import { AppLayout } from '@/components/app-layout'
 
 import type { QueryClient } from '@tanstack/react-query'
 
@@ -18,10 +22,19 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 function RootComponent() {
   return (
     <ClerkProvider>
-      <Header />
-      <Outlet />
-      <ReactQueryDevtools buttonPosition="bottom-right" />
-      <TanStackRouterDevtools position="bottom-left" />
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <LanguageProvider>
+          <MembershipProvider>
+            <SidebarProvider>
+              <CustomThemeInjector />
+              <UpdateChecker />
+              <AppLayout>
+                <Outlet />
+              </AppLayout>
+            </SidebarProvider>
+          </MembershipProvider>
+        </LanguageProvider>
+      </ThemeProvider>
     </ClerkProvider>
   )
 }

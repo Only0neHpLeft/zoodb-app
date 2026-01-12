@@ -2,7 +2,7 @@
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "zoodb-app",
   "version": "0.0.1",
-  "identifier": "com.tauri.dev",
+  "identifier": "com.only0nehpleft.zoodb",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:3000",
@@ -13,14 +13,22 @@
     "windows": [
       {
         "title": "Zoo Database",
-        "width": 1200,
-        "height": 800,
+        "width": 1400,
+        "height": 1000,
         "resizable": true,
         "fullscreen": false
       }
     ],
     "security": {
       "csp": null
+    }
+  },
+  "plugins": {
+    "updater": {
+      "endpoints": [
+        "https://github.com/Only0neHpLeft/zoo-databejs/releases/latest/download/latest.json"
+      ],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDRDQ0NFNTc1OEZGN0M5QzAKUldUQXlmZVBkZVhNVEhkOHg2Mmdzb3dRbm5Ic3MyMTBqREVQZUtLaVBTQWhYU1BLLzJPekVzbmYK"
     }
   },
   "bundle": {

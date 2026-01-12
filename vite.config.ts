@@ -15,7 +15,8 @@ const config = defineConfig({
   ],
   server: {
     port: 3000,
-    strictPort: false,
+    strictPort: true,
+    host: 'localhost',
   },
   build: {
     outDir: 'dist',

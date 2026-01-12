@@ -1,118 +1,207 @@
-import { createFileRoute } from '@tanstack/react-router'
-import {
-  Zap,
-  Server,
-  Route as RouteIcon,
-  Shield,
-  Waves,
-  Sparkles,
-} from 'lucide-react'
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { useState, useEffect } from "react"
+import { SidebarTrigger } from "@/components/ui/sidebar"
+import { Breadcrumbs } from "@/components/breadcrumbs"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Lock, Coins } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { categoriesArray, bonusLetters } from "@/data/categories"
+import { useLanguage } from "@/contexts/language-context"
+import { useTranslateDifficulty } from "@/hooks/use-translate-difficulty"
+import { useTranslateCategory } from "@/hooks/use-translate-category"
+import { useMembership } from "@/contexts/membership-context"
 
-export const Route = createFileRoute('/')({ component: App })
+export const Route = createFileRoute("/")({
+  component: Home,
+})
 
-function App() {
-  const features = [
-    {
-      icon: <Zap className="w-12 h-12 text-cyan-400" />,
-      title: 'Powerful Server Functions',
-      description:
-        'Write server-side code that seamlessly integrates with your client components. Type-safe, secure, and simple.',
-    },
-    {
-      icon: <Server className="w-12 h-12 text-cyan-400" />,
-      title: 'Flexible Server Side Rendering',
-      description:
-        'Full-document SSR, streaming, and progressive enhancement out of the box. Control exactly what renders where.',
-    },
-    {
-      icon: <RouteIcon className="w-12 h-12 text-cyan-400" />,
-      title: 'API Routes',
-      description:
-        'Build type-safe API endpoints alongside your application. No separate backend needed.',
-    },
-    {
-      icon: <Shield className="w-12 h-12 text-cyan-400" />,
-      title: 'Strongly Typed Everything',
-      description:
-        'End-to-end type safety from server to client. Catch errors before they reach production.',
-    },
-    {
-      icon: <Waves className="w-12 h-12 text-cyan-400" />,
-      title: 'Full Streaming Support',
-      description:
-        'Stream data from server to client progressively. Perfect for AI applications and real-time updates.',
-    },
-    {
-      icon: <Sparkles className="w-12 h-12 text-cyan-400" />,
-      title: 'Next Generation Ready',
-      description:
-        'Built from the ground up for modern web applications. Deploy anywhere JavaScript runs.',
-    },
-  ]
+function Home() {
+  const navigate = useNavigate()
+  const { t } = useLanguage()
+  const { translateDifficulty, difficultyColors } = useTranslateDifficulty()
+  const { translateCategory } = useTranslateCategory()
+  const { membership } = useMembership()
+  const [completedTasks, setCompletedTasks] = useState<{ [key: string]: boolean[] }>({})
+
+  useEffect(() => {
+    const saved = localStorage.getItem("sqlLessonsProgress")
+    if (saved) {
+      setCompletedTasks(JSON.parse(saved))
+    }
+  }, [])
+
+  const totalLessons = categoriesArray.length
+  const totalTasks = categoriesArray.reduce((sum, category) => sum + category.tasks.length, 0)
+
+  let completedLessonsCount = 0
+  let completedTasksCount = 0
+
+  categoriesArray.forEach((category) => {
+    const categoryTasks = completedTasks[category.letter] || []
+    const categoryCompletedCount = categoryTasks.filter(Boolean).length
+    completedTasksCount += categoryCompletedCount
+    if (categoryCompletedCount === category.tasks.length) {
+      completedLessonsCount++
+    }
+  })
+
+  const overallProgress = totalTasks > 0 ? Math.round((completedTasksCount / totalTasks) * 100) : 0
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
-      <section className="relative py-20 px-6 text-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-purple-500/10"></div>
-        <div className="relative max-w-5xl mx-auto">
-          <div className="flex items-center justify-center gap-6 mb-6">
-            <img
-              src="/tanstack-circle-logo.png"
-              alt="TanStack Logo"
-              className="w-24 h-24 md:w-32 md:h-32"
-            />
-            <h1 className="text-6xl md:text-7xl font-black text-white [letter-spacing:-0.08em]">
-              <span className="text-gray-300">TANSTACK</span>{' '}
-              <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
-                START
-              </span>
-            </h1>
-          </div>
-          <p className="text-2xl md:text-3xl text-gray-300 mb-4 font-light">
-            The framework for next generation AI applications
-          </p>
-          <p className="text-lg text-gray-400 max-w-3xl mx-auto mb-8">
-            Full-stack framework powered by TanStack Router for React and Solid.
-            Build modern applications with server functions, streaming, and type
-            safety.
-          </p>
-          <div className="flex flex-col items-center gap-4">
-            <a
-              href="https://tanstack.com/start"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-8 py-3 bg-cyan-500 hover:bg-cyan-600 text-white font-semibold rounded-lg transition-colors shadow-lg shadow-cyan-500/50"
-            >
-              Documentation
-            </a>
-            <p className="text-gray-400 text-sm mt-2">
-              Begin your TanStack Start journey by editing{' '}
-              <code className="px-2 py-1 bg-slate-700 rounded text-cyan-400">
-                /src/routes/index.tsx
-              </code>
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section className="py-16 px-6 max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {features.map((feature, index) => (
-            <div
-              key={index}
-              className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-6 hover:border-cyan-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/10"
-            >
-              <div className="mb-4">{feature.icon}</div>
-              <h3 className="text-xl font-semibold text-white mb-3">
-                {feature.title}
-              </h3>
-              <p className="text-gray-400 leading-relaxed">
-                {feature.description}
-              </p>
+    <div className="flex flex-col h-full w-full">
+      <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:px-6">
+        <SidebarTrigger />
+        <Breadcrumbs />
+        <div className="ml-auto flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <div className="relative w-12 h-12">
+              <svg className="w-12 h-12 transform -rotate-90">
+                <circle
+                  cx="24"
+                  cy="24"
+                  r="20"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                  fill="none"
+                  className="text-muted-foreground/20"
+                />
+                <circle
+                  cx="24"
+                  cy="24"
+                  r="20"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                  fill="none"
+                  strokeDasharray={`${2 * Math.PI * 20}`}
+                  strokeDashoffset={`${2 * Math.PI * 20 * (1 - overallProgress / 100)}`}
+                  className="text-primary transition-all duration-500"
+                  strokeLinecap="round"
+                />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-xs font-bold">{overallProgress}%</span>
+              </div>
             </div>
-          ))}
+            <div className="flex flex-col">
+              <div className="text-sm font-medium">
+                {completedTasksCount} / {totalTasks} {t.home.tasks}
+              </div>
+              <div className="text-sm font-medium">
+                {completedLessonsCount} / {totalLessons} {t.home.lessons}
+              </div>
+            </div>
+          </div>
         </div>
-      </section>
+      </header>
+      <main className="flex-1 p-6 overflow-auto">
+        <div className="flex flex-col gap-6">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {categoriesArray.map((originalCategory, index) => {
+              const category = translateCategory(originalCategory)
+              const categoryTasks = completedTasks[category.letter] || []
+              const categoryCompletedCount = categoryTasks.filter(Boolean).length
+              const isFullyCompleted = categoryCompletedCount === category.tasks.length
+
+              const isFreePlan = !membership || membership.plan_type === "free"
+              const isPaidCategory = index >= 3
+
+              let isUnlocked = index === 0
+
+              if (isFreePlan && isPaidCategory) {
+                isUnlocked = false
+              } else if (index > 0) {
+                const previousCategory = categoriesArray[index - 1]
+                const previousTasks = completedTasks[previousCategory.letter] || []
+                const previousCompletedCount = previousTasks.filter(Boolean).length
+                isUnlocked = previousCompletedCount === previousCategory.tasks.length
+              }
+
+              const difficulties = category.tasks.map((t) => t.difficulty)
+              const hasHard = difficulties.includes("Hard")
+              const hasMedium = difficulties.includes("Medium")
+              const categoryDifficulty = hasHard ? "Hard" : hasMedium ? "Medium" : "Easy"
+
+              const isBonus = (bonusLetters as readonly string[]).includes(category.letter)
+
+              return (
+                <Card
+                  key={category.letter}
+                  className={`transition-all border-2 ${
+                    !isUnlocked
+                      ? "opacity-60 cursor-not-allowed"
+                      : "cursor-pointer hover:shadow-lg hover:scale-105 hover:border-primary"
+                  }`}
+                  onClick={() => isUnlocked && navigate({ to: "/editor" as any, search: { lesson: category.letter } as any })}
+                >
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl font-bold relative ${
+                            !isUnlocked
+                              ? "bg-muted text-muted-foreground"
+                              : isBonus
+                                ? "bg-gradient-to-br from-purple-500 to-purple-700 text-white"
+                                : "bg-primary text-primary-foreground"
+                          }`}
+                        >
+                          {!isUnlocked ? (
+                            <>
+                              <div className="absolute inset-0 backdrop-blur-sm rounded-lg"></div>
+                              {isFreePlan && isPaidCategory ? (
+                                <Coins className="h-6 w-6 relative z-10" />
+                              ) : (
+                                <Lock className="h-6 w-6 relative z-10" />
+                              )}
+                            </>
+                          ) : (
+                            category.letter
+                          )}
+                        </div>
+                        <div>
+                          <CardTitle className={`text-base ${!isUnlocked ? "text-muted-foreground" : ""}`}>
+                            {category.title}
+                          </CardTitle>
+                          {!isUnlocked ? (
+                            <div className="flex flex-col gap-0.5 mt-1">
+                              <Badge variant="secondary">
+                                {isFreePlan && isPaidCategory ? "Paid" : t.home.locked}
+                              </Badge>
+                              <span className="text-xs text-muted-foreground">0 / {category.tasks.length}</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2 mt-1">
+                              <Badge variant="secondary">
+                                {categoryCompletedCount} / {category.tasks.length}
+                              </Badge>
+                              {isFullyCompleted && (
+                                <Badge className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 text-xs">
+                                  {t.home.completed}
+                                </Badge>
+                              )}
+                              {isBonus && (
+                                <Badge className="bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300 text-xs">
+                                  {t.home.bonus}
+                                </Badge>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className={!isUnlocked ? "blur-sm pointer-events-none" : ""}>
+                    <CardDescription className="text-sm mb-3">{category.description}</CardDescription>
+                    <Badge className={difficultyColors[categoryDifficulty]} variant="secondary">
+                      {translateDifficulty(categoryDifficulty)}
+                    </Badge>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+        </div>
+      </main>
     </div>
   )
 }

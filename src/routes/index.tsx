@@ -167,7 +167,7 @@ function Home() {
                           {!isUnlocked ? (
                             <div className="flex flex-col gap-0.5 mt-1">
                               <Badge variant="secondary">
-                                {isFreePlan && isPaidCategory ? "Paid" : t.home.locked}
+                                {isFreePlan && isPaidCategory ? t.home.paid : t.home.locked}
                               </Badge>
                               <span className="text-xs text-muted-foreground">0 / {category.tasks.length}</span>
                             </div>

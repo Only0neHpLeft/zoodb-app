@@ -14,6 +14,7 @@ export const env = createEnv({
 
   client: {
     VITE_APP_TITLE: z.string().min(1).optional(),
+    VITE_DATABASE_URL: z.string().url({ message: "VITE_DATABASE_URL must be a valid URL" }),
   },
 
   /**

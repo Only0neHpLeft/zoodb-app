@@ -1,8 +1,18 @@
-export type ValidationRule = {
-  type: 'rowCount' | 'columnNames' | 'columnCount' | 'containsData' | 'customQuery'
-  value?: any
-  description?: string
-}
+// Generic query result row type
+export type QueryResultRow = Record<string, unknown>
+
+// Value types for different validation rules
+export type RowCountValue = number | { min?: number; max?: number }
+export type ColumnNamesValue = string[] | { required?: string[]; optional?: string[]; anyOf?: string[][] }
+export type ColumnCountValue = number | { min?: number; max?: number }
+export type ContainsDataValue = { column: string; values: unknown[] } | { column: string; pattern: string }
+
+export type ValidationRule =
+  | { type: 'rowCount'; value: RowCountValue; description?: string }
+  | { type: 'columnNames'; value: ColumnNamesValue; description?: string }
+  | { type: 'columnCount'; value: ColumnCountValue; description?: string }
+  | { type: 'containsData'; value: ContainsDataValue; description?: string }
+  | { type: 'customQuery'; value?: string; description?: string }
 
 export type TaskValidation = {
   // Expected query patterns (for reference/hints)

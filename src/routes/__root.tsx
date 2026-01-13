@@ -10,6 +10,7 @@ import { ThemeProvider } from '../components/theme-provider'
 import { LanguageProvider, useLanguage } from '../contexts/language-context'
 import { MembershipProvider } from '../contexts/membership-context'
 import { AppLayout } from '../components/app-layout'
+import { DbInitBackground } from '../components/db-init-background'
 
 import type { QueryClient } from '@tanstack/react-query'
 
@@ -51,6 +52,7 @@ function RootComponent() {
     >
       <LanguageProvider>
         <WindowTitle />
+        <DbInitBackground />
         <ClerkProvider>
           <MembershipProvider>
             <AppLayout>

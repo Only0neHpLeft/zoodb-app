@@ -15,7 +15,7 @@ import { useTranslateCategory } from "@/hooks/use-translate-category"
 import { executeSQL } from "@/lib/db/tauri-db"
 import { toast } from "sonner"
 import { validateQuery } from "@/lib/query-validator"
-import type { ValidationResult } from "@/data/types"
+import type { ValidationResult, QueryResultRow } from "@/data/types"
 
 type TaskSearch = {
   lesson?: string
@@ -42,7 +42,7 @@ function TaskEditorPage() {
   const [completedTasks, setCompletedTasks] = useState<{ [key: string]: boolean[] }>({})
   const [sqlQuery, setSqlQuery] = useState('')
   const [showHint, setShowHint] = useState(false)
-  const [queryResults, setQueryResults] = useState<any[] | null>(null)
+  const [queryResults, setQueryResults] = useState<QueryResultRow[] | null>(null)
   const [queryError, setQueryError] = useState<string | null>(null)
   const [isExecuting, setIsExecuting] = useState(false)
   const [executionTime, setExecutionTime] = useState<number | null>(null)
@@ -96,7 +96,7 @@ function TaskEditorPage() {
         return
       }
 
-      let results: any[] = []
+      let results: QueryResultRow[] = []
       if (data === null) {
         results = []
         setQueryResults([])
@@ -121,9 +121,9 @@ function TaskEditorPage() {
           toast.error(t.task.validationFailed || "Query doesn't meet requirements")
         }
       }
-    } catch (error: any) {
-      console.error('Error executing query:', error)
-      setQueryError(error.message || "An unexpected error occurred")
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred"
+      setQueryError(errorMessage)
       toast.error(t.task.queryError || "Query execution failed")
     } finally {
       setIsExecuting(false)
@@ -393,7 +393,7 @@ SELECT * FROM animals;"
                       <tbody>
                         {queryResults.map((row, rowIndex) => (
                           <tr key={rowIndex} className="border-b border-border hover:bg-muted/20">
-                            {Object.values(row).map((value: any, colIndex) => (
+                            {Object.values(row).map((value, colIndex) => (
                               <td key={colIndex} className="p-3 font-mono text-xs">
                                 {value === null ? <span className="text-muted-foreground italic">NULL</span> : String(value)}
                               </td>

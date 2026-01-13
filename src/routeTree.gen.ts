@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as StudentsRouteImport } from './routes/students'
+import { Route as SqlEditorRouteImport } from './routes/sql-editor'
 import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as SettingsRouteImport } from './routes/settings'
@@ -28,6 +29,11 @@ import { Route as EditorTaskRouteImport } from './routes/editor.task'
 const StudentsRoute = StudentsRouteImport.update({
   id: '/students',
   path: '/students',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SqlEditorRoute = SqlEditorRouteImport.update({
+  id: '/sql-editor',
+  path: '/sql-editor',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignUpRoute = SignUpRouteImport.update({
@@ -110,6 +116,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/sql-editor': typeof SqlEditorRoute
   '/students': typeof StudentsRoute
   '/editor/task': typeof EditorTaskRoute
   '/scheme/animals': typeof SchemeAnimalsRoute
@@ -127,6 +134,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/sql-editor': typeof SqlEditorRoute
   '/students': typeof StudentsRoute
   '/editor/task': typeof EditorTaskRoute
   '/scheme/animals': typeof SchemeAnimalsRoute
@@ -145,6 +153,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/sql-editor': typeof SqlEditorRoute
   '/students': typeof StudentsRoute
   '/editor/task': typeof EditorTaskRoute
   '/scheme/animals': typeof SchemeAnimalsRoute
@@ -164,6 +173,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sign-in'
     | '/sign-up'
+    | '/sql-editor'
     | '/students'
     | '/editor/task'
     | '/scheme/animals'
@@ -181,6 +191,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sign-in'
     | '/sign-up'
+    | '/sql-editor'
     | '/students'
     | '/editor/task'
     | '/scheme/animals'
@@ -198,6 +209,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sign-in'
     | '/sign-up'
+    | '/sql-editor'
     | '/students'
     | '/editor/task'
     | '/scheme/animals'
@@ -216,6 +228,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   SignInRoute: typeof SignInRoute
   SignUpRoute: typeof SignUpRoute
+  SqlEditorRoute: typeof SqlEditorRoute
   StudentsRoute: typeof StudentsRoute
 }
 
@@ -226,6 +239,13 @@ declare module '@tanstack/react-router' {
       path: '/students'
       fullPath: '/students'
       preLoaderRoute: typeof StudentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sql-editor': {
+      id: '/sql-editor'
+      path: '/sql-editor'
+      fullPath: '/sql-editor'
+      preLoaderRoute: typeof SqlEditorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sign-up': {
@@ -368,6 +388,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   SignInRoute: SignInRoute,
   SignUpRoute: SignUpRoute,
+  SqlEditorRoute: SqlEditorRoute,
   StudentsRoute: StudentsRoute,
 }
 export const routeTree = rootRouteImport

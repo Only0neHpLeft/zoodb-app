@@ -36,12 +36,10 @@ export function MembershipProvider({ children }: { children: ReactNode }) {
       if (!profile) {
         // Profile doesn't exist yet - wait and retry (useClerkAuth creates it)
         if (retryCount < 5) {
-          console.log("Profile not ready, retrying membership fetch...")
           setTimeout(() => fetchMembership(userId, retryCount + 1), 500)
           return
         }
         // After retries, just set fallback
-        console.log("Profile still not ready after retries, using fallback")
         setMembership({
           id: "",
           user_id: userId,
@@ -57,7 +55,6 @@ export function MembershipProvider({ children }: { children: ReactNode }) {
       const { data, error } = await getMembership(userId)
 
       if (error) {
-        console.error("Error fetching membership:", error)
         // Set free plan as fallback
         setMembership({
           id: "",
@@ -78,8 +75,7 @@ export function MembershipProvider({ children }: { children: ReactNode }) {
           updated_at: data.updated_at || new Date().toISOString(),
         })
       }
-    } catch (error) {
-      console.error("Error fetching membership:", error)
+    } catch {
       // Set free plan as fallback
       setMembership({
         id: "",
@@ -118,7 +114,6 @@ export function MembershipProvider({ children }: { children: ReactNode }) {
       )
 
       if (error) {
-        console.error("Error updating membership:", error)
         throw error
       }
 
@@ -135,7 +130,6 @@ export function MembershipProvider({ children }: { children: ReactNode }) {
         })
       }
     } catch (error) {
-      console.error("Error updating membership:", error)
       throw error
     }
   }

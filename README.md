@@ -17,6 +17,62 @@ To build this application for production:
 bun --bun run build
 ```
 
+## Tauri Desktop App
+
+Build the desktop app:
+
+```bash
+bun run tauri:dev    # Development mode
+bun run tauri:build  # Production build
+```
+
+## Release & Notarization (macOS)
+
+Pre-flight validation tests build, signing, and notarization locally before triggering the CI release workflow.
+
+### Setup (one-time)
+
+1. Copy credentials template:
+   ```bash
+   cp .env.release.example .env.release
+   ```
+
+2. Fill in `.env.release` with your Apple credentials:
+   - `APPLE_CERTIFICATE` - Base64-encoded .p12 certificate
+   - `APPLE_CERTIFICATE_PASSWORD` - Certificate password
+   - `APPLE_SIGNING_IDENTITY` - e.g., "Developer ID Application: Name (TEAMID)"
+   - `APPLE_ID` - Apple developer email
+   - `APPLE_PASSWORD` - App-specific password
+   - `APPLE_TEAM_ID` - 10-character team ID
+
+### Commands
+
+```bash
+# Full pre-flight check (build + sign + notarize)
+bun run preflight --version 0.0.3
+
+# Pre-flight + create git tag to trigger release workflow
+bun run preflight --version 0.0.3 --tag
+
+# Skip build, test existing DMG only
+bun run preflight --skip-build
+
+# Build for Intel Mac
+bun run preflight --version 0.0.3 --target x86_64-apple-darwin
+
+# Show help
+./scripts/preflight-release.sh --help
+```
+
+### Manual Release (without pre-flight)
+
+```bash
+git tag v0.0.3
+git push origin v0.0.3
+```
+
+This triggers the GitHub Actions release workflow which builds, signs, notarizes, and publishes the release automatically.
+
 ## Testing
 
 This project uses [Vitest](https://vitest.dev/) for testing. You can run the tests with:

@@ -51,15 +51,13 @@ export function useAuth() {
         cacheData.userId === userId &&
         now - cacheData.timestamp < CACHE_DURATION
       ) {
-        console.log("Using cached profile");
         return cacheData.profile;
       }
 
       // Cache expired or different user
       localStorage.removeItem(PROFILE_CACHE_KEY);
       return null;
-    } catch (error) {
-      console.error("Error reading profile cache:", error);
+    } catch {
       return null;
     }
   };
@@ -75,8 +73,8 @@ export function useAuth() {
         userId,
       };
       localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(cacheData));
-    } catch (error) {
-      console.error("Error saving profile cache:", error);
+    } catch {
+      // Ignore cache write errors
     }
   };
 
@@ -87,7 +85,6 @@ export function useAuth() {
     try {
       // Prevent duplicate fetches for the same user in the same session
       if (!forceRefetch && profileFetchedRef.current.has(userId)) {
-        console.log("Profile already fetched in this session");
         return;
       }
 
@@ -101,12 +98,9 @@ export function useAuth() {
         }
       }
 
-      console.log("Fetching profile from NeonDB for user:", userId);
-
       const { data, error } = await getProfile(userId);
 
       if (error) {
-        console.error("Error fetching profile:", error);
         setProfile(null);
         return;
       }
@@ -115,10 +109,8 @@ export function useAuth() {
         setProfile(data);
         setCachedProfile(userId, data);
         profileFetchedRef.current.add(userId);
-        console.log("Profile loaded successfully from NeonDB");
       } else {
         // No profile exists - create one
-        console.log("No profile found, creating one for user:", userId);
 
         if (user) {
           const { data: newProfile, error: createError } = await upsertProfile(
@@ -129,7 +121,6 @@ export function useAuth() {
           );
 
           if (createError) {
-            console.error("Error creating profile:", createError);
             // Set a minimal fallback profile
             const fallbackProfile: UserProfile = {
               id: userId,
@@ -144,13 +135,11 @@ export function useAuth() {
             profileFetchedRef.current.add(userId);
 
             // Fork template data for new user
-            console.log("Forking template data for new user");
             await forkTemplateData(userId);
           }
         }
       }
-    } catch (error) {
-      console.error("Exception in fetchProfile:", error);
+    } catch {
       setProfile(null);
     }
   };
@@ -158,8 +147,8 @@ export function useAuth() {
   const logout = async (): Promise<void> => {
     try {
       await signOut();
-    } catch (error) {
-      console.error("Logout error:", error);
+    } catch {
+      // Ignore logout errors
     } finally {
       // Clear local state
       if (typeof window !== "undefined") {

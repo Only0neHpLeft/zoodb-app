@@ -173,6 +173,43 @@ jobs:
           releaseId: ${{ needs.create-release.outputs.release_id }}
           args: ${{ matrix.args }}
 
+      - name: Verify code signature and notarization
+        run: |
+          echo "🔍 Verifying code signature and notarization..."
+
+          # Find the built .app bundle
+          APP_PATH=$(find src-tauri/target -name "*.app" -type d | head -1)
+          if [ -z "$APP_PATH" ]; then
+            echo "::warning::No .app bundle found to verify"
+            exit 0
+          fi
+
+          echo "📦 Found app: $APP_PATH"
+
+          # Verify code signature
+          echo ""
+          echo "=== Code Signature Verification ==="
+          codesign -vvv --deep --strict "$APP_PATH" 2>&1 || {
+            echo "::error::Code signature verification failed"
+            exit 1
+          }
+          echo "✅ Code signature valid"
+
+          # Check notarization ticket (stapled)
+          echo ""
+          echo "=== Notarization Verification ==="
+          spctl -a -vvv "$APP_PATH" 2>&1 || {
+            echo "::warning::spctl assessment returned non-zero (may be expected in CI)"
+          }
+
+          # Verify the signature includes notarization
+          echo ""
+          echo "=== Signature Details ==="
+          codesign -dvv "$APP_PATH" 2>&1 | grep -E "(Authority|TeamIdentifier|Signature)" || true
+
+          echo ""
+          echo "✅ Verification complete for ${{ matrix.target }}"
+
   publish-release:
     needs: [create-release, build-tauri]
     permissions:

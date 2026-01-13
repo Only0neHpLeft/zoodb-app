@@ -88,11 +88,11 @@ jobs:
         include:
           # macOS Apple Silicon
           - platform: macos-latest
-            args: '--target aarch64-apple-darwin'
+            args: '--verbose aarch64-apple-darwin'
             target: aarch64-apple-darwin
           # macOS Intel
           - platform: macos-latest
-            args: '--target x86_64-apple-darwin'
+            args: '--verbose x86_64-apple-darwin'
             target: x86_64-apple-darwin
 
     runs-on: ${{ matrix.platform }}

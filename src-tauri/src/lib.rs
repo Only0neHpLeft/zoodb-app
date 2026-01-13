@@ -1,12 +1,6 @@
-use dotenvy::dotenv;
-use std::env;
-
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    dotenv().ok();
-    
-    let clerk_publishable_key = env::var("VITE_CLERK_PUBLISHABLE_KEY")
-        .expect("VITE_CLERK_PUBLISHABLE_KEY must be set");
+    let clerk_publishable_key = "pk_test_dWx0aW1hdGUtcGVnYXN1cy00MS5jbGVyay5hY2NvdW50cy5kZXYk";
 
     tauri::Builder::default()
         .plugin(tauri_plugin_http::init())

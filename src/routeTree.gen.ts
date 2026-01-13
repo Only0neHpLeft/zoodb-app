@@ -9,38 +9,274 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as StudentsRouteImport } from './routes/students'
+import { Route as SignUpRouteImport } from './routes/sign-up'
+import { Route as SignInRouteImport } from './routes/sign-in'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SchemeRouteImport } from './routes/scheme'
+import { Route as MembershipRouteImport } from './routes/membership'
+import { Route as EditorRouteImport } from './routes/editor'
+import { Route as ClassesRouteImport } from './routes/classes'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SchemeTypesRouteImport } from './routes/scheme.types'
+import { Route as SchemeTreatsRouteImport } from './routes/scheme.treats'
+import { Route as SchemeLikesRouteImport } from './routes/scheme.likes'
+import { Route as SchemeCaretakersRouteImport } from './routes/scheme.caretakers'
+import { Route as SchemeAnimalsRouteImport } from './routes/scheme.animals'
+import { Route as EditorTaskRouteImport } from './routes/editor.task'
 
+const StudentsRoute = StudentsRouteImport.update({
+  id: '/students',
+  path: '/students',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignUpRoute = SignUpRouteImport.update({
+  id: '/sign-up',
+  path: '/sign-up',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignInRoute = SignInRouteImport.update({
+  id: '/sign-in',
+  path: '/sign-in',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SchemeRoute = SchemeRouteImport.update({
+  id: '/scheme',
+  path: '/scheme',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MembershipRoute = MembershipRouteImport.update({
+  id: '/membership',
+  path: '/membership',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EditorRoute = EditorRouteImport.update({
+  id: '/editor',
+  path: '/editor',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClassesRoute = ClassesRouteImport.update({
+  id: '/classes',
+  path: '/classes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SchemeTypesRoute = SchemeTypesRouteImport.update({
+  id: '/types',
+  path: '/types',
+  getParentRoute: () => SchemeRoute,
+} as any)
+const SchemeTreatsRoute = SchemeTreatsRouteImport.update({
+  id: '/treats',
+  path: '/treats',
+  getParentRoute: () => SchemeRoute,
+} as any)
+const SchemeLikesRoute = SchemeLikesRouteImport.update({
+  id: '/likes',
+  path: '/likes',
+  getParentRoute: () => SchemeRoute,
+} as any)
+const SchemeCaretakersRoute = SchemeCaretakersRouteImport.update({
+  id: '/caretakers',
+  path: '/caretakers',
+  getParentRoute: () => SchemeRoute,
+} as any)
+const SchemeAnimalsRoute = SchemeAnimalsRouteImport.update({
+  id: '/animals',
+  path: '/animals',
+  getParentRoute: () => SchemeRoute,
+} as any)
+const EditorTaskRoute = EditorTaskRouteImport.update({
+  id: '/task',
+  path: '/task',
+  getParentRoute: () => EditorRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/classes': typeof ClassesRoute
+  '/editor': typeof EditorRouteWithChildren
+  '/membership': typeof MembershipRoute
+  '/scheme': typeof SchemeRouteWithChildren
+  '/settings': typeof SettingsRoute
+  '/sign-in': typeof SignInRoute
+  '/sign-up': typeof SignUpRoute
+  '/students': typeof StudentsRoute
+  '/editor/task': typeof EditorTaskRoute
+  '/scheme/animals': typeof SchemeAnimalsRoute
+  '/scheme/caretakers': typeof SchemeCaretakersRoute
+  '/scheme/likes': typeof SchemeLikesRoute
+  '/scheme/treats': typeof SchemeTreatsRoute
+  '/scheme/types': typeof SchemeTypesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/classes': typeof ClassesRoute
+  '/editor': typeof EditorRouteWithChildren
+  '/membership': typeof MembershipRoute
+  '/scheme': typeof SchemeRouteWithChildren
+  '/settings': typeof SettingsRoute
+  '/sign-in': typeof SignInRoute
+  '/sign-up': typeof SignUpRoute
+  '/students': typeof StudentsRoute
+  '/editor/task': typeof EditorTaskRoute
+  '/scheme/animals': typeof SchemeAnimalsRoute
+  '/scheme/caretakers': typeof SchemeCaretakersRoute
+  '/scheme/likes': typeof SchemeLikesRoute
+  '/scheme/treats': typeof SchemeTreatsRoute
+  '/scheme/types': typeof SchemeTypesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/classes': typeof ClassesRoute
+  '/editor': typeof EditorRouteWithChildren
+  '/membership': typeof MembershipRoute
+  '/scheme': typeof SchemeRouteWithChildren
+  '/settings': typeof SettingsRoute
+  '/sign-in': typeof SignInRoute
+  '/sign-up': typeof SignUpRoute
+  '/students': typeof StudentsRoute
+  '/editor/task': typeof EditorTaskRoute
+  '/scheme/animals': typeof SchemeAnimalsRoute
+  '/scheme/caretakers': typeof SchemeCaretakersRoute
+  '/scheme/likes': typeof SchemeLikesRoute
+  '/scheme/treats': typeof SchemeTreatsRoute
+  '/scheme/types': typeof SchemeTypesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/classes'
+    | '/editor'
+    | '/membership'
+    | '/scheme'
+    | '/settings'
+    | '/sign-in'
+    | '/sign-up'
+    | '/students'
+    | '/editor/task'
+    | '/scheme/animals'
+    | '/scheme/caretakers'
+    | '/scheme/likes'
+    | '/scheme/treats'
+    | '/scheme/types'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/classes'
+    | '/editor'
+    | '/membership'
+    | '/scheme'
+    | '/settings'
+    | '/sign-in'
+    | '/sign-up'
+    | '/students'
+    | '/editor/task'
+    | '/scheme/animals'
+    | '/scheme/caretakers'
+    | '/scheme/likes'
+    | '/scheme/treats'
+    | '/scheme/types'
+  id:
+    | '__root__'
+    | '/'
+    | '/classes'
+    | '/editor'
+    | '/membership'
+    | '/scheme'
+    | '/settings'
+    | '/sign-in'
+    | '/sign-up'
+    | '/students'
+    | '/editor/task'
+    | '/scheme/animals'
+    | '/scheme/caretakers'
+    | '/scheme/likes'
+    | '/scheme/treats'
+    | '/scheme/types'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ClassesRoute: typeof ClassesRoute
+  EditorRoute: typeof EditorRouteWithChildren
+  MembershipRoute: typeof MembershipRoute
+  SchemeRoute: typeof SchemeRouteWithChildren
+  SettingsRoute: typeof SettingsRoute
+  SignInRoute: typeof SignInRoute
+  SignUpRoute: typeof SignUpRoute
+  StudentsRoute: typeof StudentsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/students': {
+      id: '/students'
+      path: '/students'
+      fullPath: '/students'
+      preLoaderRoute: typeof StudentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sign-up': {
+      id: '/sign-up'
+      path: '/sign-up'
+      fullPath: '/sign-up'
+      preLoaderRoute: typeof SignUpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sign-in': {
+      id: '/sign-in'
+      path: '/sign-in'
+      fullPath: '/sign-in'
+      preLoaderRoute: typeof SignInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/scheme': {
+      id: '/scheme'
+      path: '/scheme'
+      fullPath: '/scheme'
+      preLoaderRoute: typeof SchemeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/membership': {
+      id: '/membership'
+      path: '/membership'
+      fullPath: '/membership'
+      preLoaderRoute: typeof MembershipRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/editor': {
+      id: '/editor'
+      path: '/editor'
+      fullPath: '/editor'
+      preLoaderRoute: typeof EditorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/classes': {
+      id: '/classes'
+      path: '/classes'
+      fullPath: '/classes'
+      preLoaderRoute: typeof ClassesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +284,91 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/scheme/types': {
+      id: '/scheme/types'
+      path: '/types'
+      fullPath: '/scheme/types'
+      preLoaderRoute: typeof SchemeTypesRouteImport
+      parentRoute: typeof SchemeRoute
+    }
+    '/scheme/treats': {
+      id: '/scheme/treats'
+      path: '/treats'
+      fullPath: '/scheme/treats'
+      preLoaderRoute: typeof SchemeTreatsRouteImport
+      parentRoute: typeof SchemeRoute
+    }
+    '/scheme/likes': {
+      id: '/scheme/likes'
+      path: '/likes'
+      fullPath: '/scheme/likes'
+      preLoaderRoute: typeof SchemeLikesRouteImport
+      parentRoute: typeof SchemeRoute
+    }
+    '/scheme/caretakers': {
+      id: '/scheme/caretakers'
+      path: '/caretakers'
+      fullPath: '/scheme/caretakers'
+      preLoaderRoute: typeof SchemeCaretakersRouteImport
+      parentRoute: typeof SchemeRoute
+    }
+    '/scheme/animals': {
+      id: '/scheme/animals'
+      path: '/animals'
+      fullPath: '/scheme/animals'
+      preLoaderRoute: typeof SchemeAnimalsRouteImport
+      parentRoute: typeof SchemeRoute
+    }
+    '/editor/task': {
+      id: '/editor/task'
+      path: '/task'
+      fullPath: '/editor/task'
+      preLoaderRoute: typeof EditorTaskRouteImport
+      parentRoute: typeof EditorRoute
+    }
   }
 }
 
+interface EditorRouteChildren {
+  EditorTaskRoute: typeof EditorTaskRoute
+}
+
+const EditorRouteChildren: EditorRouteChildren = {
+  EditorTaskRoute: EditorTaskRoute,
+}
+
+const EditorRouteWithChildren =
+  EditorRoute._addFileChildren(EditorRouteChildren)
+
+interface SchemeRouteChildren {
+  SchemeAnimalsRoute: typeof SchemeAnimalsRoute
+  SchemeCaretakersRoute: typeof SchemeCaretakersRoute
+  SchemeLikesRoute: typeof SchemeLikesRoute
+  SchemeTreatsRoute: typeof SchemeTreatsRoute
+  SchemeTypesRoute: typeof SchemeTypesRoute
+}
+
+const SchemeRouteChildren: SchemeRouteChildren = {
+  SchemeAnimalsRoute: SchemeAnimalsRoute,
+  SchemeCaretakersRoute: SchemeCaretakersRoute,
+  SchemeLikesRoute: SchemeLikesRoute,
+  SchemeTreatsRoute: SchemeTreatsRoute,
+  SchemeTypesRoute: SchemeTypesRoute,
+}
+
+const SchemeRouteWithChildren =
+  SchemeRoute._addFileChildren(SchemeRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ClassesRoute: ClassesRoute,
+  EditorRoute: EditorRouteWithChildren,
+  MembershipRoute: MembershipRoute,
+  SchemeRoute: SchemeRouteWithChildren,
+  SettingsRoute: SettingsRoute,
+  SignInRoute: SignInRoute,
+  SignUpRoute: SignUpRoute,
+  StudentsRoute: StudentsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

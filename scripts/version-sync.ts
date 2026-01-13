@@ -29,6 +29,10 @@ function updateTauriConfig(version: string) {
   const path = join(process.cwd(), 'src-tauri', 'tauri.conf.json');
   const config = JSON.parse(readFileSync(path, 'utf8'));
   config.version = version;
+  // Update window title with version
+  if (config.app?.windows?.[0]) {
+    config.app.windows[0].title = `Zoo Database | v${version}`;
+  }
   writeFileSync(path, JSON.stringify(config, null, 2) + '\n');
   console.log(`✓ Updated tauri.conf.json to ${version}`);
 }

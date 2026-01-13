@@ -153,25 +153,80 @@ jobs:
       - name: Sync version from tag
         run: bun run version:sync
 
-      - name: Build Tauri app
+      - name: Build and sign Tauri app (no notarization)
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Clerk Auth (publishable key is public, safe to hardcode)
           VITE_CLERK_PUBLISHABLE_KEY: pk_test_dWx0aW1hdGUtcGVnYXN1cy00MS5jbGVyay5hY2NvdW50cy5kZXYk
-          # macOS code signing
+          # macOS code signing ONLY (no APPLE_ID/PASSWORD/TEAM_ID = skip notarization)
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           # Windows code signing (uncomment when ready)
           # WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
           # WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
         with:
           releaseId: ${{ needs.create-release.outputs.release_id }}
           args: ${{ matrix.args }}
+
+      - name: Notarize app with verbose output
+        run: |
+          echo "🔍 Finding DMG file..."
+          DMG_PATH=$(find src-tauri/target -name "*.dmg" -type f | head -1)
+
+          if [ -z "$DMG_PATH" ]; then
+            echo "::error::No DMG file found!"
+            exit 1
+          fi
+
+          echo "📦 Found DMG: $DMG_PATH"
+          echo "📤 Submitting to Apple notary service..."
+          echo ""
+
+          # Submit for notarization with verbose output
+          xcrun notarytool submit "$DMG_PATH" \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_PASSWORD" \
+            --team-id "$APPLE_TEAM_ID" \
+            --wait \
+            --verbose
+
+          echo ""
+          echo "✅ Notarization complete!"
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+      - name: Staple notarization ticket
+        run: |
+          echo "📎 Stapling notarization ticket..."
+
+          # Staple to DMG
+          DMG_PATH=$(find src-tauri/target -name "*.dmg" -type f | head -1)
+          if [ -n "$DMG_PATH" ]; then
+            xcrun stapler staple "$DMG_PATH"
+            echo "✅ Stapled ticket to DMG"
+          fi
+
+          # Staple to .app
+          APP_PATH=$(find src-tauri/target -name "*.app" -type d | head -1)
+          if [ -n "$APP_PATH" ]; then
+            xcrun stapler staple "$APP_PATH"
+            echo "✅ Stapled ticket to .app"
+          fi
+
+      - name: Upload notarized DMG to release
+        run: |
+          DMG_PATH=$(find src-tauri/target -name "*.dmg" -type f | head -1)
+          DMG_NAME=$(basename "$DMG_PATH")
+
+          echo "📤 Uploading $DMG_NAME to release..."
+
+          gh release upload "v${{ needs.create-release.outputs.version }}" "$DMG_PATH" --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Verify code signature and notarization
         run: |

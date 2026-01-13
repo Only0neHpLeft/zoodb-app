@@ -13,8 +13,8 @@
     "windows": [
       {
         "title": "Zoo Database | v0.0.1",
-        "width": 1200,
-        "height": 800,
+        "width": 1400,
+        "height": 1000,
         "resizable": true,
         "fullscreen": false
       }

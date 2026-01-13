@@ -1,6 +1,9 @@
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let clerk_publishable_key = "pk_test_dWx0aW1hdGUtcGVnYXN1cy00MS5jbGVyay5hY2NvdW50cy5kZXYk";
+    // Read Clerk publishable key from build-time environment variable
+    // Set CLERK_PUBLISHABLE_KEY when building for different environments
+    let clerk_publishable_key = option_env!("CLERK_PUBLISHABLE_KEY")
+        .unwrap_or("pk_test_dWx0aW1hdGUtcGVnYXN1cy00MS5jbGVyay5hY2NvdW50cy5kZXYk");
 
     tauri::Builder::default()
         .plugin(tauri_plugin_http::init())

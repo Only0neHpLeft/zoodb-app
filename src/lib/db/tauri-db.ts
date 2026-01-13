@@ -3,6 +3,55 @@ import { neon } from '@neondatabase/serverless'
 // Initialize NeonDB connection
 const sql = neon(import.meta.env.VITE_DATABASE_URL)
 
+// SQL Query Sanitization
+const DANGEROUS_KEYWORDS = [
+  'DROP', 'DELETE', 'TRUNCATE', 'ALTER', 'CREATE', 'INSERT', 'UPDATE',
+  'GRANT', 'REVOKE', 'EXEC', 'EXECUTE', 'MERGE', 'REPLACE',
+  '--', ';--', '/*', '*/', 'XP_', 'SP_', 'WAITFOR', 'SHUTDOWN'
+]
+
+const ALLOWED_COMMANDS = ['SELECT', 'WITH', 'EXPLAIN']
+
+/**
+ * Validates that a query is safe to execute (SELECT-only for user queries)
+ */
+function validateQuerySafety(query: string): { safe: boolean; error?: string } {
+  const normalizedQuery = query.trim().toUpperCase()
+
+  // Check if query starts with allowed command
+  const startsWithAllowed = ALLOWED_COMMANDS.some(cmd =>
+    normalizedQuery.startsWith(cmd)
+  )
+
+  if (!startsWithAllowed) {
+    return {
+      safe: false,
+      error: 'Only SELECT queries are allowed. Data modification queries are not permitted.'
+    }
+  }
+
+  // Check for dangerous keywords that could indicate SQL injection
+  for (const keyword of DANGEROUS_KEYWORDS) {
+    if (normalizedQuery.includes(keyword)) {
+      return {
+        safe: false,
+        error: `Query contains prohibited keyword: ${keyword}`
+      }
+    }
+  }
+
+  // Check for multiple statements (semicolon followed by another statement)
+  const statements = query.split(';').filter(s => s.trim().length > 0)
+  if (statements.length > 1) {
+    return {
+      safe: false,
+      error: 'Multiple SQL statements are not allowed'
+    }
+  }
+
+  return { safe: true }
+}
+
 // Types
 export interface UserProfile {
   id: string
@@ -55,7 +104,6 @@ export async function getProfile(userId: string): Promise<{ data: UserProfile | 
       error: null
     }
   } catch (error) {
-    console.error('Error fetching profile:', error)
     return { data: null, error: error as Error }
   }
 }
@@ -99,7 +147,6 @@ export async function upsertProfile(
       error: null
     }
   } catch (error) {
-    console.error('Error upserting profile:', error)
     return { data: null, error: error as Error }
   }
 }
@@ -159,7 +206,6 @@ export async function getMembership(userId: string): Promise<{ data: UserMembers
       error: null
     }
   } catch (error) {
-    console.error('Error fetching membership:', error)
     return { data: null, error: error as Error }
   }
 }
@@ -206,40 +252,48 @@ export async function updateMembership(
       error: null
     }
   } catch (error) {
-    console.error('Error updating membership:', error)
     return { data: null, error: error as Error }
   }
 }
 
 /**
  * Execute a SQL query (for data pages)
+ * Validates query safety before execution - only SELECT queries allowed
  */
 export async function executeSQL<T = Record<string, unknown>>(
-  query: string,
-  _userId: string = ''
+  query: string
 ): Promise<{ data: T[] | null; error: Error | null }> {
+  // Validate query safety before execution
+  const validation = validateQuerySafety(query)
+  if (!validation.safe) {
+    return { data: null, error: new Error(validation.error) }
+  }
+
   try {
-    // For safety, we use tagged template - but for dynamic queries we need raw
     const result = await sql.query(query)
     return { data: result as T[], error: null }
   } catch (error) {
-    console.error('NeonDB query error:', error)
     return { data: null, error: error as Error }
   }
 }
 
 /**
  * Execute a raw SQL query (for SQL editor)
+ * Validates query safety before execution - only SELECT queries allowed
  */
 export async function executeRawSQL<T = Record<string, unknown>>(
-  query: string,
-  _userId: string = ''
+  query: string
 ): Promise<{ data: T[] | null; error: Error | null }> {
+  // Validate query safety before execution
+  const validation = validateQuerySafety(query)
+  if (!validation.safe) {
+    return { data: null, error: new Error(validation.error) }
+  }
+
   try {
     const result = await sql.query(query)
     return { data: result as T[], error: null }
   } catch (error) {
-    console.error('NeonDB query error:', error)
     return { data: null, error: error as Error }
   }
 }
@@ -267,7 +321,6 @@ export async function forkTemplateData(userId: string): Promise<{ success: boole
     `
     return { success: true, error: null }
   } catch (error) {
-    console.error('Error forking template data:', error)
     return { success: false, error: error as Error }
   }
 }
@@ -284,7 +337,6 @@ export async function deleteUserData(userId: string): Promise<{ success: boolean
     await sql`DELETE FROM druhy WHERE user_id = ${userId}`
     return { success: true, error: null }
   } catch (error) {
-    console.error('Error deleting user data:', error)
     return { success: false, error: error as Error }
   }
 }
@@ -303,7 +355,6 @@ export async function resetUserDatabase(userId: string): Promise<{ success: bool
     // Fork fresh template data
     return await forkTemplateData(userId)
   } catch (error) {
-    console.error('Error resetting user database:', error)
     return { success: false, error: error as Error }
   }
 }
@@ -332,8 +383,7 @@ export async function getTemplateCounts(language: string): Promise<{
       caretakers: Number(caretakers[0]?.count || 0),
       food: 0,
     }
-  } catch (error) {
-    console.error('Error getting template counts:', error)
+  } catch {
     return { animals: 0, types: 0, caretakers: 0, food: 0 }
   }
 }

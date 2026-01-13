@@ -1,5 +1,14 @@
 import { executeSQL } from './db/tauri-db'
-import type { TaskValidation, ValidationResult, ValidationRule } from '@/data/types'
+import type {
+  TaskValidation,
+  ValidationResult,
+  ValidationRule,
+  QueryResultRow,
+  RowCountValue,
+  ColumnNamesValue,
+  ColumnCountValue,
+  ContainsDataValue
+} from '@/data/types'
 
 /**
  * Validates a user's SQL query against task requirements
@@ -7,7 +16,7 @@ import type { TaskValidation, ValidationResult, ValidationRule } from '@/data/ty
 export async function validateQuery(
   userQuery: string,
   validation: TaskValidation,
-  userResults: any[]
+  userResults: QueryResultRow[]
 ): Promise<ValidationResult> {
   const result: ValidationResult = {
     isValid: true,
@@ -37,9 +46,9 @@ export async function validateQuery(
  */
 async function runValidationRule(
   rule: ValidationRule,
-  userQuery: string,
-  userResults: any[],
-  validation: TaskValidation,
+  _userQuery: string,
+  userResults: QueryResultRow[],
+  _validation: TaskValidation,
   result: ValidationResult
 ): Promise<void> {
   switch (rule.type) {
@@ -69,8 +78,8 @@ async function runValidationRule(
  * Validate row count
  */
 function validateRowCount(
-  userResults: any[],
-  expectedCount: number | { min?: number; max?: number },
+  userResults: QueryResultRow[],
+  expectedCount: RowCountValue,
   result: ValidationResult
 ): void {
   const actualCount = userResults.length
@@ -102,8 +111,8 @@ function validateRowCount(
  * Validate column names
  */
 function validateColumnNames(
-  userResults: any[],
-  expectedColumns: string[] | { required?: string[]; optional?: string[]; anyOf?: string[][] },
+  userResults: QueryResultRow[],
+  expectedColumns: ColumnNamesValue,
   result: ValidationResult
 ): void {
   if (userResults.length === 0) {
@@ -161,8 +170,8 @@ function validateColumnNames(
  * Validate column count
  */
 function validateColumnCount(
-  userResults: any[],
-  expectedCount: number | { min?: number; max?: number },
+  userResults: QueryResultRow[],
+  expectedCount: ColumnCountValue,
   result: ValidationResult
 ): void {
   if (userResults.length === 0) {
@@ -197,8 +206,8 @@ function validateColumnCount(
  * Validate that results contain specific data
  */
 function validateContainsData(
-  userResults: any[],
-  expectedData: { column: string; values: any[] } | { column: string; pattern: string },
+  userResults: QueryResultRow[],
+  expectedData: ContainsDataValue,
   result: ValidationResult
 ): void {
   if (userResults.length === 0) {
@@ -242,7 +251,7 @@ function validateContainsData(
  */
 async function validateAgainstReference(
   referenceQuery: string,
-  userResults: any[],
+  userResults: QueryResultRow[],
   exactMatch: boolean,
   result: ValidationResult
 ): Promise<void> {
@@ -274,15 +283,16 @@ async function validateAgainstReference(
         result.errors.push('Query results do not match expected results')
       }
     }
-  } catch (error: any) {
-    result.warnings.push(`Error validating against reference: ${error.message}`)
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    result.warnings.push(`Error validating against reference: ${errorMessage}`)
   }
 }
 
 /**
  * Compare two result sets
  */
-function compareResults(results1: any[], results2: any[]): boolean {
+function compareResults(results1: QueryResultRow[], results2: QueryResultRow[]): boolean {
   if (results1.length !== results2.length) {
     return false
   }

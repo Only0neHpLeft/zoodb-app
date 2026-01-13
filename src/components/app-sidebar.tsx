@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router"
-import { Home, Database, Settings, User, ChevronRight, Bug, Lightbulb, Ambulance, Heart, Bandage, ChevronDown, PawPrint, Utensils, Carrot, Ham, LogOut, GraduationCap, LogIn, Shield, Coins } from "lucide-react"
-import { useAuth } from "@/hooks/useClerkAuth"
+import { useState, useEffect } from "react"
+import { Home, Database, Settings, User, ChevronRight, Bug, Lightbulb, Ambulance, Heart, Bandage, ChevronDown, PawPrint, Utensils, Carrot, Ham, LogOut, GraduationCap, LogIn, Shield, Coins, Terminal } from "lucide-react"
+import { useAuth } from "@/hooks/use-clerk-auth"
 import {
   Sidebar,
   SidebarContent,
@@ -22,10 +23,50 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/contexts/language-context"
 import { canAccessStudents, canAccessClasses } from "@/lib/permissions"
+import { getDb, isDatabaseInitialized } from "@/lib/db/pglite"
+
+// Table name mapping for counts (scheme item key -> table names for both languages)
+const tableNameMap: Record<string, { en: string; cz: string }> = {
+  animals: { en: 'animals', cz: 'zvirata' },
+  types: { en: 'types', cz: 'druhy' },
+  caretakers: { en: 'caretakers', cz: 'osetrovatele' },
+  likes: { en: 'likes', cz: 'ma_rad' },
+  treats: { en: 'treats', cz: 'osetruje' },
+}
 
 export function AppSidebar() {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const { user, profile, logout, loading } = useAuth()
+  const [tableCounts, setTableCounts] = useState<Record<string, number>>({})
+
+  // Fetch table counts from database
+  useEffect(() => {
+    async function fetchCounts() {
+      try {
+        const initialized = await isDatabaseInitialized()
+        if (!initialized) return
+
+        const db = await getDb()
+        const counts: Record<string, number> = {}
+
+        for (const [key, tables] of Object.entries(tableNameMap)) {
+          const tableName = language === 'en' ? tables.en : tables.cz
+          try {
+            const result = await db.query(`SELECT COUNT(*) as count FROM ${tableName}`)
+            counts[key] = Number((result.rows[0] as { count: string | number })?.count ?? 0)
+          } catch {
+            counts[key] = 0
+          }
+        }
+
+        setTableCounts(counts)
+      } catch (err) {
+        console.error('Failed to fetch table counts:', err)
+      }
+    }
+
+    fetchCounts()
+  }, [language])
 
   // Check if user can access students page
   const hasStudentsAccess = canAccessStudents(profile)
@@ -43,6 +84,12 @@ export function AppSidebar() {
       title: t.nav.classes,
       icon: GraduationCap,
       url: "/classes",
+      badge: null,
+    },
+    {
+      title: t.sidebar.sqlEditor || "Editor",
+      icon: Terminal,
+      url: "/sql-editor",
       badge: null,
     },
     {
@@ -64,26 +111,31 @@ export function AppSidebar() {
       title: t.sidebar.animals,
       icon: Bug,
       url: "/scheme/animals",
+      countKey: "animals",
     },
     {
       title: t.sidebar.types,
       icon: Lightbulb,
       url: "/scheme/types",
+      countKey: "types",
     },
     {
       title: t.sidebar.caretakers,
       icon: Ambulance,
       url: "/scheme/caretakers",
+      countKey: "caretakers",
     },
     {
       title: t.sidebar.likes,
       icon: Heart,
       url: "/scheme/likes",
+      countKey: "likes",
     },
     {
       title: t.sidebar.treats,
       icon: Bandage,
       url: "/scheme/treats",
+      countKey: "treats",
     },
     {
       title: t.sidebar.menu,
@@ -201,14 +253,21 @@ export function AppSidebar() {
                             <Link to={item.url} className="flex items-center gap-2">
                               <item.icon className="size-4 shrink-0" />
                               <span className="flex-1 truncate">{item.title}</span>
-                              {item.badge === "soon" && (
+                              {item.badge === "soon" ? (
                                 <Badge
                                   variant="secondary"
                                   className="shrink-0 text-xs px-2 py-0 h-5 bg-red-500/10 text-red-500"
                                 >
                                   {t.sidebar.soon}
                                 </Badge>
-                              )}
+                              ) : item.countKey && tableCounts[item.countKey] !== undefined ? (
+                                <Badge
+                                  variant="secondary"
+                                  className="shrink-0 text-[10px] px-1.5 py-0 h-4 bg-muted text-muted-foreground"
+                                >
+                                  {tableCounts[item.countKey]}
+                                </Badge>
+                              ) : null}
                             </Link>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>

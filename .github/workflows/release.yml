@@ -90,10 +90,36 @@ jobs:
           - platform: macos-latest
             args: '--target aarch64-apple-darwin'
             target: aarch64-apple-darwin
+          # macOS Intel
+          - platform: macos-latest
+            args: '--target x86_64-apple-darwin'
+            target: x86_64-apple-darwin
 
     runs-on: ${{ matrix.platform }}
 
     steps:
+      - name: Validate macOS signing secrets
+        run: |
+          missing=""
+          if [ -z "$APPLE_CERTIFICATE" ]; then missing="$missing APPLE_CERTIFICATE"; fi
+          if [ -z "$APPLE_CERTIFICATE_PASSWORD" ]; then missing="$missing APPLE_CERTIFICATE_PASSWORD"; fi
+          if [ -z "$APPLE_SIGNING_IDENTITY" ]; then missing="$missing APPLE_SIGNING_IDENTITY"; fi
+          if [ -z "$APPLE_ID" ]; then missing="$missing APPLE_ID"; fi
+          if [ -z "$APPLE_PASSWORD" ]; then missing="$missing APPLE_PASSWORD"; fi
+          if [ -z "$APPLE_TEAM_ID" ]; then missing="$missing APPLE_TEAM_ID"; fi
+          if [ -n "$missing" ]; then
+            echo "::error::Missing required secrets:$missing"
+            exit 1
+          fi
+          echo "All macOS signing secrets are configured"
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
       - uses: actions/checkout@v4
 
       - name: Setup Bun

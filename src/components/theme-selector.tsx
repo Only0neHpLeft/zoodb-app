@@ -17,7 +17,7 @@ import { saveCustomTheme, getCustomThemeRaw } from "@/lib/custom-theme-manager"
 
 export function ThemeSelector() {
   const { t } = useLanguage()
-  const [currentTheme, setCurrentTheme] = React.useState<string>("eyesight")
+  const [currentTheme, setCurrentTheme] = React.useState<string>("caffeine")
   const [mounted, setMounted] = React.useState(false)
   const [customCss, setCustomCss] = React.useState("")
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
@@ -26,7 +26,7 @@ export function ThemeSelector() {
     setMounted(true)
     // Get the current theme from localStorage or data attribute
     const savedTheme = localStorage.getItem('selected-theme')
-    const theme = savedTheme || document.documentElement.getAttribute('data-theme') || 'eyesight'
+    const theme = savedTheme || document.documentElement.getAttribute('data-theme') || 'caffeine'
     setCurrentTheme(theme)
 
     // Ensure the data-theme attribute is set

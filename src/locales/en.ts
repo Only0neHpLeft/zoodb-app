@@ -124,21 +124,9 @@ export const en = {
 
   // Themes
   themes: {
-    eyesight: {
-      name: "Eyesight",
-      description: "Soft purple tones for comfortable viewing",
-    },
     caffeine: {
       name: "Caffeine",
       description: "Warm coffee-inspired palette",
-    },
-    claymorphism: {
-      name: "Claymorphism",
-      description: "Soft clay-like textures and shadows",
-    },
-    mono: {
-      name: "Mono",
-      description: "Minimalist monochrome design",
     },
     custom: {
       name: "Custom",

@@ -124,21 +124,9 @@ export const cz = {
 
   // Themes
   themes: {
-    eyesight: {
-      name: "Zrakový komfort",
-      description: "Jemné fialové tóny pro pohodlné sledování",
-    },
     caffeine: {
       name: "Kofein",
       description: "Teplá paleta inspirovaná kávou",
-    },
-    claymorphism: {
-      name: "Hliněný vzhled",
-      description: "Měkké hlinité textury a stíny",
-    },
-    mono: {
-      name: "Mono",
-      description: "Minimalistický monochromatický design",
     },
     custom: {
       name: "Vlastní",

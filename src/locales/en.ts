@@ -14,6 +14,7 @@ export const en = {
     schemeDescription: "Manage all aspects of your zoo database schema",
     viewDetails: "View Details",
     comingSoon: "Coming Soon",
+    schemaReference: "Schema Reference",
   },
 
   // Sidebar Scheme Items
@@ -565,6 +566,9 @@ export const en = {
       comingSoon: "Payments coming soon. Stay tuned!",
       becomeMember: "Become a Member",
       activateLicense: "Activate License",
+      premiumFeature: "Premium Feature",
+      sqlEditorPremium: "The SQL Editor is available for Zoo and Zoo+ members. Upgrade your plan to unlock this feature.",
+      viewPlans: "View Plans",
     },
     checkout: {
       title: "Upgrade to {plan}",

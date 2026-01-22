@@ -30,8 +30,8 @@ export const categoriesCz = {
     description: "Naučte se vyhledávat specifická data v databázi",
     tasks: {
       b1: {
-        title: "Sloni v ZOO",
-        description: "Vypište jména všech slonů v naší ZOO.",
+        title: "Slimáci v ZOO",
+        description: "Vypište jména všech slimáků v naší ZOO.",
         hint: "Použijte WHERE pro filtrování podle druhu zvířete.",
       },
       b2: {

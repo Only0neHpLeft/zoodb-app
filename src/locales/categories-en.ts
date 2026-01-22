@@ -30,8 +30,8 @@ export const categoriesEn = {
     description: "Learn to search for specific data in the database",
     tasks: {
       b1: {
-        title: "Elephants in the ZOO",
-        description: "List the names of all elephants in our ZOO.",
+        title: "Slugs in the ZOO",
+        description: "List the names of all slugs in our ZOO.",
         hint: "Use WHERE to filter by animal type.",
       },
       b2: {

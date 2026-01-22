@@ -14,6 +14,7 @@ export const cz = {
     schemeDescription: "Spravujte všechny aspekty schématu databáze Zoo",
     viewDetails: "Zobrazit Detail",
     comingSoon: "Již Brzy",
+    schemaReference: "Reference Schématu",
   },
 
   // Sidebar Scheme Items
@@ -565,6 +566,9 @@ export const cz = {
       comingSoon: "Platby již brzy. Zůstaňte naladěni!",
       becomeMember: "Stát se členem",
       activateLicense: "Aktivovat Licenci",
+      premiumFeature: "Prémiová Funkce",
+      sqlEditorPremium: "SQL Editor je dostupný pro členy Zoo a Zoo+. Upgradujte svůj plán pro odemknutí této funkce.",
+      viewPlans: "Zobrazit Plány",
     },
     checkout: {
       title: "Upgradovat na {plan}",

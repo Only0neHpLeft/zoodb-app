@@ -3,17 +3,18 @@ import { themes, type ThemeName } from "./themes"
 // Button colors per theme (darker colors suitable for button backgrounds with white text)
 const buttonColors: Record<string, { light: string; dark: string }> = {
   caffeine: { light: "#4a3728", dark: "#5c4433" },
-  eyesight: { light: "#6b5b8a", dark: "#7a6b99" },
-  claymorphism: { light: "#4f46e5", dark: "#5b52e8" },
   mono: { light: "#404040", dark: "#525252" },
-  custom: { light: "#333333", dark: "#444444" },
+  "violet-bloom": { light: "#5925cc", dark: "#7033ff" },
+  supabase: { light: "#006239", dark: "#4ade80" },
+  "sage-garden": { light: "#5a6b5e", dark: "#7c9082" },
+  claude: { light: "#a54e33", dark: "#c96442" },
 }
 
 /**
  * Generate Clerk appearance config based on current theme
  */
 export function getClerkAppearance(themeName: ThemeName, isDark: boolean) {
-  const theme = themes.find((t) => t.value === themeName) || themes[1] // Default to Caffeine
+  const theme = themes.find((t) => t.value === themeName) || themes[0] // Default to Caffeine
   const colors = isDark ? theme.preview.dark : theme.preview.light
   const btnColor = buttonColors[themeName] || buttonColors.caffeine
   const buttonBg = isDark ? btnColor.dark : btnColor.light

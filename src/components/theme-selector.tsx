@@ -1,22 +1,11 @@
 import * as React from "react"
 import { themes } from "@/lib/themes"
-import { Check, Upload } from "lucide-react"
+import { Check, Lock, Clock } from "lucide-react"
 import { useLanguage } from "@/contexts/language-context"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
-import { saveCustomTheme, getCustomThemeRaw } from "@/lib/custom-theme-manager"
+import { useMembership } from "@/contexts/membership-context"
 
-// Card colors for the grid
-const CARD_COLORS = ['#3b82f6', '#8b5cf6', '#22c55e', '#f97316', '#ec4899', '#06b6d4']
+// Themes that are free (available to all users)
+const FREE_THEMES = ['caffeine']
 
 // Mini App Mockup Component - Realistic app preview
 function ThemeMockup({ theme, isDark }: { theme: typeof themes[number]; isDark: boolean }) {
@@ -136,12 +125,12 @@ function ThemeMockup({ theme, isDark }: { theme: typeof themes[number]; isDark: 
                   }}
                 />
               </div>
-              {/* Colored progress bar at bottom */}
+              {/* Colored progress bar at bottom - use theme primary */}
               <div
                 className="h-0.5 w-full"
                 style={{
-                  backgroundColor: CARD_COLORS[i % CARD_COLORS.length],
-                  opacity: i < 6 ? 0.8 : 0.3
+                  backgroundColor: colors.primary,
+                  opacity: i < 6 ? 0.8 : 0.4
                 }}
               />
             </div>
@@ -153,12 +142,14 @@ function ThemeMockup({ theme, isDark }: { theme: typeof themes[number]; isDark: 
 }
 
 export function ThemeSelector() {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
+  const { membership } = useMembership()
   const [currentTheme, setCurrentTheme] = React.useState<string>("caffeine")
   const [mounted, setMounted] = React.useState(false)
-  const [customCss, setCustomCss] = React.useState("")
-  const [isDialogOpen, setIsDialogOpen] = React.useState(false)
   const [isDarkMode, setIsDarkMode] = React.useState(false)
+
+  // Check if user has premium membership (Zoo or Zoo+)
+  const hasPremium = membership?.plan_type === 'zoo' || membership?.plan_type === 'zooPlus'
 
   React.useEffect(() => {
     setMounted(true)
@@ -174,9 +165,6 @@ export function ThemeSelector() {
     if (!document.documentElement.hasAttribute('data-theme')) {
       document.documentElement.setAttribute('data-theme', theme)
     }
-
-    // Load custom CSS if available
-    setCustomCss(getCustomThemeRaw())
 
     // Listen for dark mode changes
     const observer = new MutationObserver((mutations) => {
@@ -209,6 +197,13 @@ export function ThemeSelector() {
     // Don't do anything if already selected
     if (themeName === currentTheme) return
 
+    // Check if theme requires premium
+    const isFreeTheme = FREE_THEMES.includes(themeName)
+    if (!isFreeTheme && !hasPremium) {
+      // Theme is locked - don't allow selection
+      return
+    }
+
     // Remove the old theme attribute first to force a complete CSS recalculation
     document.documentElement.removeAttribute('data-theme')
 
@@ -225,39 +220,43 @@ export function ThemeSelector() {
     localStorage.setItem('selected-theme', themeName)
   }
 
-  const handleSaveCustomTheme = () => {
-    saveCustomTheme(customCss)
-
-    // Dispatch event to update styles
-    window.dispatchEvent(new Event("custom-theme-changed"))
-
-    // Select the custom theme
-    handleThemeSelect("custom")
-
-    setIsDialogOpen(false)
-  }
+  // Coming Soon text based on language
+  const comingSoonText = language === 'cs' ? 'Brzy' : 'Coming Soon'
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       {themes.map((theme) => {
         const isSelected = currentTheme === theme.value
+        const isFreeTheme = FREE_THEMES.includes(theme.value)
+        const isLocked = !isFreeTheme && !hasPremium
 
         return (
           <button
             key={theme.value}
             onClick={() => handleThemeSelect(theme.value)}
-            className="group text-left space-y-2 focus:outline-none"
+            disabled={isLocked}
+            className={`group text-left space-y-2 focus:outline-none ${isLocked ? 'cursor-not-allowed' : ''}`}
           >
             <div
               className={`
                 relative border rounded-lg p-1.5 h-32 transition-all overflow-hidden
-                ${isSelected ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : 'hover:border-primary'}
+                ${isSelected ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''}
+                ${isLocked ? 'opacity-60' : 'hover:border-primary'}
               `}
             >
               {/* Theme preview mockup */}
               <ThemeMockup theme={theme} isDark={isDarkMode} />
 
-              {isSelected && (
+              {/* Lock overlay for premium themes */}
+              {isLocked && (
+                <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
+                  <div className="bg-muted rounded-full p-2">
+                    <Lock className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                </div>
+              )}
+
+              {isSelected && !isLocked && (
                 <div className="absolute top-1.5 right-1.5 bg-primary text-primary-foreground rounded-full p-0.5 shadow-md">
                   <Check className="h-3 w-3" />
                 </div>
@@ -265,9 +264,16 @@ export function ThemeSelector() {
             </div>
 
             <div className="space-y-0.5">
-              <p className="font-medium text-sm">
-                {t.themes[theme.value as keyof typeof t.themes]?.name || theme.name}
-              </p>
+              <div className="flex items-center gap-1.5">
+                <p className={`font-medium text-sm ${isLocked ? 'text-muted-foreground' : ''}`}>
+                  {t.themes[theme.value as keyof typeof t.themes]?.name || theme.name}
+                </p>
+                {isLocked && (
+                  <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-medium">
+                    Zoo+
+                  </span>
+                )}
+              </div>
               <p className="text-xs text-muted-foreground line-clamp-2">
                 {t.themes[theme.value as keyof typeof t.themes]?.description || theme.description}
               </p>
@@ -276,41 +282,29 @@ export function ThemeSelector() {
         )
       })}
 
-      {/* Import Theme Button */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogTrigger asChild>
-          <button className="group text-left space-y-2 focus:outline-none">
-            <div className="relative border rounded-lg p-1.5 h-32 transition-all hover:border-primary flex flex-col items-center justify-center text-muted-foreground hover:text-primary border-dashed">
-              <Upload className="h-6 w-6 mb-2" />
-              <span className="text-xs font-medium">Import Theme</span>
-            </div>
-            <div className="space-y-0.5">
-              <p className="font-medium text-sm">Import</p>
-              <p className="text-xs text-muted-foreground">Paste your own CSS theme</p>
-            </div>
-          </button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Import Custom Theme</DialogTitle>
-            <DialogDescription>
-              Paste your CSS variables here. Supports :root and .dark blocks.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <Textarea
-              placeholder=":root { --background: ... }"
-              className="h-[300px] font-mono text-xs"
-              value={customCss}
-              onChange={(e) => setCustomCss(e.target.value)}
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSaveCustomTheme}>Save Theme</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Coming Soon Placeholder 1 */}
+      <div className="text-left space-y-2">
+        <div className="relative border border-dashed rounded-lg p-1.5 h-32 flex flex-col items-center justify-center bg-muted/30">
+          <Clock className="h-6 w-6 text-muted-foreground mb-2" />
+          <span className="text-xs font-medium text-muted-foreground">{comingSoonText}</span>
+        </div>
+        <div className="space-y-0.5">
+          <p className="font-medium text-sm text-muted-foreground">{comingSoonText}</p>
+          <p className="text-xs text-muted-foreground">???</p>
+        </div>
+      </div>
+
+      {/* Coming Soon Placeholder 2 */}
+      <div className="text-left space-y-2">
+        <div className="relative border border-dashed rounded-lg p-1.5 h-32 flex flex-col items-center justify-center bg-muted/30">
+          <Clock className="h-6 w-6 text-muted-foreground mb-2" />
+          <span className="text-xs font-medium text-muted-foreground">{comingSoonText}</span>
+        </div>
+        <div className="space-y-0.5">
+          <p className="font-medium text-sm text-muted-foreground">{comingSoonText}</p>
+          <p className="text-xs text-muted-foreground">???</p>
+        </div>
+      </div>
     </div>
   )
 }

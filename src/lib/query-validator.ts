@@ -1,4 +1,4 @@
-import { executeSQL } from './db/tauri-db'
+import { executeQuery } from './db/pglite'
 import type {
   TaskValidation,
   ValidationResult,
@@ -43,12 +43,17 @@ export async function validateQuery(
 
 /**
  * Run a single validation rule
+ * @param rule - The validation rule to run
+ * @param _userQuery - Reserved for future custom query validation (e.g., syntax checking)
+ * @param userResults - The query results to validate
+ * @param _validation - Reserved for future cross-rule validation logic
+ * @param result - The validation result to populate
  */
 async function runValidationRule(
   rule: ValidationRule,
-  _userQuery: string,
+  _userQuery: string, // eslint-disable-line @typescript-eslint/no-unused-vars
   userResults: QueryResultRow[],
-  _validation: TaskValidation,
+  _validation: TaskValidation, // eslint-disable-line @typescript-eslint/no-unused-vars
   result: ValidationResult
 ): Promise<void> {
   switch (rule.type) {
@@ -256,12 +261,8 @@ async function validateAgainstReference(
   result: ValidationResult
 ): Promise<void> {
   try {
-    const { data: referenceResults, error } = await executeSQL(referenceQuery)
-
-    if (error) {
-      result.warnings.push(`Could not run reference query: ${error.message}`)
-      return
-    }
+    const queryResult = await executeQuery(referenceQuery)
+    const referenceResults = queryResult.rows as QueryResultRow[]
 
     if (!referenceResults || !Array.isArray(referenceResults)) {
       result.warnings.push('Reference query returned invalid results')

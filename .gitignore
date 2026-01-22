@@ -12,3 +12,10 @@ count.txt
 .output
 .vinxi
 todos.json
+.claude
+.vscode
+.cursor
+
+# Samael agent artifacts
+docs/reports/
+docs/skills/

@@ -1,0 +1,124 @@
+import { v } from "convex/values";
+import { query, mutation } from "./_generated/server";
+
+// Get user profile by Clerk ID
+export const getProfile = query({
+  args: { clerkId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("userProfiles")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+      .first();
+  },
+});
+
+// Create or update user profile
+export const upsertProfile = mutation({
+  args: {
+    clerkId: v.string(),
+    email: v.string(),
+    fullName: v.optional(v.string()),
+    role: v.optional(v.union(v.literal("student"), v.literal("teacher"), v.literal("admin"))),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+      .first();
+
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        email: args.email,
+        fullName: args.fullName ?? existing.fullName,
+        role: args.role ?? existing.role,
+      });
+      return await ctx.db.get(existing._id);
+    }
+
+    const id = await ctx.db.insert("userProfiles", {
+      clerkId: args.clerkId,
+      email: args.email,
+      fullName: args.fullName,
+      role: args.role ?? "student",
+    });
+    return await ctx.db.get(id);
+  },
+});
+
+// Get user settings
+export const getSettings = query({
+  args: { clerkId: v.string() },
+  handler: async (ctx, args) => {
+    const profile = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+      .first();
+
+    if (!profile) return null;
+
+    return {
+      language: profile.language ?? "en",
+      theme: profile.theme ?? "caffeine",
+      darkMode: profile.darkMode ?? false,
+      customThemeCss: profile.customThemeCss ?? null,
+    };
+  },
+});
+
+// Update user settings
+export const updateSettings = mutation({
+  args: {
+    clerkId: v.string(),
+    language: v.optional(v.union(v.literal("en"), v.literal("cz"))),
+    theme: v.optional(v.string()),
+    darkMode: v.optional(v.boolean()),
+    customThemeCss: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const profile = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+      .first();
+
+    if (!profile) {
+      // Create profile with settings
+      const id = await ctx.db.insert("userProfiles", {
+        clerkId: args.clerkId,
+        email: "", // Will be updated later
+        role: "student",
+        language: args.language,
+        theme: args.theme,
+        darkMode: args.darkMode,
+        customThemeCss: args.customThemeCss,
+      });
+      return await ctx.db.get(id);
+    }
+
+    const updates: Record<string, unknown> = {};
+    if (args.language !== undefined) updates.language = args.language;
+    if (args.theme !== undefined) updates.theme = args.theme;
+    if (args.darkMode !== undefined) updates.darkMode = args.darkMode;
+    if (args.customThemeCss !== undefined) updates.customThemeCss = args.customThemeCss;
+
+    if (Object.keys(updates).length > 0) {
+      await ctx.db.patch(profile._id, updates);
+    }
+
+    return await ctx.db.get(profile._id);
+  },
+});
+
+// Update last seen timestamp
+export const updateLastSeen = mutation({
+  args: { clerkId: v.string() },
+  handler: async (ctx, args) => {
+    const profile = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+      .first();
+
+    if (profile) {
+      await ctx.db.patch(profile._id, { lastSeenAt: Date.now() });
+    }
+  },
+});

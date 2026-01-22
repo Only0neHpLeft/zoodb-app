@@ -6894,6 +6894,7 @@ name = "zoodb-app"
 version = "0.0.1"
 dependencies = [
  "chrono",
+ "dotenvy",
  "log",
  "serde",
  "serde_json",

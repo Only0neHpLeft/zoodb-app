@@ -1,14 +1,14 @@
 import { createRootRouteWithContext, Outlet } from '@tanstack/react-router'
-import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { useEffect } from 'react'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { getVersion } from '@tauri-apps/api/app'
 
 import ClerkProvider from '../integrations/clerk/provider'
+import { ConvexClientProvider } from '../integrations/convex/provider'
 import { ThemeProvider } from '../components/theme-provider'
 import { LanguageProvider, useLanguage } from '../contexts/language-context'
 import { MembershipProvider } from '../contexts/membership-context'
+import { SettingsSyncProvider } from '../hooks/use-settings-sync'
 import { AppLayout } from '../components/app-layout'
 import { DbInitBackground } from '../components/db-init-background'
 
@@ -54,13 +54,15 @@ function RootComponent() {
         <WindowTitle />
         <DbInitBackground />
         <ClerkProvider>
-          <MembershipProvider>
-            <AppLayout>
-              <Outlet />
-            </AppLayout>
-            <ReactQueryDevtools buttonPosition="bottom-right" />
-            <TanStackRouterDevtools position="bottom-left" />
-          </MembershipProvider>
+          <ConvexClientProvider>
+            <MembershipProvider>
+              <SettingsSyncProvider>
+                <AppLayout>
+                  <Outlet />
+                </AppLayout>
+              </SettingsSyncProvider>
+            </MembershipProvider>
+          </ConvexClientProvider>
         </ClerkProvider>
       </LanguageProvider>
     </ThemeProvider>

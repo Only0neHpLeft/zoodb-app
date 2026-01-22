@@ -133,13 +133,13 @@ function Home() {
                       ? "opacity-60 cursor-not-allowed"
                       : "cursor-pointer hover:shadow-lg hover:scale-105 hover:border-primary"
                   }`}
-                  onClick={() => isUnlocked && navigate({ to: "/editor" as any, search: { lesson: category.letter } as any })}
+                  onClick={() => isUnlocked && navigate({ to: "/editor" as any, search: { lesson: category.letter, task: 1 } as any })}
                 >
-                  <CardHeader className="pb-3">
+                <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
                         <div
-                          className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl font-bold relative ${
+                          className={`w-12 h-12 min-w-12 min-h-12 shrink-0 rounded-lg flex items-center justify-center text-2xl font-bold relative ${
                             !isUnlocked
                               ? "bg-muted text-muted-foreground"
                               : isBonus
@@ -164,39 +164,42 @@ function Home() {
                           <CardTitle className={`text-base ${!isUnlocked ? "text-muted-foreground" : ""}`}>
                             {category.title}
                           </CardTitle>
-                          {!isUnlocked ? (
-                            <div className="flex flex-col gap-0.5 mt-1">
+                          {/* Status badges - only show lock/paid/completed/bonus status, not task count */}
+                          <div className="flex items-center gap-2 mt-1">
+                            {!isUnlocked ? (
                               <Badge variant="secondary">
                                 {isFreePlan && isPaidCategory ? t.home.paid : t.home.locked}
                               </Badge>
-                              <span className="text-xs text-muted-foreground">0 / {category.tasks.length}</span>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-2 mt-1">
-                              <Badge variant="secondary">
-                                {categoryCompletedCount} / {category.tasks.length}
-                              </Badge>
-                              {isFullyCompleted && (
-                                <Badge className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 text-xs">
-                                  {t.home.completed}
-                                </Badge>
-                              )}
-                              {isBonus && (
-                                <Badge className="bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300 text-xs">
-                                  {t.home.bonus}
-                                </Badge>
-                              )}
-                            </div>
-                          )}
+                            ) : (
+                              <>
+                                {isFullyCompleted && (
+                                  <Badge className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 text-xs">
+                                    {t.home.completed}
+                                  </Badge>
+                                )}
+                                {isBonus && (
+                                  <Badge className="bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300 text-xs">
+                                    {t.home.bonus}
+                                  </Badge>
+                                )}
+                              </>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent className={!isUnlocked ? "blur-sm pointer-events-none" : ""}>
                     <CardDescription className="text-sm mb-3">{category.description}</CardDescription>
-                    <Badge className={difficultyColors[categoryDifficulty]} variant="secondary">
-                      {translateDifficulty(categoryDifficulty)}
-                    </Badge>
+                    {/* Task count and difficulty at the bottom */}
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className="text-xs">
+                        {!isUnlocked ? 0 : categoryCompletedCount} / {category.tasks.length}
+                      </Badge>
+                      <Badge className={difficultyColors[categoryDifficulty]} variant="secondary">
+                        {translateDifficulty(categoryDifficulty)}
+                      </Badge>
+                    </div>
                   </CardContent>
                 </Card>
               )

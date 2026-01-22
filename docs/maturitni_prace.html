@@ -1,0 +1,952 @@
+<!doctype html>
+<html lang="cs">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Maturitní práce – Zoo Database</title>
+    <style>
+      body {
+        font-family: 'Times New Roman', Times, serif;
+        font-size: 12pt;
+        line-height: 1.5;
+        max-width: 21cm;
+        margin: 2.5cm auto;
+        padding: 0 2.5cm;
+        text-align: justify;
+      }
+      h1 {
+        font-size: 18pt;
+        text-align: center;
+        margin-top: 2cm;
+      }
+      h2 {
+        font-size: 14pt;
+        margin-top: 1.5cm;
+        page-break-after: avoid;
+      }
+      h3 {
+        font-size: 12pt;
+        margin-top: 1cm;
+      }
+      .title-page {
+        text-align: center;
+        page-break-after: always;
+        min-height: 90vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+      .title-page h1 {
+        font-size: 24pt;
+        margin-bottom: 1cm;
+      }
+      .title-page h2 {
+        font-size: 18pt;
+        margin-bottom: 3cm;
+      }
+      .title-page .info {
+        text-align: left;
+        margin-top: 4cm;
+      }
+      .title-page .info p {
+        margin: 0.3cm 0;
+      }
+      .abstract-page {
+        page-break-after: always;
+      }
+      .declaration-page {
+        page-break-after: always;
+        min-height: 80vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1cm 0;
+      }
+      th,
+      td {
+        border: 1px solid #000;
+        padding: 0.3cm;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background-color: #f0f0f0;
+        font-weight: bold;
+      }
+      code {
+        font-family: 'Courier New', monospace;
+        background-color: #f5f5f5;
+        padding: 0.1cm 0.2cm;
+      }
+      pre {
+        background-color: #f5f5f5;
+        padding: 0.5cm;
+        overflow-x: auto;
+        font-family: 'Courier New', monospace;
+        font-size: 10pt;
+      }
+      .toc {
+        page-break-after: always;
+      }
+      .toc ul {
+        list-style: none;
+        padding-left: 0;
+      }
+      .toc li {
+        margin: 0.3cm 0;
+      }
+      .toc .sub {
+        padding-left: 1cm;
+      }
+      @media print {
+        body {
+          margin: 0;
+          padding: 2.5cm;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- TITULNÍ STRANA -->
+    <div class="title-page">
+      <p style="font-size: 14pt">MATURITNÍ PRÁCE</p>
+
+      <h1>Zoo Database</h1>
+      <h2>Výuková aplikace pro učení SQL</h2>
+
+      <div class="info">
+        <p><strong>Studijní obor:</strong> Informační technologie</p>
+        <p><strong>Třída:</strong> <em>(Doplnit)</em></p>
+        <p><strong>Školní rok:</strong> 2025/2026</p>
+        <p><strong>Jméno a příjmení:</strong> <em>(Doplnit)</em></p>
+        <p><strong>Vedoucí práce:</strong> <em>(Doplnit)</em></p>
+      </div>
+    </div>
+
+    <!-- ABSTRAKT -->
+    <div class="abstract-page">
+      <h2>Abstrakt</h2>
+      <p>
+        Tato maturitní práce se zabývá vývojem vzdělávací desktopové aplikace
+        Zoo Database, která slouží k výuce jazyka SQL prostřednictvím
+        interaktivních úloh v tematickém prostředí zoologické zahrady. Aplikace
+        kombinuje moderní webové technologie (React, TypeScript) s desktopovým
+        frameworkem Tauri pro vytvoření multiplatformní aplikace. Uživatelé řeší
+        SQL úlohy postupující od základních SELECT dotazů až po komplexní JOIN
+        operace, subdotazy a agregační funkce. Součástí aplikace je pokročilý
+        SQL editor s automatickým doplňováním, systém validace odpovědí,
+        sledování postupu studenta a správa tříd pro učitele.
+      </p>
+
+      <h2>Abstract</h2>
+      <p>
+        This thesis presents the development of Zoo Database, an educational
+        desktop application designed to teach SQL through interactive exercises
+        set in a zoo-themed database environment. The application combines
+        modern web technologies (React, TypeScript) with the Tauri desktop
+        framework to create a cross-platform solution. Users solve SQL tasks
+        progressing from basic SELECT queries to complex JOIN operations,
+        subqueries, and aggregate functions. The application features an
+        advanced SQL editor with autocomplete, answer validation system, student
+        progress tracking, and classroom management for teachers.
+      </p>
+
+      <h2>Klíčová slova</h2>
+      <p>
+        SQL, výuka databází, React, TypeScript, Tauri, vzdělávací software,
+        interaktivní učení
+      </p>
+    </div>
+
+    <!-- PROHLÁŠENÍ -->
+    <div class="declaration-page">
+      <p>
+        Prohlašuji, že jsem tuto práci vypracoval(a) samostatně a použil(a) jsem
+        literární prameny a informace, které cituji a uvádím v seznamu použité
+        literatury a zdrojů informací.
+      </p>
+      <br /><br />
+      <p>
+        V Praze dne
+        ………….&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;……..……………………
+      </p>
+      <p style="text-align: right; margin-right: 2cm">
+        <em>jméno a příjmení</em>
+      </p>
+    </div>
+
+    <!-- OBSAH -->
+    <div class="toc">
+      <h2>Obsah</h2>
+      <ul>
+        <li>1&nbsp;&nbsp;Úvod</li>
+        <li>2&nbsp;&nbsp;Specifikace projektu</li>
+        <li class="sub">2.1&nbsp;&nbsp;Cíle práce</li>
+        <li class="sub">2.2&nbsp;&nbsp;Cílová skupina</li>
+        <li class="sub">2.3&nbsp;&nbsp;Funkční požadavky</li>
+        <li class="sub">2.4&nbsp;&nbsp;Nefunkční požadavky</li>
+        <li>3&nbsp;&nbsp;Harmonogram práce</li>
+        <li>4&nbsp;&nbsp;Teoretická část</li>
+        <li class="sub">4.1&nbsp;&nbsp;Jazyk SQL</li>
+        <li class="sub">4.2&nbsp;&nbsp;Moderní webové technologie</li>
+        <li class="sub">4.3&nbsp;&nbsp;Desktopové aplikace pomocí Tauri</li>
+        <li>5&nbsp;&nbsp;Analýza projektu</li>
+        <li class="sub">5.1&nbsp;&nbsp;Technologický stack</li>
+        <li class="sub">5.2&nbsp;&nbsp;Architektura aplikace</li>
+        <li class="sub">5.3&nbsp;&nbsp;Databázové schéma ZOO</li>
+        <li class="sub">5.4&nbsp;&nbsp;Struktura úloh</li>
+        <li>6&nbsp;&nbsp;Popis implementace</li>
+        <li class="sub">6.1&nbsp;&nbsp;Frontend aplikace</li>
+        <li class="sub">6.2&nbsp;&nbsp;SQL Editor</li>
+        <li class="sub">6.3&nbsp;&nbsp;Validace odpovědí</li>
+        <li class="sub">6.4&nbsp;&nbsp;Správa uživatelů a tříd</li>
+        <li class="sub">6.5&nbsp;&nbsp;Lokalizace</li>
+        <li>7&nbsp;&nbsp;Závěr</li>
+        <li>8&nbsp;&nbsp;Seznam použitých zdrojů</li>
+        <li>9&nbsp;&nbsp;Seznam příloh</li>
+      </ul>
+    </div>
+
+    <!-- 1. ÚVOD -->
+    <h2>1&nbsp;&nbsp;Úvod</h2>
+
+    <p>
+      Výuka jazyka SQL je nedílnou součástí vzdělávání v oblasti informačních
+      technologií. Strukturovaný dotazovací jazyk (SQL) představuje základní
+      nástroj pro práci s relačními databázemi a jeho znalost je vyžadována
+      prakticky ve všech odvětvích IT průmyslu. Tradiční metody výuky SQL často
+      narážejí na problém abstraktnosti – studenti pracují s bezejmennými
+      tabulkami a umělými daty, což snižuje jejich motivaci a ztěžuje pochopení
+      praktického využití.
+    </p>
+
+    <p>
+      Tato maturitní práce představuje řešení tohoto problému v podobě
+      vzdělávací aplikace <strong>Zoo Database</strong>. Aplikace využívá
+      intuitivní tematiku zoologické zahrady, kde studenti pracují se zvířaty,
+      ošetřovateli a jejich vzájemnými vztahy. Místo abstraktních tabulek tak
+      uživatelé hledají „nejlehčího králíka" nebo zjišťují, „kdo ošetřuje
+      nejstaršího vlka", což přirozeně motivuje k řešení úloh.
+    </p>
+
+    <p>Cílem práce je vytvořit kompletní výukovou platformu, která:</p>
+    <ul>
+      <li>Poskytuje strukturovaný kurz SQL od základů po pokročilé dotazy</li>
+      <li>Nabízí interaktivní prostředí s okamžitou zpětnou vazbou</li>
+      <li>Umožňuje učitelům vytvářet třídy a sledovat pokrok studentů</li>
+      <li>Funguje jako desktopová aplikace na různých operačních systémech</li>
+    </ul>
+
+    <p>
+      Práce je strukturována následovně: po úvodu následuje specifikace projektu
+      definující cíle a požadavky, harmonogram práce popisující jednotlivé fáze
+      vývoje, teoretická část vysvětlující klíčové technologie, analýza projektu
+      rozebírající architekturu řešení a nakonec popis implementace jednotlivých
+      komponent.
+    </p>
+
+    <!-- 2. SPECIFIKACE PROJEKTU -->
+    <h2>2&nbsp;&nbsp;Specifikace projektu</h2>
+
+    <h3>2.1&nbsp;&nbsp;Cíle práce</h3>
+
+    <p>
+      Hlavním cílem práce je navrhnout a implementovat vzdělávací aplikaci pro
+      výuku SQL, která:
+    </p>
+
+    <ol>
+      <li>
+        <strong>Usnadní pochopení SQL</strong> – Aplikace provede studenta od
+        základních SELECT dotazů přes podmínky WHERE, řazení ORDER BY, až po
+        komplexní JOIN operace, subdotazy a agregační funkce.
+      </li>
+      <li>
+        <strong>Poskytne okamžitou zpětnou vazbu</strong> – Každá odpověď je
+        automaticky validována a student okamžitě ví, zda jeho řešení je
+        správné.
+      </li>
+      <li>
+        <strong>Motivuje pomocí gamifikace</strong> – Systém úloh je rozdělen do
+        26 kategorií (A-Z) s různými obtížnostmi, což vytváří pocit postupu a
+        dosažení cílů.
+      </li>
+      <li>
+        <strong>Umožní správu výuky</strong> – Učitelé mohou vytvářet virtuální
+        třídy, přidávat studenty a sledovat jejich pokrok.
+      </li>
+      <li>
+        <strong>Bude multiplatformní</strong> – Aplikace bude funkční na
+        Windows, macOS i Linux.
+      </li>
+    </ol>
+
+    <h3>2.2&nbsp;&nbsp;Cílová skupina</h3>
+
+    <p>
+      Primární cílovou skupinou jsou studenti středních a vysokých škol s IT
+      zaměřením, kteří se učí základy práce s databázemi. Sekundární skupinou
+      jsou učitelé, kteří potřebují nástroj pro sledování pokroku studentů.
+    </p>
+
+    <h3>2.3&nbsp;&nbsp;Funkční požadavky</h3>
+
+    <table>
+      <tr>
+        <th>ID</th>
+        <th>Požadavek</th>
+        <th>Priorita</th>
+      </tr>
+      <tr>
+        <td>FR01</td>
+        <td>Uživatel může spouštět SQL dotazy vůči databázi ZOO</td>
+        <td>Vysoká</td>
+      </tr>
+      <tr>
+        <td>FR02</td>
+        <td>Systém automaticky validuje správnost SQL dotazů</td>
+        <td>Vysoká</td>
+      </tr>
+      <tr>
+        <td>FR03</td>
+        <td>Uživatel vidí výsledky dotazu v přehledné tabulce</td>
+        <td>Vysoká</td>
+      </tr>
+      <tr>
+        <td>FR04</td>
+        <td>Systém nabízí nápovědy k jednotlivým úlohám</td>
+        <td>Střední</td>
+      </tr>
+      <tr>
+        <td>FR05</td>
+        <td>Uživatel může procházet úlohy podle kategorií (A-Z)</td>
+        <td>Vysoká</td>
+      </tr>
+      <tr>
+        <td>FR06</td>
+        <td>Systém sleduje a ukládá pokrok uživatele</td>
+        <td>Vysoká</td>
+      </tr>
+      <tr>
+        <td>FR07</td>
+        <td>Učitel může vytvářet třídy a přidávat studenty</td>
+        <td>Střední</td>
+      </tr>
+      <tr>
+        <td>FR08</td>
+        <td>Učitel vidí statistiky pokroku všech studentů ve třídě</td>
+        <td>Střední</td>
+      </tr>
+      <tr>
+        <td>FR09</td>
+        <td>Uživatel si může zvolit jazyk rozhraní (CZ/EN)</td>
+        <td>Střední</td>
+      </tr>
+      <tr>
+        <td>FR10</td>
+        <td>Uživatel si může přizpůsobit vzhled aplikace (témata)</td>
+        <td>Nízká</td>
+      </tr>
+    </table>
+
+    <h3>2.4&nbsp;&nbsp;Nefunkční požadavky</h3>
+
+    <table>
+      <tr>
+        <th>ID</th>
+        <th>Požadavek</th>
+        <th>Metrika</th>
+      </tr>
+      <tr>
+        <td>NFR01</td>
+        <td>Aplikace musí být responzivní</td>
+        <td>Odezva UI &lt; 100ms</td>
+      </tr>
+      <tr>
+        <td>NFR02</td>
+        <td>SQL dotazy musí být vyhodnoceny rychle</td>
+        <td>Doba zpracování &lt; 500ms</td>
+      </tr>
+      <tr>
+        <td>NFR03</td>
+        <td>Aplikace musí fungovat offline</td>
+        <td>100% funkcionalita bez internetu</td>
+      </tr>
+      <tr>
+        <td>NFR04</td>
+        <td>Aplikace musí podporovat více operačních systémů</td>
+        <td>Windows, macOS, Linux</td>
+      </tr>
+      <tr>
+        <td>NFR05</td>
+        <td>Uživatelské rozhraní musí být intuitivní</td>
+        <td>Uživatel zvládne první úlohu bez nápovědy</td>
+      </tr>
+    </table>
+
+    <!-- 3. HARMONOGRAM PRÁCE -->
+    <h2>3&nbsp;&nbsp;Harmonogram práce</h2>
+
+    <table>
+      <tr>
+        <th>Fáze</th>
+        <th>Časové období</th>
+        <th>Popis činností</th>
+      </tr>
+      <tr>
+        <td><strong>1. Analýza a návrh</strong></td>
+        <td>Září – Říjen 2025</td>
+        <td>
+          Analýza požadavků, návrh architektury, výběr technologií, návrh
+          databázového schématu ZOO
+        </td>
+      </tr>
+      <tr>
+        <td><strong>2. Implementace jádra</strong></td>
+        <td>Listopad – Prosinec 2025</td>
+        <td>
+          Vývoj SQL editoru, implementace validace dotazů, vytvoření systému
+          úloh
+        </td>
+      </tr>
+      <tr>
+        <td><strong>3. Uživatelské rozhraní</strong></td>
+        <td>Leden 2026</td>
+        <td>Design a implementace UI komponent, témata, lokalizace</td>
+      </tr>
+      <tr>
+        <td><strong>4. Správa uživatelů</strong></td>
+        <td>Únor 2026</td>
+        <td>Autentizace pomocí Clerk, systém tříd, sledování pokroku</td>
+      </tr>
+      <tr>
+        <td><strong>5. Testování a ladění</strong></td>
+        <td>Březen 2026</td>
+        <td>Testování všech funkcí, oprava chyb, optimalizace výkonu</td>
+      </tr>
+      <tr>
+        <td><strong>6. Dokumentace</strong></td>
+        <td>Březen 2026</td>
+        <td>Dokončení maturitní práce, příprava prezentace</td>
+      </tr>
+    </table>
+
+    <!-- 4. TEORETICKÁ ČÁST -->
+    <h2>4&nbsp;&nbsp;Teoretická část</h2>
+
+    <h3>4.1&nbsp;&nbsp;Jazyk SQL</h3>
+
+    <p>
+      SQL (Structured Query Language) je standardizovaný jazyk pro správu a
+      manipulaci s relačními databázemi. Jazyk byl vyvinut v 70. letech 20.
+      století společností IBM a od té doby se stal průmyslovým standardem. SQL
+      se skládá z několika podjazyků:
+    </p>
+
+    <ul>
+      <li>
+        <strong>DQL (Data Query Language)</strong> – dotazování dat pomocí
+        příkazu SELECT
+      </li>
+      <li>
+        <strong>DML (Data Manipulation Language)</strong> – manipulace s daty
+        (INSERT, UPDATE, DELETE)
+      </li>
+      <li>
+        <strong>DDL (Data Definition Language)</strong> – definice struktury
+        (CREATE, ALTER, DROP)
+      </li>
+      <li>
+        <strong>DCL (Data Control Language)</strong> – řízení přístupu (GRANT,
+        REVOKE)
+      </li>
+    </ul>
+
+    <p>
+      Aplikace Zoo Database se zaměřuje primárně na DQL, protože právě
+      dotazování dat je nejčastější činností při práci s databázemi a je
+      základem pro pochopení relačního modelu.
+    </p>
+
+    <h3>4.2&nbsp;&nbsp;Moderní webové technologie</h3>
+
+    <p>Aplikace využívá moderní JavaScript/TypeScript ekosystém:</p>
+
+    <p>
+      <strong>React</strong> je JavaScriptová knihovna pro tvorbu uživatelských
+      rozhraní vyvinutá společností Meta (dříve Facebook). React používá
+      komponentový přístup a virtuální DOM pro efektivní aktualizace
+      uživatelského rozhraní.
+    </p>
+
+    <p>
+      <strong>TypeScript</strong> je nadstavba JavaScriptu přidávající statické
+      typování. Typová kontrola během vývoje eliminuje mnoho běžných chyb a
+      zlepšuje čitelnost kódu.
+    </p>
+
+    <p>
+      <strong>TanStack Router</strong> je moderní router pro React aplikace
+      podporující typově bezpečné routování a automatické generování routes ze
+      souborové struktury.
+    </p>
+
+    <h3>4.3&nbsp;&nbsp;Desktopové aplikace pomocí Tauri</h3>
+
+    <p>
+      Tauri je framework pro tvorbu multiplatformních desktopových aplikací
+      využívající webové technologie pro uživatelské rozhraní a Rust pro
+      systémové operace. Na rozdíl od Electronu, Tauri nevyžaduje bundlování
+      celého Chromium enginu, což vede k výrazně menším binárním souborům
+      (typicky 3-10 MB oproti 150+ MB u Electronu).
+    </p>
+
+    <p>Výhody Tauri:</p>
+    <ul>
+      <li>Malá velikost výsledné aplikace</li>
+      <li>Nižší spotřeba paměti</li>
+      <li>Bezpečnější architektura díky Rust backendu</li>
+      <li>Podpora Windows, macOS a Linux</li>
+    </ul>
+
+    <!-- 5. ANALÝZA PROJEKTU -->
+    <h2>5&nbsp;&nbsp;Analýza projektu</h2>
+
+    <h3>5.1&nbsp;&nbsp;Technologický stack</h3>
+
+    <p>Aplikace Zoo Database využívá následující technologie:</p>
+
+    <p><strong>Frontend:</strong></p>
+    <ul>
+      <li>React 19 – UI knihovna</li>
+      <li>TypeScript – typově bezpečný JavaScript</li>
+      <li>TanStack Router – file-based routing</li>
+      <li>TanStack Query – správa serverového stavu</li>
+      <li>Tailwind CSS 4 – utility-first CSS framework</li>
+      <li>Radix UI – přístupné UI komponenty</li>
+      <li>Shadcn/ui – předpřipravené komponenty</li>
+    </ul>
+
+    <p><strong>Backend a databáze:</strong></p>
+    <ul>
+      <li>Convex – serverless databáze a backend</li>
+      <li>PGlite – PostgreSQL běžící v prohlížeči (WebAssembly)</li>
+      <li>Neon – cloudová PostgreSQL databáze</li>
+    </ul>
+
+    <p><strong>Autentizace:</strong></p>
+    <ul>
+      <li>Clerk – autentizační služba s podporou OAuth</li>
+    </ul>
+
+    <p><strong>Desktop:</strong></p>
+    <ul>
+      <li>Tauri 2 – framework pro desktopové aplikace</li>
+    </ul>
+
+    <p><strong>Vývojové nástroje:</strong></p>
+    <ul>
+      <li>Bun – JavaScript runtime a package manager</li>
+      <li>Vite 7 – build tool</li>
+      <li>Vitest – testovací framework</li>
+      <li>ESLint + Prettier – linting a formátování</li>
+    </ul>
+
+    <h3>5.2&nbsp;&nbsp;Architektura aplikace</h3>
+
+    <p>
+      Aplikace sleduje moderní architekturu single-page aplikace (SPA) s
+      následující strukturou:
+    </p>
+
+    <pre>
+src/
+├── components/          # Znovupoužitelné UI komponenty
+│   ├── ui/             # Základní komponenty (Button, Card, Dialog...)
+│   ├── sql-editor.tsx  # SQL editor s autocomplete
+│   └── ...
+├── routes/             # Stránky aplikace (file-based routing)
+│   ├── index.tsx       # Hlavní stránka s úlohami
+│   ├── editor.tsx      # SQL editor pro volné dotazy
+│   ├── scheme.*.tsx    # Prohlížeč databázového schématu
+│   ├── classes.tsx     # Správa tříd (pro učitele)
+│   └── settings.tsx    # Nastavení aplikace
+├── lib/                # Pomocné funkce a utility
+│   ├── db/             # Databázová vrstva
+│   ├── validation/     # Validace SQL odpovědí
+│   └── ...
+├── data/               # Definice úloh a kategorií
+├── locales/            # Překlady (CZ, EN)
+├── contexts/           # React kontexty (jazyk, téma)
+└── hooks/              # Custom React hooks
+</pre
+    >
+
+    <h3>5.3&nbsp;&nbsp;Databázové schéma ZOO</h3>
+
+    <p>Databáze Zoo obsahuje následující tabulky:</p>
+
+    <p><strong>Česká verze (výchozí):</strong></p>
+
+    <table>
+      <tr>
+        <th>Tabulka</th>
+        <th>Sloupce</th>
+        <th>Popis</th>
+      </tr>
+      <tr>
+        <td><code>Druhy</code></td>
+        <td>id, nazev</td>
+        <td>Druhy zvířat (např. vlk, králík)</td>
+      </tr>
+      <tr>
+        <td><code>Zvirata</code></td>
+        <td>id, druh, jmeno, vaha, narozeno, spotreba</td>
+        <td>Konkrétní zvířata v ZOO</td>
+      </tr>
+      <tr>
+        <td><code>Osetrovatele</code></td>
+        <td>id, jmeno, narozen</td>
+        <td>Ošetřovatelé pracující v ZOO</td>
+      </tr>
+      <tr>
+        <td><code>Osetruje</code></td>
+        <td>id, osetrujici, zvire</td>
+        <td>Vazební tabulka: kdo koho ošetřuje</td>
+      </tr>
+      <tr>
+        <td><code>Ma_rad</code></td>
+        <td>id, osetrujici, druh</td>
+        <td>Vazební tabulka: kdo má rád jaký druh</td>
+      </tr>
+    </table>
+
+    <p><strong>Anglická verze:</strong></p>
+
+    <table>
+      <tr>
+        <th>Tabulka</th>
+        <th>Sloupce</th>
+        <th>Popis</th>
+      </tr>
+      <tr>
+        <td><code>Types</code></td>
+        <td>id, title, weight_min, weight_max</td>
+        <td>Animal types</td>
+      </tr>
+      <tr>
+        <td><code>Animals</code></td>
+        <td>id, type, name, weight, born, consumption</td>
+        <td>Individual animals</td>
+      </tr>
+      <tr>
+        <td><code>Caretakers</code></td>
+        <td>id, name, born</td>
+        <td>Zoo caretakers</td>
+      </tr>
+      <tr>
+        <td><code>Treats</code></td>
+        <td>id, caretaker, animal</td>
+        <td>Who takes care of whom</td>
+      </tr>
+      <tr>
+        <td><code>Likes</code></td>
+        <td>id, caretaker, type</td>
+        <td>Preferred animal types</td>
+      </tr>
+    </table>
+
+    <h3>5.4&nbsp;&nbsp;Struktura úloh</h3>
+
+    <p>
+      Úlohy jsou organizovány do 26 kategorií označených písmeny A-Z, každá se
+      zaměřuje na specifické SQL koncepty:
+    </p>
+
+    <table>
+      <tr>
+        <th>Kategorie</th>
+        <th>Název</th>
+        <th>Zaměření</th>
+      </tr>
+      <tr>
+        <td>A</td>
+        <td>Základní Dotazy</td>
+        <td>SELECT, *, WHERE</td>
+      </tr>
+      <tr>
+        <td>B</td>
+        <td>Pokročilé Vyhledávání</td>
+        <td>WHERE s LIKE, více podmínek</td>
+      </tr>
+      <tr>
+        <td>C</td>
+        <td>Řazení a Limity</td>
+        <td>ORDER BY, LIMIT, OFFSET</td>
+      </tr>
+      <tr>
+        <td>D</td>
+        <td>Komplexní Podmínky</td>
+        <td>AND, OR, kombinace podmínek</td>
+      </tr>
+      <tr>
+        <td>E</td>
+        <td>Pokročilé Dotazy</td>
+        <td>LIMIT/OFFSET, datové typy</td>
+      </tr>
+      <tr>
+        <td>F</td>
+        <td>Subdotazy</td>
+        <td>Vnořené SELECT dotazy</td>
+      </tr>
+      <tr>
+        <td>G-H</td>
+        <td>Vztahy Mezi Tabulkami</td>
+        <td>JOIN operace</td>
+      </tr>
+      <tr>
+        <td>I</td>
+        <td>Porovnání</td>
+        <td>Porovnávání hodnot z tabulek</td>
+      </tr>
+      <tr>
+        <td>J-K</td>
+        <td>Agregační Funkce</td>
+        <td>COUNT, SUM, AVG, MIN, MAX</td>
+      </tr>
+      <tr>
+        <td>L</td>
+        <td>SQL Teorie</td>
+        <td>Teoretické koncepty</td>
+      </tr>
+      <tr>
+        <td>M-O</td>
+        <td>Agregace a Statistiky</td>
+        <td>GROUP BY, HAVING</td>
+      </tr>
+      <tr>
+        <td>P-Q</td>
+        <td>Komplexní Dotazy</td>
+        <td>Kombinace všech konceptů</td>
+      </tr>
+      <tr>
+        <td>R-S</td>
+        <td>Negace a Podmínky</td>
+        <td>NOT EXISTS, LEFT JOIN</td>
+      </tr>
+      <tr>
+        <td>T-V</td>
+        <td>Pokročilá Analýza</td>
+        <td>Window funkce, komplexní JOIN</td>
+      </tr>
+      <tr>
+        <td>W-Z</td>
+        <td>Časová Analýza</td>
+        <td>Práce s daty a časem</td>
+      </tr>
+    </table>
+
+    <p>Každá úloha obsahuje:</p>
+    <ul>
+      <li><strong>Název</strong> – krátký popis úlohy</li>
+      <li><strong>Popis</strong> – zadání úlohy v kontextu ZOO</li>
+      <li><strong>Nápověda</strong> – volitelná nápověda k řešení</li>
+      <li><strong>Obtížnost</strong> – Easy, Medium, Hard</li>
+      <li><strong>Validace</strong> – pravidla pro ověření správnosti</li>
+    </ul>
+
+    <!-- 6. POPIS IMPLEMENTACE -->
+    <h2>6&nbsp;&nbsp;Popis implementace</h2>
+
+    <h3>6.1&nbsp;&nbsp;Frontend aplikace</h3>
+
+    <p>
+      Uživatelské rozhraní je postaveno na komponentové architektuře React.
+      Hlavní layout aplikace obsahuje:
+    </p>
+
+    <ul>
+      <li>
+        <strong>Sidebar</strong> – navigace mezi kategoriemi, přehled pokroku
+      </li>
+      <li><strong>Hlavní panel</strong> – zobrazení aktuální úlohy</li>
+      <li><strong>SQL Editor</strong> – vstup pro psaní dotazů</li>
+      <li><strong>Výsledkový panel</strong> – zobrazení výsledků dotazu</li>
+    </ul>
+
+    <p>
+      Navigace využívá TanStack Router s file-based routingem, kde každý soubor
+      v adresáři <code>routes/</code> automaticky vytváří odpovídající URL
+      cestu.
+    </p>
+
+    <h3>6.2&nbsp;&nbsp;SQL Editor</h3>
+
+    <p>
+      SQL Editor je klíčová komponenta aplikace implementovaná v souboru
+      <code>sql-editor.tsx</code>. Nabízí:
+    </p>
+
+    <ul>
+      <li>
+        <strong>Zvýrazňování syntaxe</strong> – SQL klíčová slova, funkce,
+        řetězce, čísla
+      </li>
+      <li>
+        <strong>Automatické doplňování</strong> – návrhy tabulek, sloupců, SQL
+        klíčových slov
+      </li>
+      <li>
+        <strong>Kontextové návrhy</strong> – po napsání názvu tabulky nabízí
+        její sloupce
+      </li>
+      <li>
+        <strong>Klávesové zkratky</strong> – Ctrl+Enter pro spuštění dotazu
+      </li>
+    </ul>
+
+    <p>
+      Editor využívá vlastní tokenizer pro parsování SQL kódu a poskytuje
+      real-time návrhy na základě aktuální pozice kurzoru.
+    </p>
+
+    <h3>6.3&nbsp;&nbsp;Validace odpovědí</h3>
+
+    <p>
+      Systém validace kontroluje správnost studentských řešení pomocí několika
+      metod:
+    </p>
+
+    <ol>
+      <li>
+        <strong>Počet řádků</strong> – ověření očekávaného množství výsledků
+      </li>
+      <li>
+        <strong>Názvy sloupců</strong> – kontrola správných sloupců ve výstupu
+      </li>
+      <li><strong>Obsah dat</strong> – porovnání s referenčním dotazem</li>
+      <li>
+        <strong>Vzory v datech</strong> – ověření specifických podmínek (např.
+        jména začínající na 'A')
+      </li>
+    </ol>
+
+    <p>
+      Validační pravidla jsou definována pro každou úlohu v datovém souboru
+      <code>categories.ts</code>.
+    </p>
+
+    <h3>6.4&nbsp;&nbsp;Správa uživatelů a tříd</h3>
+
+    <p>Aplikace podporuje tři role uživatelů:</p>
+    <ul>
+      <li><strong>Student</strong> – řeší úlohy, sleduje svůj pokrok</li>
+      <li>
+        <strong>Učitel</strong> – vytváří třídy, přidává studenty, sleduje
+        pokrok třídy
+      </li>
+      <li><strong>Admin</strong> – plná správa aplikace</li>
+    </ul>
+
+    <p>
+      Autentizace je zajištěna službou Clerk, která poskytuje OAuth přihlášení
+      (Google, GitHub) a správu uživatelských sessions.
+    </p>
+
+    <p>
+      Data o pokroku jsou ukládána v Convex databázi s následující strukturou:
+    </p>
+    <ul>
+      <li>Sledování dokončených úloh</li>
+      <li>Počet pokusů a nápověd</li>
+      <li>Čas strávený na úlohách</li>
+      <li>Příslušnost ke třídám</li>
+    </ul>
+
+    <h3>6.5&nbsp;&nbsp;Lokalizace</h3>
+
+    <p>
+      Aplikace je plně lokalizována do češtiny a angličtiny. Lokalizační soubory
+      obsahují:
+    </p>
+    <ul>
+      <li>
+        Texty uživatelského rozhraní (<code>cz.ts</code>, <code>en.ts</code>)
+      </li>
+      <li>
+        Zadání úloh a nápovědy (<code>categories-cz.ts</code>,
+        <code>categories-en.ts</code>)
+      </li>
+      <li>Názvy databázových objektů</li>
+    </ul>
+
+    <p>
+      Přepínání jazyka je dostupné v nastavení a ovlivňuje jak UI, tak
+      databázové schéma (české nebo anglické názvy tabulek a sloupců).
+    </p>
+
+    <!-- 7. ZÁVĚR -->
+    <h2>7&nbsp;&nbsp;Závěr</h2>
+
+    <p>
+      <em>(Tato sekce bude doplněna po dokončení praktické části práce.)</em>
+    </p>
+
+    <!-- 8. SEZNAM POUŽITÝCH ZDROJŮ -->
+    <h2>8&nbsp;&nbsp;Seznam použitých zdrojů</h2>
+
+    <h3>Literární zdroje</h3>
+
+    <ol>
+      <li>
+        SILBERSCHATZ Abraham, KORTH Henry F., SUDARSHAN S.
+        <em>Database System Concepts</em>. 7th ed. McGraw-Hill, 2019. ISBN
+        978-0-07-802215-9.
+      </li>
+      <li>
+        BEAULIEU Alan.
+        <em>Learning SQL: Generate, Manipulate, and Retrieve Data</em>. 3rd ed.
+        O'Reilly Media, 2020. ISBN 978-1-492-05761-1.
+      </li>
+    </ol>
+
+    <h3>Online zdroje</h3>
+
+    <ol>
+      <li>
+        REACT. <em>React Documentation</em>. Online. React. Dostupné z:
+        https://react.dev/. [cit. 2025-01-20].
+      </li>
+      <li>
+        TAURI. <em>Tauri Documentation</em>. Online. Tauri. Dostupné z:
+        https://tauri.app/. [cit. 2025-01-20].
+      </li>
+      <li>
+        CONVEX. <em>Convex Documentation</em>. Online. Convex. Dostupné z:
+        https://docs.convex.dev/. [cit. 2025-01-20].
+      </li>
+      <li>
+        TANSTACK. <em>TanStack Router Documentation</em>. Online. TanStack.
+        Dostupné z: https://tanstack.com/router/. [cit. 2025-01-20].
+      </li>
+      <li>
+        CLERK. <em>Clerk Documentation</em>. Online. Clerk. Dostupné z:
+        https://clerk.com/docs. [cit. 2025-01-20].
+      </li>
+    </ol>
+
+    <!-- 9. SEZNAM PŘÍLOH -->
+    <h2>9&nbsp;&nbsp;Seznam příloh</h2>
+
+    <ol>
+      <li>Příloha 1 – Kompletní databázové schéma ZOO (ER diagram)</li>
+      <li>Příloha 2 – Seznam všech SQL úloh s očekávanými řešeními</li>
+      <li>Příloha 3 – Uživatelská příručka aplikace</li>
+      <li>Příloha 4 – Instalační příručka</li>
+      <li>Příloha 5 – Zdrojový kód aplikace (elektronická příloha)</li>
+    </ol>
+  </body>
+</html>

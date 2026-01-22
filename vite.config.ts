@@ -6,7 +6,11 @@ import tailwindcss from '@tailwindcss/vite'
 
 const config = defineConfig({
   plugins: [
-    TanStackRouterVite(),
+    TanStackRouterVite({
+      // Enable automatic code splitting for routes (bundle-dynamic-imports rule)
+      // Route configs stay in main bundle, components load on navigation
+      autoCodeSplitting: true,
+    }),
     viteTsConfigPaths({
       projects: ['./tsconfig.json'],
     }),
@@ -22,8 +26,21 @@ const config = defineConfig({
   },
   build: {
     outDir: 'dist',
-    chunkSizeWarningLimit: 1000,
+    // Clerk is ~3MB, pglite assets are large - this is expected
+    chunkSizeWarningLimit: 3500,
     rollupOptions: {
+      // Suppress warnings from pglite's node polyfills (browser doesn't need them)
+      onwarn(warning, warn) {
+        // Ignore pglite's node external warnings
+        if (warning.code === 'MISSING_EXPORT' && warning.message.includes('__vite-browser-external')) {
+          return
+        }
+        // Ignore eval warnings from pglite (it's from the WASM loader)
+        if (warning.code === 'EVAL' && warning.id?.includes('pglite')) {
+          return
+        }
+        warn(warning)
+      },
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {

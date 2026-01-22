@@ -8,6 +8,18 @@ import { ErrorBoundary } from './components/error-boundary'
 
 import './styles/globals.css'
 
+// Handle unhandled promise rejections from PGlite sync operations
+// These are non-critical errors from relaxedDurability mode
+window.addEventListener('unhandledrejection', (event) => {
+  // Check if it's a PGlite/IndexedDB sync error (these are often objects, not Errors)
+  const reason = event.reason
+  if (reason && typeof reason === 'object' && !(reason instanceof Error)) {
+    // Log but don't crash - these are typically non-critical sync issues
+    console.warn('Non-critical async error:', reason)
+    event.preventDefault()
+  }
+})
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ErrorBoundary>

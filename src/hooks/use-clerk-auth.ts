@@ -3,7 +3,7 @@
 import { useUser, useClerk, useAuth as useClerkAuth } from "@clerk/clerk-react";
 import { useNavigate } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
-import { getProfile, upsertProfile, forkTemplateData } from "@/lib/db/tauri-db";
+import { getProfile, upsertProfile } from "@/lib/db/convex-db";
 
 export interface UserProfile {
   id: string;
@@ -133,9 +133,6 @@ export function useAuth() {
             setProfile(newProfile);
             setCachedProfile(userId, newProfile);
             profileFetchedRef.current.add(userId);
-
-            // Fork template data for new user
-            await forkTemplateData(userId);
           }
         }
       }

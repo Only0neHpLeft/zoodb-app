@@ -1,7 +1,12 @@
-import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from "react"
+import { createContext, useContext, ReactNode, useMemo } from "react"
 import { useUser } from "@clerk/clerk-react"
-import { getMembership, updateMembership as updateMembershipApi } from "@/lib/db/convex-db"
-import { retryUntil } from "@/lib/effect/async"
+import { 
+  useMembership as useConvexMembership,
+  useProfile as useConvexProfile,
+  useGetOrCreateMembership,
+  useUpdateMembership as useConvexUpdateMembership
+} from "@/lib/db/convex-db"
+import { useEffect } from "react"
 
 export type PlanType = "free" | "zoo" | "zooPlus"
 
@@ -25,68 +30,56 @@ interface MembershipContextType {
 
 const MembershipContext = createContext<MembershipContextType | undefined>(undefined)
 
-// Fallback membership for error cases
-const createFallbackMembership = (userId: string): UserMembership => ({
-  id: "",
-  user_id: userId,
-  plan_type: "free",
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
-})
-
 export function MembershipProvider({ children }: { children: ReactNode }) {
-  const [membership, setMembership] = useState<UserMembership | null>(null)
-  const [loading, setLoading] = useState(true)
   const { user, isLoaded: isUserLoaded, isSignedIn } = useUser()
+  const clerkId = isSignedIn && user ? user.id : undefined
 
-  /**
-   * Optimized membership fetching using Effect parallel utilities
-   *
-   * BEFORE (waterfall - async-parallel violation):
-   *   await getProfile() → 500ms retry × 5 → await getMembership()
-   *   Total: up to 2.5s+ of sequential waiting
-   *
-   * AFTER (parallel with smart retry):
-   *   Profile retry in background while membership fetches
-   *   Total: single round-trip in most cases
-   */
-  const fetchMembership = useCallback(async (userId: string) => {
-    try {
-      // Strategy: Fetch membership directly first (it auto-creates if needed)
-      // Only wait for profile if membership fetch fails
-      const membershipResult = await retryUntil(
-        () => getMembership(userId),
-        (result) => result.data !== null || result.error !== null,
-        { maxRetries: 3, delay: 300 }
-      )
+  // Reactive Convex queries - automatically update when data changes
+  const convexMembership = useConvexMembership(clerkId)
+  const convexProfile = useConvexProfile(clerkId)
+  
+  // Mutations
+  const getOrCreateMembership = useGetOrCreateMembership()
+  const updateMembershipMutation = useConvexUpdateMembership()
 
-      if (membershipResult.data) {
-        const data = membershipResult.data
-        setMembership({
-          id: String(data.id),
-          user_id: data.user_id,
-          plan_type: data.plan_type as PlanType,
-          license_key: data.license_key || undefined,
-          license_status: data.license_status || undefined,
-          license_expires_at: data.license_expires_at || undefined,
-          created_at: data.created_at || new Date().toISOString(),
-          updated_at: data.updated_at || new Date().toISOString(),
-        })
-      } else {
-        // Fallback: profile might not exist yet, use optimistic free plan
-        setMembership(createFallbackMembership(userId))
-      }
-    } catch {
-      setMembership(createFallbackMembership(userId))
-    } finally {
-      setLoading(false)
+  // Ensure membership exists when user is signed in
+  useEffect(() => {
+    if (clerkId && convexMembership === null && isUserLoaded) {
+      // Create membership if it doesn't exist
+      getOrCreateMembership({ clerkId })
     }
-  }, [])
+  }, [clerkId, convexMembership, isUserLoaded, getOrCreateMembership])
+
+  // Check if user is admin - admins get zooPlus by default
+  const isAdmin = convexProfile?.isAdmin === true
+
+  // Transform Convex data to legacy format with admin override
+  const membership = useMemo<UserMembership | null>(() => {
+    if (!convexMembership) return null
+
+    return {
+      id: convexMembership._id,
+      user_id: convexMembership.clerkId,
+      // Admin override: admins always get zooPlus
+      plan_type: isAdmin ? "zooPlus" : (convexMembership.planType as PlanType),
+      license_key: convexMembership.licenseKey || undefined,
+      license_status: convexMembership.licenseStatus || undefined,
+      license_expires_at: convexMembership.licenseExpiresAt
+        ? new Date(convexMembership.licenseExpiresAt).toISOString()
+        : undefined,
+      created_at: new Date(convexMembership._creationTime).toISOString(),
+      updated_at: new Date(convexMembership._creationTime).toISOString(),
+    }
+  }, [convexMembership, isAdmin])
+
+  // Loading state: still waiting for user or membership data
+  const loading = !isUserLoaded || (isSignedIn && convexMembership === undefined)
 
   const refreshMembership = async () => {
-    if (user) {
-      setLoading(true)
-      await fetchMembership(user.id)
+    // With reactive queries, this is a no-op - data auto-refreshes
+    // But we can force a re-creation if needed
+    if (clerkId) {
+      await getOrCreateMembership({ clerkId })
     }
   }
 
@@ -96,62 +89,16 @@ export function MembershipProvider({ children }: { children: ReactNode }) {
     licenseStatus?: string,
     expiresAt?: string
   ) => {
-    if (!user) return
+    if (!clerkId) return
 
-    try {
-      const { data, error } = await updateMembershipApi(
-        user.id,
-        planType,
-        licenseKey,
-        licenseStatus,
-        expiresAt
-      )
-
-      if (error) {
-        throw error
-      }
-
-      if (data) {
-        setMembership({
-          id: String(data.id),
-          user_id: data.user_id,
-          plan_type: data.plan_type as PlanType,
-          license_key: data.license_key || undefined,
-          license_status: data.license_status || undefined,
-          license_expires_at: data.license_expires_at || undefined,
-          created_at: data.created_at || new Date().toISOString(),
-          updated_at: data.updated_at || new Date().toISOString(),
-        })
-      }
-    } catch (error) {
-      throw error
-    }
+    await updateMembershipMutation({
+      clerkId,
+      planType,
+      licenseKey,
+      licenseStatus,
+      licenseExpiresAt: expiresAt ? new Date(expiresAt).getTime() : undefined,
+    })
   }
-
-  useEffect(() => {
-    let isSubscribed = true
-
-    // Safety timeout: ensure loading state doesn't stay true forever
-    const loadingTimeout = setTimeout(() => {
-      if (isSubscribed) {
-        setLoading(false)
-      }
-    }, 5000) // 5 second timeout
-
-    if (isUserLoaded) {
-      if (isSignedIn && user) {
-        fetchMembership(user.id)
-      } else {
-        setMembership(null)
-        setLoading(false)
-      }
-    }
-
-    return () => {
-      isSubscribed = false
-      clearTimeout(loadingTimeout)
-    }
-  }, [isUserLoaded, isSignedIn, user?.id])
 
   return (
     <MembershipContext.Provider

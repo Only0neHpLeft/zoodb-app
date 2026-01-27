@@ -2,6 +2,7 @@ import { PGlite } from '@electric-sql/pglite';
 
 let db: PGlite | null = null;
 let initPromise: Promise<PGlite> | null = null;
+let initializationLock: Promise<DbStatus> | null = null;
 let dbReady = false;
 
 // Schema definitions for English and Czech
@@ -131,25 +132,32 @@ export async function getDb(): Promise<PGlite> {
 
 // Initialize the database with IndexedDB persistence
 async function initializeDb(): Promise<PGlite> {
+  const timeoutPromise = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error('Database initialization timed out after 15s')), 15000)
+  );
+
   // Try IndexedDB first for persistence
   try {
-    db = await PGlite.create({
+    const dbPromise = PGlite.create({
       dataDir: 'idb://zoodb-local',
       relaxedDurability: true,
     });
+    
+    db = await Promise.race([dbPromise, timeoutPromise]);
     dbReady = true;
     console.log('PGlite initialized with IndexedDB persistence');
-    return db;
+    return db as PGlite;
   } catch (idbError) {
-    console.warn('IndexedDB failed, trying in-memory mode:', idbError);
+    console.warn('IndexedDB failed or timed out, trying in-memory mode:', idbError);
   }
 
   // Fallback to in-memory mode
   try {
-    db = await PGlite.create('memory://');
+    const dbPromise = PGlite.create('memory://');
+    db = await Promise.race([dbPromise, timeoutPromise]);
     dbReady = true;
     console.log('PGlite initialized in memory mode (no persistence)');
-    return db;
+    return db as PGlite;
   } catch (error) {
     console.error('PGlite initialization failed:', error);
     throw error;
@@ -292,6 +300,29 @@ export async function importCSV(
  * AFTER: Parallel fetch all CSVs, then parallel import (~1-2s)
  */
 export async function initializeDatabase(
+  onProgress?: (stage: string, current: number, total: number) => void
+): Promise<DbStatus> {
+  if (initializationLock) {
+    return initializationLock;
+  }
+
+  initializationLock = (async () => {
+    try {
+      return await performDatabaseInitialization(onProgress);
+    } catch (e) {
+      throw e;
+    }
+  })();
+
+  try {
+    return await initializationLock;
+  } catch (error) {
+    initializationLock = null;
+    throw error;
+  }
+}
+
+async function performDatabaseInitialization(
   onProgress?: (stage: string, current: number, total: number) => void
 ): Promise<DbStatus> {
   const database = await getDb();

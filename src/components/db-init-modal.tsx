@@ -52,7 +52,7 @@ export function DbInitModal({ onComplete }: DbInitModalProps) {
           setProgress(0);
           setCurrentStage('Initializing database...');
 
-          await initializeDatabase(language as Language, (stage, current, total) => {
+          await initializeDatabase((stage, current, total) => {
             setCurrentStage(stage);
             setProgress(Math.round((current / total) * 100));
           });

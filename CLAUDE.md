@@ -113,6 +113,6 @@ For ambiguous tasks without clear success signals, skip the Reflector phase.
 - Match existing patterns
 
 ### Verification
-- Run builds after changes
+- Run builds after changes, bun
 - Run tests after code changes
 - Check API responses for expected shape

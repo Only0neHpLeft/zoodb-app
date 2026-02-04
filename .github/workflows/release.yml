@@ -16,7 +16,35 @@ env:
   RUSTUP_MAX_RETRIES: 10
 
 jobs:
+  # Fast validation job - fails quickly if secrets are missing
+  validate-secrets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Validate macOS signing secrets
+        run: |
+          missing=""
+          if [ -z "$APPLE_CERTIFICATE" ]; then missing="$missing APPLE_CERTIFICATE"; fi
+          if [ -z "$APPLE_CERTIFICATE_PASSWORD" ]; then missing="$missing APPLE_CERTIFICATE_PASSWORD"; fi
+          if [ -z "$APPLE_SIGNING_IDENTITY" ]; then missing="$missing APPLE_SIGNING_IDENTITY"; fi
+          if [ -z "$APPLE_ID" ]; then missing="$missing APPLE_ID"; fi
+          if [ -z "$APPLE_PASSWORD" ]; then missing="$missing APPLE_PASSWORD"; fi
+          if [ -z "$APPLE_TEAM_ID" ]; then missing="$missing APPLE_TEAM_ID"; fi
+          if [ -n "$missing" ]; then
+            echo "::error::Missing required secrets:$missing"
+            exit 1
+          fi
+          echo "✓ All macOS signing secrets are configured"
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
   create-release:
+    needs: validate-secrets
     permissions:
       contents: write
     runs-on: ubuntu-latest
@@ -81,7 +109,8 @@ jobs:
     needs: create-release
     permissions:
       contents: write
-    timeout-minutes: 720
+    # Timeout includes notarization which can take 1-2 hours
+    timeout-minutes: 180
     strategy:
       fail-fast: false
       matrix:
@@ -98,28 +127,6 @@ jobs:
     runs-on: ${{ matrix.platform }}
 
     steps:
-      - name: Validate macOS signing secrets
-        run: |
-          missing=""
-          if [ -z "$APPLE_CERTIFICATE" ]; then missing="$missing APPLE_CERTIFICATE"; fi
-          if [ -z "$APPLE_CERTIFICATE_PASSWORD" ]; then missing="$missing APPLE_CERTIFICATE_PASSWORD"; fi
-          if [ -z "$APPLE_SIGNING_IDENTITY" ]; then missing="$missing APPLE_SIGNING_IDENTITY"; fi
-          if [ -z "$APPLE_ID" ]; then missing="$missing APPLE_ID"; fi
-          if [ -z "$APPLE_PASSWORD" ]; then missing="$missing APPLE_PASSWORD"; fi
-          if [ -z "$APPLE_TEAM_ID" ]; then missing="$missing APPLE_TEAM_ID"; fi
-          if [ -n "$missing" ]; then
-            echo "::error::Missing required secrets:$missing"
-            exit 1
-          fi
-          echo "All macOS signing secrets are configured"
-        env:
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-
       - uses: actions/checkout@v4
 
       - name: Setup Bun
@@ -136,22 +143,60 @@ jobs:
         uses: swatinem/rust-cache@v2
         with:
           workspaces: './src-tauri -> target'
-          shared-key: v1-${{ matrix.target || 'default' }}
+          # Include target in shared-key for better cache hits (Context7 best practice)
+          shared-key: v2-${{ matrix.target || 'default' }}
           cache-on-failure: true
+          # Save cache even if build fails (for faster retry)
+          save-if: true
 
       - name: Cache Bun dependencies
+        id: cache-bun
         uses: actions/cache@v5
         with:
           path: ~/.bun/install/cache
-          key: v1-${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          key: v2-${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
           restore-keys: |
+            v2-${{ runner.os }}-bun-
             v1-${{ runner.os }}-bun-
 
       - name: Install frontend dependencies
+        # Skip install if cache hit (Context7 optimization)
+        if: steps.cache-bun.outputs.cache-hit != 'true'
         run: bun install --frozen-lockfile
+
+      - name: Verify dependencies (cache hit path)
+        if: steps.cache-bun.outputs.cache-hit == 'true'
+        run: echo "✓ Using cached Bun dependencies"
 
       - name: Sync version from tag
         run: bun run version:sync
+
+      - name: Cache frontend build
+        id: cache-frontend-build
+        uses: actions/cache@v5
+        with:
+          path: dist
+          key: v1-${{ runner.os }}-frontend-build-${{ hashFiles('src/**', 'vite.config.ts', 'bun.lock') }}
+          restore-keys: |
+            v1-${{ runner.os }}-frontend-build-
+
+      - name: Build frontend
+        if: steps.cache-frontend-build.outputs.cache-hit != 'true'
+        run: bun run build
+
+      - name: Verify frontend build (cache hit)
+        if: steps.cache-frontend-build.outputs.cache-hit == 'true'
+        run: echo "✓ Using cached frontend build"
+
+      - name: Cache Tauri CLI
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cargo/bin/cargo-tauri
+            ~/.cargo/bin/tauri
+          key: v1-${{ runner.os }}-tauri-cli-${{ hashFiles('src-tauri/Cargo.lock') }}
+          restore-keys: |
+            v1-${{ runner.os }}-tauri-cli-
 
       - name: Build and sign Tauri app (no notarization)
         uses: tauri-apps/tauri-action@v0

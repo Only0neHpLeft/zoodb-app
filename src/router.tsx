@@ -12,7 +12,31 @@ function NotFound() {
   )
 }
 
-export const queryClient = new QueryClient()
+// Configure React Query with sensible caching defaults
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Data stays fresh for 5 minutes
+      staleTime: 5 * 60 * 1000,
+      // Cache unused data for 10 minutes
+      gcTime: 10 * 60 * 1000,
+      // Retry failed queries 3 times with exponential backoff
+      retry: 3,
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      // Refetch on window focus for real-time data
+      refetchOnWindowFocus: true,
+      // Don't refetch on reconnect (data is likely still valid)
+      refetchOnReconnect: false,
+      // Refetch background data that's stale
+      refetchInterval: false,
+    },
+    mutations: {
+      // Retry failed mutations once
+      retry: 1,
+      retryDelay: 1000,
+    },
+  },
+})
 
 export const router = createRouter({
   routeTree,

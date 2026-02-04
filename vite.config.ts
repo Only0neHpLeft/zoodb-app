@@ -23,11 +23,24 @@ const config = defineConfig({
   server: {
     port: 3000,
     strictPort: false,
+    // Pre-transform critical files on startup (Vite optimization)
+    warmup: {
+      clientFiles: [
+        './src/routes/__root.tsx',
+        './src/routes/index.tsx',
+        './src/components/app-sidebar.tsx',
+        './src/lib/db/pglite.ts',
+      ],
+    },
   },
   build: {
     outDir: 'dist',
     // Clerk is ~3MB, pglite assets are large - this is expected
     chunkSizeWarningLimit: 3500,
+    // Enable module preload for faster chunk loading (Vite optimization)
+    modulePreload: {
+      polyfill: true,
+    },
     rollupOptions: {
       // Suppress warnings from pglite's node polyfills (browser doesn't need them)
       onwarn(warning, warn) {
@@ -46,15 +59,48 @@ const config = defineConfig({
           if (id.includes('node_modules')) {
             // Don't chunk PGlite - let it handle its own assets
             if (id.includes('@electric-sql/pglite')) return undefined
+            
             // Group by major library to avoid circular deps
+            // Clerk is the largest - keep it separate
             if (id.includes('@clerk') || id.includes('clerk')) return 'vendor-clerk'
+            
+            // TanStack packages together
             if (id.includes('@tanstack')) return 'vendor-tanstack'
+            
+            // Radix UI - many small packages, group them
             if (id.includes('@radix-ui')) return 'vendor-radix'
+            
+            // Charts - heavy, only load when needed
             if (id.includes('recharts') || id.includes('d3-')) return 'vendor-charts'
-            // All other deps (react, etc) in one vendor chunk
+            
+            // Convex - API client
+            if (id.includes('convex')) return 'vendor-convex'
+            
+            // Utility libraries
+            if (id.includes('date-fns') || id.includes('lodash') || id.includes('zod')) {
+              return 'vendor-utils'
+            }
+            
+            // All other deps (react, react-dom, etc) in one vendor chunk
             return 'vendor'
           }
+          
+          // Split heavy local modules
+          // Chart component is heavy due to recharts - lazy loaded
+          if (id.includes('/components/ui/chart')) {
+            return 'ui-charts'
+          }
         },
+      },
+    },
+    // Enable source maps for debugging (can be disabled for production)
+    sourcemap: false,
+    // Minify better for smaller bundles
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
       },
     },
   },

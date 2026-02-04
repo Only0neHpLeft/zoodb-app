@@ -24,6 +24,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/contexts/language-context"
 import { getDb, isDatabaseInitialized } from "@/lib/db/pglite"
+import { dbEvents } from "@/lib/db/events"
 
 // Table name mapping for counts (scheme item key -> table names for both languages)
 const tableNameMap: Record<string, { en: string; cz: string }> = {
@@ -46,41 +47,46 @@ export function AppSidebar() {
    * BEFORE: 5 sequential queries (~500ms total)
    * AFTER: 5 parallel queries (~100ms total)
    */
-  useEffect(() => {
-    let cancelled = false
+  const fetchCounts = useCallback(async () => {
+    try {
+      const initialized = await isDatabaseInitialized()
+      if (!initialized) return
 
-    async function fetchCounts() {
-      try {
-        const initialized = await isDatabaseInitialized()
-        if (!initialized || cancelled) return
+      const db = await getDb()
+      const entries = Object.entries(tableNameMap)
 
-        const db = await getDb()
-        const entries = Object.entries(tableNameMap)
+      // Parallel fetch all table counts at once (async-parallel rule)
+      const results = await Promise.all(
+        entries.map(async ([key, tables]) => {
+          const tableName = language === 'en' ? tables.en : tables.cz
+          try {
+            const result = await db.query(`SELECT COUNT(*) as count FROM ${tableName}`)
+            return [key, Number((result.rows[0] as { count: string | number })?.count ?? 0)] as const
+          } catch {
+            return [key, 0] as const
+          }
+        })
+      )
 
-        // Parallel fetch all table counts at once (async-parallel rule)
-        const results = await Promise.all(
-          entries.map(async ([key, tables]) => {
-            const tableName = language === 'en' ? tables.en : tables.cz
-            try {
-              const result = await db.query(`SELECT COUNT(*) as count FROM ${tableName}`)
-              return [key, Number((result.rows[0] as { count: string | number })?.count ?? 0)] as const
-            } catch {
-              return [key, 0] as const
-            }
-          })
-        )
-
-        if (cancelled) return
-        setTableCounts(Object.fromEntries(results))
-      } catch (err) {
-        console.error('Failed to fetch table counts:', err)
-      }
+      setTableCounts(Object.fromEntries(results))
+    } catch (err) {
+      console.error('Failed to fetch table counts:', err)
     }
-
-    fetchCounts()
-
-    return () => { cancelled = true }
   }, [language])
+
+  // Initial fetch on mount and language change
+  useEffect(() => {
+    fetchCounts()
+  }, [fetchCounts])
+
+  // Subscribe to database changes
+  useEffect(() => {
+    const unsubscribe = dbEvents.subscribe(() => {
+      fetchCounts()
+    })
+
+    return unsubscribe
+  }, [fetchCounts])
 
   // Stable logout handler (rerender-functional-setstate rule)
   const handleLogout = useStableCallback(async (e: React.MouseEvent) => {

@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useState, useEffect } from "react"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Breadcrumbs } from "@/components/breadcrumbs"
+import { OfflineIndicator } from "@/components/offline-indicator"
 import { Notifications } from "@/components/notifications"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Lock, Coins } from "lucide-react"
@@ -53,6 +54,7 @@ function Home() {
       <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:px-6">
         <SidebarTrigger />
         <Breadcrumbs />
+        <OfflineIndicator />
         <div className="ml-auto flex items-center gap-4">
           <div className="flex items-center gap-2">
             <div className="relative w-12 h-12">

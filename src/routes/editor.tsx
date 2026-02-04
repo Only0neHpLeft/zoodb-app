@@ -15,6 +15,7 @@ import { useTranslateCategory } from "@/hooks/use-translate-category"
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from "@/components/ui/empty"
 import { SqlEditor } from "@/components/sql-editor"
 import { executeQuery, type QueryResult } from "@/lib/db/pglite"
+import { notifyDataChange } from "@/lib/db/events"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { validateTask, getTaskRules, type ValidationResult } from "@/lib/validation"
@@ -112,6 +113,21 @@ function EditorPage() {
       const queryResult = await executeQuery(sqlQuery)
       setResult(queryResult)
       setViewMode('output')
+
+      // Check if query modifies data and notify sidebar
+      const trimmedQuery = sqlQuery.trim().toUpperCase()
+      const isModifyingQuery =
+        trimmedQuery.startsWith('INSERT') ||
+        trimmedQuery.startsWith('UPDATE') ||
+        trimmedQuery.startsWith('DELETE') ||
+        trimmedQuery.startsWith('TRUNCATE') ||
+        trimmedQuery.startsWith('DROP') ||
+        trimmedQuery.startsWith('ALTER') ||
+        trimmedQuery.startsWith('CREATE')
+
+      if (isModifyingQuery) {
+        notifyDataChange()
+      }
 
       // Validate the result if we have a task selected
       if (category && taskParam) {

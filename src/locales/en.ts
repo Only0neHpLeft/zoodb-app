@@ -783,6 +783,57 @@ export const en = {
     criticalUpdate: "Critical Security Update",
     criticalUpdateDesc: "A critical update is being installed. The app will restart automatically.",
   },
+
+  // Offline Mode
+  offline: {
+    indicator: {
+      offline: "Offline",
+      syncing: "Syncing...",
+      pending: "pending",
+      failed: "failed",
+    },
+    tooltip: {
+      offlineMessage: "You are offline. Changes will sync when you reconnect.",
+      pendingMessage: "operation(s) waiting to sync",
+      failedMessage: "operation(s) failed after 5 retries",
+      viewDetails: "Go to Settings to view details",
+      retrySync: "Retry Sync",
+    },
+    errors: {
+      upgradePlan: "You need an internet connection to upgrade your plan. Please connect and try again.",
+      login: "You need an internet connection to sign in. Please connect and try again.",
+      sync: "You need an internet connection to sync your data. Please connect and try again.",
+      generic: "You need an internet connection to perform this action. Please connect and try again.",
+    },
+  },
+
+  // Backup & Restore
+  backup: {
+    title: "Database Backup",
+    dangerZone: "Danger Zone",
+    backupExists: "Backup available",
+    noBackup: "No backup available",
+    createdOn: "Created on",
+    restoreButton: "Restore from Backup",
+    description: "Restore your database to the original factory state. This will delete all your current data.",
+    confirmDialog: {
+      title: "Restore from Backup?",
+      description: "This will DELETE all your current data and restore the database to factory defaults. This action cannot be undone.",
+      warningCount: "You will lose all your changes, custom data, and progress.",
+      confirmButton: "Yes, Restore Factory Data",
+      cancelButton: "Cancel",
+      typeToConfirm: "Type RESTORE to confirm",
+      placeholder: "Type here...",
+    },
+    progress: {
+      preparing: "Preparing restore...",
+      clearing: "Clearing current data...",
+      restoring: "Restoring",
+      complete: "Restore complete!",
+    },
+    success: "Database restored successfully!",
+    error: "Failed to restore database. Please try again.",
+  },
 } as const;
 
 export type Translations = typeof en;

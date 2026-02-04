@@ -1,4 +1,5 @@
 import { PGlite } from '@electric-sql/pglite';
+import { initializeOfflineTables } from './offline-queue';
 
 let db: PGlite | null = null;
 let initPromise: Promise<PGlite> | null = null;
@@ -132,8 +133,10 @@ export async function getDb(): Promise<PGlite> {
 
 // Initialize the database with IndexedDB persistence
 async function initializeDb(): Promise<PGlite> {
+  // Reduced timeout for faster startup (bundle-defer-third-party rule)
+  // If IndexedDB takes >5s, fall back to memory mode quickly
   const timeoutPromise = new Promise<never>((_, reject) =>
-    setTimeout(() => reject(new Error('Database initialization timed out after 15s')), 15000)
+    setTimeout(() => reject(new Error('Database initialization timed out after 5s')), 5000)
   );
 
   // Try IndexedDB first for persistence
@@ -142,21 +145,29 @@ async function initializeDb(): Promise<PGlite> {
       dataDir: 'idb://zoodb-local',
       relaxedDurability: true,
     });
-    
+
     db = await Promise.race([dbPromise, timeoutPromise]);
     dbReady = true;
-    console.log('PGlite initialized with IndexedDB persistence');
+    console.log('✓ PGlite initialized with IndexedDB persistence');
+
+    // Initialize offline tables (non-blocking, deferred)
+    initializeOfflineTables().catch(console.error);
+
     return db as PGlite;
   } catch (idbError) {
-    console.warn('IndexedDB failed or timed out, trying in-memory mode:', idbError);
+    console.warn('IndexedDB timeout, falling back to memory mode:', idbError);
   }
 
-  // Fallback to in-memory mode
+  // Fallback to in-memory mode (fast startup)
   try {
     const dbPromise = PGlite.create('memory://');
     db = await Promise.race([dbPromise, timeoutPromise]);
     dbReady = true;
-    console.log('PGlite initialized in memory mode (no persistence)');
+    console.log('✓ PGlite initialized in memory mode (no persistence)');
+
+    // Initialize offline tables (non-blocking, deferred)
+    initializeOfflineTables().catch(console.error);
+
     return db as PGlite;
   } catch (error) {
     console.error('PGlite initialization failed:', error);
@@ -414,6 +425,55 @@ async function performDatabaseInitialization(
 
   await database.query('INSERT INTO _zoodb_init (initialized_at) VALUES (CURRENT_TIMESTAMP)');
 
+  // Initialize backup database if it doesn't exist
+  const { hasBackup, initializeBackupDb, getBackupDb } = await import('./backup');
+  const backupExists = await hasBackup();
+
+  if (!backupExists) {
+    onProgress?.('Creating backup database...', 0, 1);
+    await initializeBackupDb();
+    const backupDb = await getBackupDb();
+
+    // Create same schemas in backup
+    await backupDb.exec(englishSchema);
+    await backupDb.exec(czechSchema);
+
+    // Import same data into backup
+    for (const { tableName, content, csvFile, lang } of fetchResults) {
+      if (content) {
+        try {
+          const { headers, rows } = parseCSV(content);
+          if (headers.length === 0 || rows.length === 0) continue;
+
+          const columns = headers.join(', ');
+          const placeholders = headers.map((_, i) => `$${i + 1}`).join(', ');
+          const insertSql = `INSERT INTO ${tableName} (${columns}) VALUES (${placeholders})`;
+
+          for (const row of rows) {
+            const values = row.map((val) => {
+              if (val === 'NULL' || val === '' || val === 'null') return null;
+              return val;
+            });
+            await backupDb.query(insertSql, values);
+          }
+        } catch (error) {
+          console.warn(`Failed to import ${csvFile} to backup:`, error);
+        }
+      }
+    }
+
+    // Create marker table in backup
+    await backupDb.exec(`
+      CREATE TABLE IF NOT EXISTS _zoodb_init (
+        id SERIAL PRIMARY KEY,
+        initialized_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    await backupDb.query('INSERT INTO _zoodb_init (initialized_at) VALUES (CURRENT_TIMESTAMP)');
+
+    onProgress?.('Backup created!', 1, 1);
+  }
+
   onProgress?.('Complete!', totalFiles, totalFiles);
 
   return {
@@ -548,4 +608,32 @@ export async function resetDatabase(): Promise<void> {
   for (const table of allTables) {
     await database.exec(`DROP TABLE IF EXISTS ${table} CASCADE`);
   }
+}
+
+/**
+ * Close the database connection and clean up resources
+ * Call this when the app is unmounting or before a hot reload
+ */
+export async function closeDatabase(): Promise<void> {
+  if (db) {
+    try {
+      await db.close();
+      console.log('PGlite database closed successfully');
+    } catch (error) {
+      console.warn('Error closing PGlite database:', error);
+    } finally {
+      // Reset state so a new connection can be established
+      db = null;
+      initPromise = null;
+      initializationLock = null;
+      dbReady = false;
+    }
+  }
+}
+
+/**
+ * Check if the database connection is active
+ */
+export function isDatabaseConnected(): boolean {
+  return db !== null && dbReady;
 }

@@ -783,4 +783,55 @@ export const cz = {
     criticalUpdate: "Kritická Bezpečnostní Aktualizace",
     criticalUpdateDesc: "Probíhá instalace kritické aktualizace. Aplikace se automaticky restartuje.",
   },
+
+  // Offline Mode
+  offline: {
+    indicator: {
+      offline: "Offline",
+      syncing: "Synchronizace...",
+      pending: "čekající",
+      failed: "selhalo",
+    },
+    tooltip: {
+      offlineMessage: "Jste offline. Změny se synchronizují po opětovném připojení.",
+      pendingMessage: "operace čekají na synchronizaci",
+      failedMessage: "operace selhaly po 5 pokusech",
+      viewDetails: "Přejděte do Nastavení pro zobrazení detailů",
+      retrySync: "Zkusit znovu synchronizovat",
+    },
+    errors: {
+      upgradePlan: "K upgradu plánu potřebujete připojení k internetu. Připojte se a zkuste to znovu.",
+      login: "K přihlášení potřebujete připojení k internetu. Připojte se a zkuste to znovu.",
+      sync: "K synchronizaci dat potřebujete připojení k internetu. Připojte se a zkuste to znovu.",
+      generic: "K provedení této akce potřebujete připojení k internetu. Připojte se a zkuste to znovu.",
+    },
+  },
+
+  // Backup & Restore
+  backup: {
+    title: "Záloha Databáze",
+    dangerZone: "Nebezpečná Zóna",
+    backupExists: "Záloha dostupná",
+    noBackup: "Žádná záloha",
+    createdOn: "Vytvořeno",
+    restoreButton: "Obnovit ze Zálohy",
+    description: "Obnovte databázi do původního továrního stavu. Tímto smažete všechna vaše aktuální data.",
+    confirmDialog: {
+      title: "Obnovit ze Zálohy?",
+      description: "Tímto SMAŽETE všechna vaše aktuální data a obnovíte databázi do továrního nastavení. Tuto akci nelze vrátit zpět.",
+      warningCount: "Ztratíte všechny své změny, vlastní data a pokrok.",
+      confirmButton: "Ano, Obnovit Tovární Data",
+      cancelButton: "Zrušit",
+      typeToConfirm: "Napište RESTORE pro potvrzení",
+      placeholder: "Pište zde...",
+    },
+    progress: {
+      preparing: "Příprava obnovy...",
+      clearing: "Mazání aktuálních dat...",
+      restoring: "Obnovování",
+      complete: "Obnova dokončena!",
+    },
+    success: "Databáze byla úspěšně obnovena!",
+    error: "Nepodařilo se obnovit databázi. Zkuste to prosím znovu.",
+  },
 } as const;

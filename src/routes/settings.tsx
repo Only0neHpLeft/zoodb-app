@@ -5,6 +5,7 @@ import { Notifications } from "@/components/notifications"
 import { ThemeSelector } from "@/components/theme-selector"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { LanguageToggle } from "@/components/language-toggle"
+import { BackupRestore } from "@/components/backup-restore"
 import { useLanguage } from "@/contexts/language-context"
 import { useAuth } from "@/hooks/use-clerk-auth"
 import { useMembership } from "@/contexts/membership-context"
@@ -129,6 +130,9 @@ function SettingsPage() {
               </Field>
             </div>
           </div>
+
+          {/* Backup & Restore Section */}
+          <BackupRestore />
         </div>
       </main>
     </div>

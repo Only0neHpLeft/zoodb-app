@@ -1,5 +1,5 @@
 import { createRootRouteWithContext, Outlet } from '@tanstack/react-router'
-import { useEffect } from 'react'
+import { useEffect, Suspense } from 'react'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { getVersion } from '@tauri-apps/api/app'
 
@@ -8,9 +8,11 @@ import { ConvexClientProvider } from '../integrations/convex/provider'
 import { ThemeProvider } from '../components/theme-provider'
 import { LanguageProvider, useLanguage } from '../contexts/language-context'
 import { MembershipProvider } from '../contexts/membership-context'
+import { OfflineProvider } from '../contexts/offline-context'
 import { SettingsSyncProvider } from '../hooks/use-settings-sync'
 import { AppLayout } from '../components/app-layout'
 import { DbInitBackground } from '../components/db-init-background'
+import { AppSkeleton } from '../components/app-skeleton'
 
 import type { QueryClient } from '@tanstack/react-query'
 
@@ -55,13 +57,18 @@ function RootComponent() {
         <DbInitBackground />
         <ClerkProvider>
           <ConvexClientProvider>
-            <MembershipProvider>
-              <SettingsSyncProvider>
-                <AppLayout>
-                  <Outlet />
-                </AppLayout>
-              </SettingsSyncProvider>
-            </MembershipProvider>
+            <OfflineProvider>
+              <MembershipProvider>
+                <SettingsSyncProvider>
+                  {/* Suspense boundary for app shell - shows skeleton while AppLayout loads */}
+                  <Suspense fallback={<AppSkeleton />}>
+                    <AppLayout>
+                      <Outlet />
+                    </AppLayout>
+                  </Suspense>
+                </SettingsSyncProvider>
+              </MembershipProvider>
+            </OfflineProvider>
           </ConvexClientProvider>
         </ClerkProvider>
       </LanguageProvider>

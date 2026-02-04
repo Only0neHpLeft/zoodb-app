@@ -159,13 +159,7 @@ jobs:
             v3-${{ runner.os }}-bun-
 
       - name: Install frontend dependencies
-        # Skip install if cache hit (Context7 optimization)
-        if: steps.cache-bun.outputs.cache-hit != 'true'
         run: bun install --frozen-lockfile
-
-      - name: Verify dependencies (cache hit path)
-        if: steps.cache-bun.outputs.cache-hit == 'true'
-        run: echo "✓ Using cached Bun dependencies"
 
       - name: Sync version from tag
         run: bun run version:sync

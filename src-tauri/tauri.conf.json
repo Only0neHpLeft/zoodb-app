@@ -3,6 +3,10 @@
   "productName": "Zoo Database",
   "version": "0.0.1",
   "identifier": "com.only0nehpleft.zoodb",
+  "_config": {
+    "_note": "Custom application configuration values",
+    "clerkPublishableKey": "pk_test_dWx0aW1hdGUtcGVnYXN1cy00MS5jbGVyay5hY2NvdW50cy5kZXYk"
+  },
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:3000",

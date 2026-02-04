@@ -1,12 +1,9 @@
+mod config;
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    // Load .env file if present (development mode)
-    // In production, set CLERK_PUBLISHABLE_KEY as an environment variable
-    let _ = dotenvy::dotenv();
-
-    // Read Clerk publishable key from environment (loaded from .env or system env)
-    let clerk_publishable_key = std::env::var("CLERK_PUBLISHABLE_KEY")
-        .expect("CLERK_PUBLISHABLE_KEY must be set. Add it to .env file or set as environment variable.");
+    // Load application configuration
+    let config = config::AppConfig::load();
 
     tauri::Builder::default()
         .plugin(tauri_plugin_http::init())
@@ -15,7 +12,7 @@ pub fn run() {
         .plugin(tauri_plugin_process::init())
         .plugin(
             tauri_plugin_clerk::ClerkPluginBuilder::new()
-                .publishable_key(clerk_publishable_key)
+                .publishable_key(config.clerk_publishable_key)
                 .with_tauri_store()
                 .build(),
         )

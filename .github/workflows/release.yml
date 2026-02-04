@@ -204,6 +204,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Clerk Auth (publishable key is public, safe to hardcode)
           VITE_CLERK_PUBLISHABLE_KEY: pk_test_dWx0aW1hdGUtcGVnYXN1cy00MS5jbGVyay5hY2NvdW50cy5kZXYk
+          # Tauri Rust backend also needs this
+          CLERK_PUBLISHABLE_KEY: pk_test_dWx0aW1hdGUtcGVnYXN1cy00MS5jbGVyay5hY2NvdW50cy5kZXYk
           # macOS code signing ONLY (no APPLE_ID/PASSWORD/TEAM_ID = skip notarization)
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}

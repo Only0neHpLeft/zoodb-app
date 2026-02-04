@@ -144,7 +144,7 @@ jobs:
         with:
           workspaces: './src-tauri -> target'
           # Include target in shared-key for better cache hits (Context7 best practice)
-          shared-key: v2-${{ matrix.target || 'default' }}
+          shared-key: v3-${{ matrix.target || 'default' }}
           cache-on-failure: true
           # Save cache even if build fails (for faster retry)
           save-if: true
@@ -154,10 +154,9 @@ jobs:
         uses: actions/cache@v5
         with:
           path: ~/.bun/install/cache
-          key: v2-${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          key: v3-${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
           restore-keys: |
-            v2-${{ runner.os }}-bun-
-            v1-${{ runner.os }}-bun-
+            v3-${{ runner.os }}-bun-
 
       - name: Install frontend dependencies
         # Skip install if cache hit (Context7 optimization)
@@ -171,32 +170,8 @@ jobs:
       - name: Sync version from tag
         run: bun run version:sync
 
-      - name: Cache frontend build
-        id: cache-frontend-build
-        uses: actions/cache@v5
-        with:
-          path: dist
-          key: v1-${{ runner.os }}-frontend-build-${{ hashFiles('src/**', 'vite.config.ts', 'bun.lock') }}
-          restore-keys: |
-            v1-${{ runner.os }}-frontend-build-
-
       - name: Build frontend
-        if: steps.cache-frontend-build.outputs.cache-hit != 'true'
         run: bun run build
-
-      - name: Verify frontend build (cache hit)
-        if: steps.cache-frontend-build.outputs.cache-hit == 'true'
-        run: echo "✓ Using cached frontend build"
-
-      - name: Cache Tauri CLI
-        uses: actions/cache@v5
-        with:
-          path: |
-            ~/.cargo/bin/cargo-tauri
-            ~/.cargo/bin/tauri
-          key: v1-${{ runner.os }}-tauri-cli-${{ hashFiles('src-tauri/Cargo.lock') }}
-          restore-keys: |
-            v1-${{ runner.os }}-tauri-cli-
 
       - name: Build and sign Tauri app (no notarization)
         uses: tauri-apps/tauri-action@v0

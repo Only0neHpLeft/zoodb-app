@@ -1,4 +1,4 @@
-import { createRootRouteWithContext, Outlet, ErrorComponent, useRouter } from '@tanstack/react-router'
+import { createRootRouteWithContext, Outlet, useRouter } from '@tanstack/react-router'
 import { useEffect, Suspense } from 'react'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { getVersion } from '@tauri-apps/api/app'

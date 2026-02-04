@@ -68,12 +68,15 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     return <>{children}</>
   }
 
+  // Always wrap in SidebarProvider to prevent context errors
   // Show loading spinner while auth is loading or user not signed in
   if (!isLoaded || !isSignedIn) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Spinner className="size-8" />
-      </div>
+      <SidebarProvider>
+        <div className="flex min-h-screen items-center justify-center">
+          <Spinner className="size-8" />
+        </div>
+      </SidebarProvider>
     )
   }
 

@@ -75,10 +75,8 @@ jobs:
               '',
               '| Platform | Architecture | Download |',
               '|:---------|:-------------|:---------|',
-              '| macOS | Apple Silicon (M1/M2/M3) | `.dmg` |',
-              '| macOS | Intel x64 | `.dmg` |',
-              '| Windows | x64 | `.msi` / `.exe` |',
-              '| Linux | x64 | `.AppImage` / `.deb` |',
+              '| macOS | Apple Silicon (M1\u2013M5) | `ZooDB-v' + version + '-arm64.dmg` |',
+              '| macOS | Intel x64 | `ZooDB-v' + version + '-x64.dmg` |',
               '',
               '---',
               '',
@@ -237,11 +235,25 @@ jobs:
       - name: Upload notarized DMG to release
         run: |
           DMG_PATH=$(find src-tauri/target -name "*.dmg" -type f | head -1)
-          DMG_NAME=$(basename "$DMG_PATH")
+          OLD_NAME=$(basename "$DMG_PATH")
+          VERSION="${{ needs.create-release.outputs.version }}"
 
-          echo "📤 Uploading $DMG_NAME to release..."
+          # Map target triple to short arch name
+          case "${{ matrix.target }}" in
+            aarch64-apple-darwin) ARCH="arm64" ;;
+            x86_64-apple-darwin)  ARCH="x64" ;;
+            *)                    ARCH="${{ matrix.target }}" ;;
+          esac
 
-          gh release upload "v${{ needs.create-release.outputs.version }}" "$DMG_PATH" --clobber
+          NEW_NAME="ZooDB-v${VERSION}-${ARCH}.dmg"
+          NEW_PATH="$(dirname "$DMG_PATH")/$NEW_NAME"
+          mv "$DMG_PATH" "$NEW_PATH"
+
+          echo "📤 Uploading $NEW_NAME (was $OLD_NAME)..."
+
+          # Delete the original DMG uploaded by tauri-action
+          gh release delete-asset "v${VERSION}" "$OLD_NAME" --yes 2>/dev/null || true
+          gh release upload "v${VERSION}" "$NEW_PATH"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

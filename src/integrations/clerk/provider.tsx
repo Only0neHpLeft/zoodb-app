@@ -34,7 +34,7 @@ function LoadingScreen() {
   const texts = loadingTexts[lang]
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-background">
+    <div className="flex flex-col items-center justify-center min-h-screen w-full bg-background">
       {/* Animated logo/spinner */}
       <div className="relative mb-8">
         <div className="w-16 h-16 rounded-full border-4 border-muted animate-pulse" />
@@ -85,7 +85,7 @@ function ClerkProviderInner({
     <ClerkProvider 
       publishableKey={clerk.publishableKey} 
       Clerk={clerk}
-      afterSignOutUrl="/"
+      afterSignOutUrl="/sign-in"
     >
       {children}
     </ClerkProvider>

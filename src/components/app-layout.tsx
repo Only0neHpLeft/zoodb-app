@@ -2,7 +2,7 @@ import { useUser, useClerk } from "@clerk/clerk-react"
 import { useNavigate, useLocation } from "@tanstack/react-router"
 import { useEffect, useRef } from "react"
 import { AppSidebar } from "@/components/app-sidebar"
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
+import { SidebarInset } from "@/components/ui/sidebar"
 import { Spinner } from "@/components/ui/spinner"
 
 // Routes that don't require authentication and shouldn't show sidebar
@@ -57,9 +57,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       navigate({ to: "/sign-in" as never })
     }
 
-    // If signed in and on an auth route (sign-in/sign-up), redirect to home
+    // If signed in and on an auth route (sign-in/sign-up), full reload to home.
+    // Client-side navigate causes stale PGlite IDB locks from the pre-login session.
     if (isSignedIn && isAuthRoute) {
-      navigate({ to: "/" })
+      window.location.href = "/"
     }
   }, [isLoaded, isSignedIn, isAuthRoute, navigate, pathname])
 
@@ -68,25 +69,22 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     return <>{children}</>
   }
 
-  // Always wrap in SidebarProvider to prevent context errors
   // Show loading spinner while auth is loading or user not signed in
   if (!isLoaded || !isSignedIn) {
     return (
-      <SidebarProvider>
-        <div className="flex min-h-screen items-center justify-center">
-          <Spinner className="size-8" />
-        </div>
-      </SidebarProvider>
+      <div className="flex min-h-screen items-center justify-center">
+        <Spinner className="size-8" />
+      </div>
     )
   }
 
-  // Render with sidebar for authenticated users
+  // Render with sidebar for authenticated users (SidebarProvider is in __root.tsx)
   return (
-    <SidebarProvider>
+    <>
       <AppSidebar />
       <SidebarInset className="flex-1">
         {children}
       </SidebarInset>
-    </SidebarProvider>
+    </>
   )
 }

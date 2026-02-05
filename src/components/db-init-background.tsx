@@ -1,11 +1,18 @@
-import { useEffect, useRef } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   isDatabaseInitialized,
   initializeDatabase,
 } from '@/lib/db/pglite';
 
-export function DbInitBackground() {
+const DbReadyContext = createContext(false);
+
+export function useDbReady() {
+  return useContext(DbReadyContext);
+}
+
+export function DbInitProvider({ children }: { children: ReactNode }) {
   const initStarted = useRef(false);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     if (initStarted.current) return;
@@ -27,13 +34,21 @@ export function DbInitBackground() {
           await initializeDatabase();
           console.log('Local database initialized with both language schemas');
         }
+
+        setReady(true);
       } catch (err) {
         console.error('Background database initialization failed:', err);
+        // Still mark ready so the app doesn't hang — pages will show empty state
+        setReady(true);
       }
     }
 
     initInBackground();
-  }, []); // No language dependency - only runs once
+  }, []);
 
-  return null;
+  return (
+    <DbReadyContext.Provider value={ready}>
+      {children}
+    </DbReadyContext.Provider>
+  );
 }

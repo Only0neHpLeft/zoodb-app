@@ -1,53 +1,20 @@
-"use client"
-
-import { useEffect, useState, useCallback, useRef } from "react"
-import { getUserSettings, updateUserSettings } from "@/lib/db/convex-db"
+import { useEffect, useState, useCallback } from "react"
+import { useAuth } from "@clerk/clerk-react"
+import { useUpdateSettings } from "@/lib/db/convex-db"
 
 export function useCustomTheme() {
   const [theme, setThemeState] = useState<string>("caffeine")
-  const isSyncingRef = useRef(false)
-  // Track current user ID in a ref to avoid stale closures
-  const userIdRef = useRef<string | null>(null)
+
+  const { userId, isSignedIn } = useAuth()
+  const clerkId = isSignedIn ? (userId ?? undefined) : undefined
+  const updateSettings = useUpdateSettings()
 
   const syncTheme = useCallback(() => {
     const savedTheme = localStorage.getItem("selected-theme") || "caffeine"
     setThemeState(savedTheme)
 
-    // Ensure the data-theme attribute is set
     if (document.documentElement.getAttribute("data-theme") !== savedTheme) {
       document.documentElement.setAttribute("data-theme", savedTheme)
-    }
-  }, [])
-
-  // Sync theme with database for logged in user
-  const syncWithUser = useCallback(async (userId: string) => {
-    if (isSyncingRef.current) return
-    isSyncingRef.current = true
-    userIdRef.current = userId
-
-    try {
-      const { data: settings } = await getUserSettings(userId)
-      if (settings && settings.theme) {
-        const dbTheme = settings.theme
-        const localTheme = localStorage.getItem("selected-theme")
-
-        if (dbTheme !== localTheme) {
-          setThemeState(dbTheme)
-          localStorage.setItem("selected-theme", dbTheme)
-          document.documentElement.setAttribute("data-theme", dbTheme)
-          window.dispatchEvent(new CustomEvent("theme-change"))
-        }
-      } else {
-        // If no DB setting, save current localStorage value to DB
-        const localTheme = localStorage.getItem("selected-theme")
-        if (localTheme) {
-          await updateUserSettings(userId, { theme: localTheme })
-        }
-      }
-    } catch (error) {
-      console.error('Failed to sync theme settings:', error)
-    } finally {
-      isSyncingRef.current = false
     }
   }, [])
 
@@ -82,44 +49,28 @@ export function useCustomTheme() {
     const handleThemeChange = () => syncTheme()
     window.addEventListener("theme-change", handleThemeChange)
 
-    // Poll localStorage periodically to catch direct edits (DevTools)
-    const pollInterval = setInterval(() => {
-      const currentTheme = localStorage.getItem("selected-theme") || "caffeine"
-      if (currentTheme !== theme) {
-        syncTheme()
-      }
-    }, 1000)
-
     return () => {
       observer.disconnect()
       window.removeEventListener("storage", handleStorageChange)
       window.removeEventListener("theme-change", handleThemeChange)
-      clearInterval(pollInterval)
     }
-  }, [syncTheme, theme])
+  }, [syncTheme])
 
   const setTheme = useCallback(async (newTheme: string) => {
     setThemeState(newTheme)
     document.documentElement.setAttribute("data-theme", newTheme)
     localStorage.setItem("selected-theme", newTheme)
-    // Dispatch custom event for same-tab listeners
     window.dispatchEvent(new CustomEvent("theme-change"))
 
     // If user is logged in, persist to database
-    if (userIdRef.current) {
+    if (clerkId) {
       try {
-        await updateUserSettings(userIdRef.current, { theme: newTheme })
+        await updateSettings({ clerkId, theme: newTheme })
       } catch (error) {
         console.error('Failed to save theme to database:', error)
-        // localStorage is already set as fallback
       }
     }
-  }, [])
+  }, [clerkId, updateSettings])
 
-  // Clear user ID when user logs out
-  const clearUser = useCallback(() => {
-    userIdRef.current = null
-  }, [])
-
-  return { theme, setTheme, syncWithUser, clearUser }
+  return { theme, setTheme }
 }

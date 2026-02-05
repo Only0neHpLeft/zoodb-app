@@ -1,5 +1,6 @@
 // Student Progress Tracking System
-import { saveTaskProgress, getStudentTaskProgress, type LegacyTaskProgressRecord as TaskProgressRecord } from './db/convex-db'
+// All functions here work with localStorage only.
+// DB sync is handled by use-settings-sync.tsx via Convex hooks.
 
 export type QueryAttempt = {
   query: string
@@ -47,115 +48,6 @@ export type StudentAnalytics = {
 // Storage keys
 const STUDENT_ANALYTICS_KEY = 'studentAnalytics'
 const CURRENT_STUDENT_KEY = 'currentStudent'
-
-// Helper to save to database (non-blocking)
-// userId is passed as parameter to avoid module-level state
-async function saveToDb(userId: string | null, categoryLetter: string, taskIndex: number, progress: {
-  completed?: boolean
-  attemptCount?: number
-  successfulAttempts?: number
-  hintsUsed?: number
-  timeSpentSeconds?: number
-}) {
-  if (!userId) return
-
-  try {
-    await saveTaskProgress(userId, categoryLetter, taskIndex, progress)
-  } catch (error) {
-    console.error('Failed to save progress to database:', error)
-    // localStorage serves as fallback
-  }
-}
-
-// Sync progress from database to localStorage
-export async function syncProgressWithUser(userId: string): Promise<void> {
-  try {
-    const { data: dbProgress } = await getStudentTaskProgress(userId)
-    if (!dbProgress || dbProgress.length === 0) {
-      // No DB data, migrate localStorage to DB if exists
-      const analytics = getAllStudentAnalytics()
-      if (analytics.students[userId]) {
-        const student = analytics.students[userId]
-        for (const [, task] of Object.entries(student.tasks)) {
-          await saveTaskProgress(userId, task.categoryLetter, task.taskIndex, {
-            completed: task.completed,
-            attemptCount: task.attempts.length,
-            successfulAttempts: task.attempts.filter(a => a.success).length,
-            hintsUsed: task.hintsUsed.length,
-            timeSpentSeconds: task.timeSpent,
-          })
-        }
-      }
-      return
-    }
-
-    // Update localStorage with DB data
-    const analytics = getAllStudentAnalytics()
-    if (!analytics.students[userId]) {
-      // Get user info from current student or create placeholder
-      const currentStudent = getCurrentStudent()
-      analytics.students[userId] = {
-        studentId: userId,
-        studentName: currentStudent?.name || 'Unknown',
-        studentEmail: currentStudent?.email || '',
-        tasks: {},
-        totalTimeSpent: 0,
-        tasksCompleted: 0,
-        totalAttempts: 0,
-        totalHintsUsed: 0,
-        lastActive: Date.now(),
-      }
-    }
-
-    // Merge DB progress into localStorage
-    for (const record of dbProgress) {
-      const taskKey = `${record.category_letter}-${record.task_index}`
-      const existingTask = analytics.students[userId].tasks[taskKey]
-
-      // Only update if DB has more recent data
-      const dbLastAttempt = new Date(record.last_attempt_at).getTime()
-      const localLastAttempt = existingTask?.lastAttemptAt || 0
-
-      if (!existingTask || dbLastAttempt > localLastAttempt) {
-        analytics.students[userId].tasks[taskKey] = {
-          taskId: taskKey,
-          categoryLetter: record.category_letter,
-          taskIndex: record.task_index,
-          attempts: existingTask?.attempts || [],
-          hintsUsed: existingTask?.hintsUsed || [],
-          timeSpent: record.time_spent_seconds,
-          completed: record.completed,
-          completedAt: record.completed_at ? new Date(record.completed_at).getTime() : undefined,
-          firstAttemptAt: new Date(record.first_attempt_at).getTime(),
-          lastAttemptAt: dbLastAttempt,
-        }
-      }
-    }
-
-    // Recalculate totals
-    let totalTime = 0
-    let totalCompleted = 0
-    let totalAttempts = 0
-    let totalHints = 0
-
-    for (const task of Object.values(analytics.students[userId].tasks)) {
-      totalTime += task.timeSpent
-      if (task.completed) totalCompleted++
-      totalAttempts += task.attempts.length
-      totalHints += task.hintsUsed.length
-    }
-
-    analytics.students[userId].totalTimeSpent = totalTime
-    analytics.students[userId].tasksCompleted = totalCompleted
-    analytics.students[userId].totalAttempts = totalAttempts
-    analytics.students[userId].totalHintsUsed = totalHints
-    analytics.students[userId].lastActive = Date.now()
-
-    saveStudentAnalytics(analytics)
-  } catch (error) {
-    console.error('Failed to sync progress with database:', error)
-  }
-}
 
 // Get all student analytics (for teachers)
 export function getAllStudentAnalytics(): StudentAnalytics {

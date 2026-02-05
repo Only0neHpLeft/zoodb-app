@@ -33,7 +33,7 @@ interface TableSchema {
 
 const SCHEMA_EN: TableSchema[] = [
   { name: 'Animals', columns: ['id', 'type', 'name', 'weight', 'born', 'consumption'] },
-  { name: 'Types', columns: ['id', 'title', 'weight_min', 'weight_max'] },
+  { name: 'Types', columns: ['id', 'name', 'weight_min', 'weight_max'] },
   { name: 'Caretakers', columns: ['id', 'name', 'born'] },
   { name: 'Likes', columns: ['id', 'caretaker', 'type'] },
   { name: 'Treats', columns: ['id', 'caretaker', 'animal'] },

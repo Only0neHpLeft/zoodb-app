@@ -91,7 +91,7 @@ function SettingsPage() {
                       <span className="text-xs text-muted-foreground">{t.settings[membershipInfo.descriptionKey]}</span>
                     </FieldDescription>
                   </FieldContent>
-                  <Link to={"/membership" as any}>
+                  <Link to="/membership">
                     <Button variant="outline" size="sm">{t.settings.upgrade}</Button>
                   </Link>
                 </div>

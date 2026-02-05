@@ -56,18 +56,18 @@ function TreatsPage() {
           ])
         }
 
-        const mappedCaretakers = caretakersResult.rows.map((row: any) => ({
-          id: row.id,
-          name: isCzech ? row.jmeno : row.name
+        const mappedCaretakers = (caretakersResult.rows as Record<string, unknown>[]).map((row) => ({
+          id: row.id as number,
+          name: (isCzech ? row.jmeno : row.name) as string
         }))
-        const mappedAnimals = animalsResult.rows.map((row: any) => ({
-          id: row.id,
-          name: isCzech ? row.jmeno : row.name
+        const mappedAnimals = (animalsResult.rows as Record<string, unknown>[]).map((row) => ({
+          id: row.id as number,
+          name: (isCzech ? row.jmeno : row.name) as string
         }))
-        const mappedTreats = treatsResult.rows.map((row: any) => ({
-          id: row.id,
-          caretakerId: isCzech ? row.osetrovatel : row.caretaker,
-          animalId: isCzech ? row.zvire : row.animal,
+        const mappedTreats = (treatsResult.rows as Record<string, unknown>[]).map((row) => ({
+          id: row.id as number,
+          caretakerId: (isCzech ? row.osetrovatel : row.caretaker) as number,
+          animalId: (isCzech ? row.zvire : row.animal) as number,
         }))
 
         setCaretakers(mappedCaretakers)

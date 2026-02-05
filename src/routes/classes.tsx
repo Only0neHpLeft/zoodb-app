@@ -1,242 +1,80 @@
 import { createFileRoute } from "@tanstack/react-router"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useUser } from "@clerk/clerk-react"
 import { toast } from "sonner"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Breadcrumbs } from "@/components/breadcrumbs"
 import { Notifications } from "@/components/notifications"
 import { useLanguage } from "@/contexts/language-context"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
-import { GraduationCap, Plus, Copy, Users, Calendar, LogOut, Trash2, Eye, BookOpen } from "lucide-react"
-import { getProfile } from "@/lib/db/convex-db"
+import { GraduationCap } from "lucide-react"
 import {
-  createClass,
-  joinClass,
-  getTeacherClasses,
-  getStudentClasses,
-  getClassStudents,
-  leaveClass,
-  deleteClass,
-  type Class,
-  type ClassStudent,
+  useProfile,
+  useTeacherClasses,
+  useStudentClasses,
+  useClassStudents,
+  useDeleteClass,
 } from "@/lib/db/convex-db"
+import type { Id } from "../../convex/_generated/dataModel"
+import { CreateClassDialog } from "@/components/classes/create-class-dialog"
+import { JoinClassDialog } from "@/components/classes/join-class-dialog"
+import { TeacherClassCard } from "@/components/classes/teacher-class-card"
+import { StudentClassCard } from "@/components/classes/student-class-card"
+import { ClassStudentsTable } from "@/components/classes/class-students-table"
 
 export const Route = createFileRoute("/classes")({
   component: ClassesPage,
 })
 
+function formatDate(timestamp: number | undefined) {
+  if (!timestamp) return '-'
+  return new Date(timestamp).toLocaleDateString()
+}
+
+function timeAgo(timestamp: number | undefined) {
+  if (!timestamp) return '-'
+  const seconds = Math.floor((Date.now() - timestamp) / 1000)
+  if (seconds < 60) return 'just now'
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`
+  return `${Math.floor(seconds / 86400)}d ago`
+}
+
 function ClassesPage() {
   const { t } = useLanguage()
   const { user, isLoaded, isSignedIn } = useUser()
-  const [userRole, setUserRole] = useState<'student' | 'teacher' | 'admin'>('student')
-  const [isLoading, setIsLoading] = useState(true)
-  const [teacherClasses, setTeacherClasses] = useState<Class[]>([])
-  const [studentClasses, setStudentClasses] = useState<(Class & { joined_at: string })[]>([])
-  const [selectedClass, setSelectedClass] = useState<Class | null>(null)
-  const [classStudents, setClassStudents] = useState<ClassStudent[]>([])
-  const [isStudentsLoading, setIsStudentsLoading] = useState(false)
+  const clerkId = isSignedIn && user ? user.id : undefined
 
-  // Create class form state
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-  const [newClassName, setNewClassName] = useState('')
-  const [newClassDescription, setNewClassDescription] = useState('')
-  const [isCreating, setIsCreating] = useState(false)
+  const convexProfile = useProfile(clerkId)
+  const teacherClasses = useTeacherClasses(
+    convexProfile && (convexProfile.role === 'teacher' || convexProfile.role === 'admin')
+      ? clerkId
+      : undefined
+  )
+  const studentClasses = useStudentClasses(clerkId)
 
-  // Join class form state
-  const [isJoinDialogOpen, setIsJoinDialogOpen] = useState(false)
-  const [joinCode, setJoinCode] = useState('')
-  const [isJoining, setIsJoining] = useState(false)
+  const [selectedClassId, setSelectedClassId] = useState<Id<"classes"> | null>(null)
+  const classStudents = useClassStudents(selectedClassId ?? undefined)
+  const deleteClass = useDeleteClass()
 
-  // Load user role and classes
-  useEffect(() => {
-    async function loadData() {
-      if (!isLoaded || !isSignedIn || !user) {
-        setIsLoading(false)
-        return
-      }
+  const userRole = convexProfile?.role || 'student'
 
-      try {
-        // Get user profile to determine role
-        const { data: profile } = await getProfile(user.id)
-        const role = profile?.role || 'student'
-        setUserRole(role)
-
-        // Load classes based on role
-        if (role === 'teacher' || role === 'admin') {
-          const { data: tClasses } = await getTeacherClasses(user.id)
-          setTeacherClasses(tClasses || [])
-        }
-
-        const { data: sClasses } = await getStudentClasses(user.id)
-        setStudentClasses(sClasses || [])
-      } catch (error) {
-        console.error('Failed to load classes:', error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    loadData()
-  }, [isLoaded, isSignedIn, user?.id])
-
-  // Load students for a selected class
-  async function loadClassStudents(classId: string) {
-    setIsStudentsLoading(true)
-    try {
-      const { data: students } = await getClassStudents(classId)
-      setClassStudents(students || [])
-    } catch (error) {
-      console.error('Failed to load class students:', error)
-      toast.error('Failed to load students')
-    } finally {
-      setIsStudentsLoading(false)
-    }
-  }
-
-  // Create a new class
-  async function handleCreateClass() {
-    if (!user || !newClassName.trim()) return
-
-    setIsCreating(true)
-    try {
-      const { data: newClass, error } = await createClass(user.id, newClassName.trim(), {
-        description: newClassDescription.trim() || undefined,
-      })
-
-      if (error) {
-        toast.error(error.message)
-        return
-      }
-
-      if (newClass) {
-        setTeacherClasses([newClass, ...teacherClasses])
-        toast.success(t.pages.classes.classCreated)
-        setIsCreateDialogOpen(false)
-        setNewClassName('')
-        setNewClassDescription('')
-      }
-    } catch (error) {
-      toast.error('Failed to create class')
-    } finally {
-      setIsCreating(false)
-    }
-  }
-
-  // Join a class
-  async function handleJoinClass() {
-    if (!user || !joinCode.trim()) return
-
-    setIsJoining(true)
-    try {
-      const { data: enrollment, error } = await joinClass(user.id, joinCode.trim())
-
-      if (error) {
-        if (error.message.includes('Invalid')) {
-          toast.error(t.pages.classes.invalidCode)
-        } else if (error.message.includes('already enrolled')) {
-          toast.error(t.pages.classes.alreadyMember)
-        } else {
-          toast.error(error.message)
-        }
-        return
-      }
-
-      if (enrollment) {
-        // Reload student classes
-        const { data: sClasses } = await getStudentClasses(user.id)
-        setStudentClasses(sClasses || [])
-        toast.success(t.pages.classes.classJoined)
-        setIsJoinDialogOpen(false)
-        setJoinCode('')
-      }
-    } catch (error) {
-      toast.error('Failed to join class')
-    } finally {
-      setIsJoining(false)
-    }
-  }
-
-  // Leave a class
-  async function handleLeaveClass(classId: string) {
+  async function handleDeleteClass(classId: Id<"classes">) {
     if (!user) return
-
     try {
-      const { success, error } = await leaveClass(user.id, classId)
-
-      if (error) {
-        toast.error(error.message)
-        return
-      }
-
-      if (success) {
-        setStudentClasses(studentClasses.filter(c => c.id !== classId))
-        toast.success(t.pages.classes.leftClass)
-      }
+      await deleteClass({ teacherClerkId: user.id, classId })
+      if (selectedClassId === classId) setSelectedClassId(null)
+      toast.success(t.pages.classes.classDeleted)
     } catch (error) {
-      toast.error('Failed to leave class')
+      toast.error(error instanceof Error ? error.message : 'Failed to delete class')
     }
   }
 
-  // Delete a class
-  async function handleDeleteClass(classId: string) {
-    if (!user) return
+  const isLoading = !isLoaded || (isSignedIn && convexProfile === undefined)
 
-    try {
-      const { success, error } = await deleteClass(user.id, classId)
-
-      if (error) {
-        toast.error(error.message)
-        return
-      }
-
-      if (success) {
-        setTeacherClasses(teacherClasses.filter(c => c.id !== classId))
-        if (selectedClass?.id === classId) {
-          setSelectedClass(null)
-          setClassStudents([])
-        }
-        toast.success(t.pages.classes.classDeleted)
-      }
-    } catch (error) {
-      toast.error('Failed to delete class')
-    }
-  }
-
-  // Copy class code to clipboard
-  function copyClassCode(code: string) {
-    navigator.clipboard.writeText(code)
-    toast.success(t.pages.classes.codeCopied)
-  }
-
-  // Format date for display
-  function formatDate(dateString: string) {
-    return new Date(dateString).toLocaleDateString()
-  }
-
-  // Format time ago
-  function timeAgo(dateString: string | undefined) {
-    if (!dateString) return '-'
-    const date = new Date(dateString)
-    const now = new Date()
-    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000)
-
-    if (seconds < 60) return 'just now'
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
-    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`
-    return `${Math.floor(seconds / 86400)}d ago`
-  }
-
-  // Loading state
   if (isLoading) {
     return (
       <div className="flex flex-col h-full w-full">
@@ -261,7 +99,6 @@ function ClassesPage() {
     )
   }
 
-  // Not signed in state
   if (!isSignedIn) {
     return (
       <div className="flex flex-col h-full w-full">
@@ -290,7 +127,13 @@ function ClassesPage() {
   }
 
   const isTeacher = userRole === 'teacher' || userRole === 'admin'
-  const hasNoClasses = teacherClasses.length === 0 && studentClasses.length === 0
+  const tClasses = teacherClasses ?? []
+  const sClasses = (studentClasses ?? []).filter((c): c is NonNullable<typeof c> => c !== null)
+  const hasNoClasses = tClasses.length === 0 && sClasses.length === 0
+
+  const selectedClassData = selectedClassId
+    ? tClasses.find(c => c._id === selectedClassId) ?? null
+    : null
 
   return (
     <div className="flex flex-col h-full w-full">
@@ -304,87 +147,17 @@ function ClassesPage() {
 
       <main className="flex-1 p-6 overflow-auto">
         <div className="max-w-6xl mx-auto space-y-6">
-          {/* Header with actions */}
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold">{t.pages.classes.title}</h1>
               <p className="text-muted-foreground">{t.pages.classes.description}</p>
             </div>
             <div className="flex gap-2">
-              {/* Join Class Dialog */}
-              <Dialog open={isJoinDialogOpen} onOpenChange={setIsJoinDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline">
-                    <BookOpen className="mr-2 h-4 w-4" />
-                    {t.pages.classes.joinClass}
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>{t.pages.classes.joinClass}</DialogTitle>
-                    <DialogDescription>
-                      {t.pages.classes.enterClassCode}
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="join-code">{t.pages.classes.classCode}</Label>
-                      <Input
-                        id="join-code"
-                        value={joinCode}
-                        onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                        placeholder={t.pages.classes.enterCodePlaceholder}
-                        className="font-mono"
-                      />
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button onClick={handleJoinClass} disabled={isJoining || !joinCode.trim()}>
-                      {isJoining ? '...' : t.pages.classes.joinButton}
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-
-              {/* Create Class Dialog (teachers only) */}
-              {isTeacher && (
-                <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button>
-                      <Plus className="mr-2 h-4 w-4" />
-                      {t.pages.classes.createClass}
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>{t.pages.classes.createClass}</DialogTitle>
-                      <DialogDescription>
-                        {t.pages.classes.description}
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4 py-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="class-name">{t.pages.classes.className}</Label>
-                        <Input
-                          id="class-name"
-                          value={newClassName}
-                          onChange={(e) => setNewClassName(e.target.value)}
-                          placeholder={t.pages.classes.classNamePlaceholder}
-                        />
-                      </div>
-                    </div>
-                    <DialogFooter>
-                      <Button onClick={handleCreateClass} disabled={isCreating || !newClassName.trim()}>
-                        {isCreating ? '...' : t.pages.classes.createClass}
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              )}
+              <JoinClassDialog clerkId={user!.id} t={t} />
+              {isTeacher && <CreateClassDialog clerkId={user!.id} t={t} />}
             </div>
           </div>
 
-          {/* Empty state */}
           {hasNoClasses ? (
             <Empty className="border rounded-lg p-12">
               <EmptyHeader>
@@ -401,208 +174,62 @@ function ClassesPage() {
             <Tabs defaultValue={isTeacher ? "teacher" : "student"} className="space-y-4">
               {isTeacher && (
                 <TabsList>
-                  <TabsTrigger value="teacher">
-                    {t.pages.classes.teacherView}
-                  </TabsTrigger>
-                  <TabsTrigger value="student">
-                    {t.pages.classes.studentView}
-                  </TabsTrigger>
+                  <TabsTrigger value="teacher">{t.pages.classes.teacherView}</TabsTrigger>
+                  <TabsTrigger value="student">{t.pages.classes.studentView}</TabsTrigger>
                 </TabsList>
               )}
 
-              {/* Teacher View */}
               {isTeacher && (
                 <TabsContent value="teacher" className="space-y-4">
                   <h2 className="text-lg font-semibold">{t.pages.classes.myClasses}</h2>
-                  {teacherClasses.length === 0 ? (
+                  {tClasses.length === 0 ? (
                     <Card className="p-8 text-center">
                       <p className="text-muted-foreground">{t.pages.classes.noClasses}</p>
                     </Card>
                   ) : (
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                      {teacherClasses.map((cls) => (
-                        <Card key={cls.id} className="relative">
-                          <CardHeader className="pb-2">
-                            <div className="flex items-start justify-between">
-                              <CardTitle className="text-lg">{cls.name}</CardTitle>
-                              <Badge variant="outline" className="font-mono text-xs">
-                                {cls.code}
-                              </Badge>
-                            </div>
-                            {cls.description && (
-                              <CardDescription>{cls.description}</CardDescription>
-                            )}
-                          </CardHeader>
-                          <CardContent className="space-y-4">
-                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                              <div className="flex items-center gap-1">
-                                <Users className="h-4 w-4" />
-                                <span>{cls.student_count} {t.pages.classes.students}</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <Calendar className="h-4 w-4" />
-                                <span>{formatDate(cls.created_at)}</span>
-                              </div>
-                            </div>
-
-                            <div className="flex gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => copyClassCode(cls.code)}
-                              >
-                                <Copy className="h-3 w-3 mr-1" />
-                                {t.pages.classes.copyCode}
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  setSelectedClass(cls)
-                                  loadClassStudents(cls.id)
-                                }}
-                              >
-                                <Eye className="h-3 w-3 mr-1" />
-                                {t.pages.classes.viewStudents}
-                              </Button>
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button variant="outline" size="sm" className="text-destructive">
-                                    <Trash2 className="h-3 w-3" />
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>{t.pages.classes.deleteClass}</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      {t.pages.classes.confirmDelete}
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>{t.common.cancel}</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => handleDeleteClass(cls.id)}>
-                                      {t.common.delete}
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            </div>
-                          </CardContent>
-                        </Card>
+                      {tClasses.map((cls) => (
+                        <TeacherClassCard
+                          key={cls._id}
+                          cls={cls}
+                          onViewStudents={setSelectedClassId}
+                          onDelete={handleDeleteClass}
+                          formatDate={formatDate}
+                          t={t}
+                        />
                       ))}
                     </div>
                   )}
 
-                  {/* Students Table (when a class is selected) */}
-                  {selectedClass && (
-                    <Card className="mt-6">
-                      <CardHeader>
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <CardTitle>{selectedClass.name} - {t.pages.classes.students}</CardTitle>
-                            <CardDescription>
-                              {t.pages.classes.classCode}: <span className="font-mono">{selectedClass.code}</span>
-                            </CardDescription>
-                          </div>
-                          <Button variant="ghost" size="sm" onClick={() => setSelectedClass(null)}>
-                            {t.common.close}
-                          </Button>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        {isStudentsLoading ? (
-                          <div className="space-y-2">
-                            {[1, 2, 3].map(i => (
-                              <Skeleton key={i} className="h-12" />
-                            ))}
-                          </div>
-                        ) : classStudents.length === 0 ? (
-                          <div className="py-8 text-center text-muted-foreground">
-                            <p>{t.pages.classes.noStudents}</p>
-                            <p className="text-sm mt-2">{t.pages.classes.noStudentsDescription}</p>
-                          </div>
-                        ) : (
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead>{t.pages.classes.studentName}</TableHead>
-                                <TableHead>{t.pages.classes.studentEmail}</TableHead>
-                                <TableHead>{t.pages.classes.tasksCompleted}</TableHead>
-                                <TableHead>{t.pages.classes.lastActive}</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {classStudents.map((student) => (
-                                <TableRow key={student.student_id}>
-                                  <TableCell className="font-medium">{student.student_name || 'Unknown'}</TableCell>
-                                  <TableCell>{student.student_email}</TableCell>
-                                  <TableCell>{student.tasks_completed}</TableCell>
-                                  <TableCell>{timeAgo(student.last_active)}</TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        )}
-                      </CardContent>
-                    </Card>
+                  {selectedClassData && (
+                    <ClassStudentsTable
+                      classData={selectedClassData}
+                      students={classStudents}
+                      onClose={() => setSelectedClassId(null)}
+                      timeAgo={timeAgo}
+                      t={t}
+                    />
                   )}
                 </TabsContent>
               )}
 
-              {/* Student View */}
               <TabsContent value="student" className="space-y-4">
                 <h2 className="text-lg font-semibold">{t.pages.classes.myClasses}</h2>
-                {studentClasses.length === 0 ? (
+                {sClasses.length === 0 ? (
                   <Card className="p-8 text-center">
                     <p className="text-muted-foreground">{t.pages.classes.noClasses}</p>
                     <p className="text-sm text-muted-foreground mt-2">{t.pages.classes.noClassesDescription}</p>
                   </Card>
                 ) : (
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {studentClasses.map((cls) => (
-                      <Card key={cls.id}>
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-lg">{cls.name}</CardTitle>
-                          {cls.description && (
-                            <CardDescription>{cls.description}</CardDescription>
-                          )}
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              <Users className="h-4 w-4" />
-                              <span>{cls.student_count} {t.pages.classes.students}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Calendar className="h-4 w-4" />
-                              <span>{t.pages.classes.joined}: {formatDate(cls.joined_at)}</span>
-                            </div>
-                          </div>
-
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="outline" size="sm" className="w-full">
-                                <LogOut className="h-3 w-3 mr-2" />
-                                {t.pages.classes.leaveClass}
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>{t.pages.classes.leaveClass}</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  {t.pages.classes.confirmLeave}
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>{t.common.cancel}</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleLeaveClass(cls.id)}>
-                                  {t.pages.classes.leaveClass}
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </CardContent>
-                      </Card>
+                    {sClasses.map((cls) => (
+                      <StudentClassCard
+                        key={cls._id}
+                        cls={cls}
+                        clerkId={user!.id}
+                        formatDate={formatDate}
+                        t={t}
+                      />
                     ))}
                   </div>
                 )}

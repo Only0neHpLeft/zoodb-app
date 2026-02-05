@@ -131,58 +131,38 @@ export async function getDb(): Promise<PGlite> {
   return initPromise;
 }
 
-// Initialize the database with IndexedDB persistence
+// Initialize the database with IndexedDB persistence — no timeouts, no memory fallback
 async function initializeDb(): Promise<PGlite> {
-  // Reduced timeout for faster startup (bundle-defer-third-party rule)
-  // If IndexedDB takes >5s, fall back to memory mode quickly
-  const timeoutPromise = new Promise<never>((_, reject) =>
-    setTimeout(() => reject(new Error('Database initialization timed out after 5s')), 5000)
-  );
+  db = await PGlite.create({
+    dataDir: 'idb://zoodb-local',
+    relaxedDurability: true,
+  });
+  dbReady = true;
+  // PGlite initialized with IndexedDB persistence
 
-  // Try IndexedDB first for persistence
-  try {
-    const dbPromise = PGlite.create({
-      dataDir: 'idb://zoodb-local',
-      relaxedDurability: true,
-    });
+  // Initialize offline tables (non-blocking, deferred)
+  initializeOfflineTables().catch(console.error);
 
-    db = await Promise.race([dbPromise, timeoutPromise]);
-    dbReady = true;
-    console.log('✓ PGlite initialized with IndexedDB persistence');
-
-    // Initialize offline tables (non-blocking, deferred)
-    initializeOfflineTables().catch(console.error);
-
-    return db as PGlite;
-  } catch (idbError) {
-    console.warn('IndexedDB timeout, falling back to memory mode:', idbError);
-  }
-
-  // Fallback to in-memory mode (fast startup)
-  try {
-    const dbPromise = PGlite.create('memory://');
-    db = await Promise.race([dbPromise, timeoutPromise]);
-    dbReady = true;
-    console.log('✓ PGlite initialized in memory mode (no persistence)');
-
-    // Initialize offline tables (non-blocking, deferred)
-    initializeOfflineTables().catch(console.error);
-
-    return db as PGlite;
-  } catch (error) {
-    console.error('PGlite initialization failed:', error);
-    throw error;
-  }
+  return db;
 }
 
-// Check if database has been set up with schema
-export async function isDatabaseInitialized(): Promise<boolean> {
-  // For in-memory mode, check if we've already initialized in this session
-  if (!dbReady) return false;
+// Close stale connections on Vite HMR so the new module can reopen IDB
+if (import.meta.hot) {
+  import.meta.hot.dispose(async () => {
+    if (db) {
+      try { await db.close(); } catch { /* ignore */ }
+      db = null;
+      initPromise = null;
+      initializationLock = null;
+      dbReady = false;
+    }
+  });
+}
 
+// Check if database has been set up with schema (checks IDB marker table)
+export async function isDatabaseInitialized(): Promise<boolean> {
   const database = await getDb();
   try {
-    // Check for marker table that indicates initialization is complete
     const result = await database.query(`
       SELECT EXISTS (
         SELECT FROM information_schema.tables
@@ -266,38 +246,49 @@ export async function importCSV(
     return 0;
   }
 
-  // Prepare insert statement
   const columns = headers.join(', ');
-  const placeholders = headers.map((_, i) => `$${i + 1}`).join(', ');
-  const insertSql = `INSERT INTO ${tableName} (${columns}) VALUES (${placeholders})`;
-
+  const BATCH_SIZE = 50;
   let importedCount = 0;
 
-  for (let i = 0; i < rows.length; i++) {
-    const row = rows[i];
+  for (let batchStart = 0; batchStart < rows.length; batchStart += BATCH_SIZE) {
+    const batch = rows.slice(batchStart, batchStart + BATCH_SIZE);
+    const allValues: (string | null)[] = [];
+    const valueTuples: string[] = [];
 
-    // Convert values, handling NULL and type conversion
-    const values = row.map((val) => {
-      if (val === 'NULL' || val === '' || val === 'null') {
-        return null;
+    for (let r = 0; r < batch.length; r++) {
+      const row = batch[r];
+      const offset = r * headers.length;
+      const tuple = headers.map((_, i) => `$${offset + i + 1}`).join(', ');
+      valueTuples.push(`(${tuple})`);
+      for (const val of row) {
+        allValues.push(val === 'NULL' || val === '' || val === 'null' ? null : val);
       }
-      return val;
-    });
+    }
+
+    const batchSql = `INSERT INTO ${tableName} (${columns}) VALUES ${valueTuples.join(', ')}`;
 
     try {
-      await database.query(insertSql, values);
-      importedCount++;
-    } catch (error) {
-      console.warn(`Failed to import row ${i + 1}:`, error);
+      await database.query(batchSql, allValues);
+      importedCount += batch.length;
+    } catch {
+      // Fallback: insert rows individually to skip bad rows
+      for (let i = 0; i < batch.length; i++) {
+        const values = batch[i].map((val) =>
+          val === 'NULL' || val === '' || val === 'null' ? null : val
+        );
+        const placeholders = headers.map((_, j) => `$${j + 1}`).join(', ');
+        try {
+          await database.query(`INSERT INTO ${tableName} (${columns}) VALUES (${placeholders})`, values);
+          importedCount++;
+        } catch (rowErr) {
+          console.warn(`Failed to import row ${batchStart + i + 1}:`, rowErr);
+        }
+      }
     }
 
-    if (onProgress && i % 100 === 0) {
-      onProgress(i + 1, rows.length);
+    if (onProgress) {
+      onProgress(Math.min(batchStart + BATCH_SIZE, rows.length), rows.length);
     }
-  }
-
-  if (onProgress) {
-    onProgress(rows.length, rows.length);
   }
 
   return importedCount;
@@ -317,13 +308,7 @@ export async function initializeDatabase(
     return initializationLock;
   }
 
-  initializationLock = (async () => {
-    try {
-      return await performDatabaseInitialization(onProgress);
-    } catch (e) {
-      throw e;
-    }
-  })();
+  initializationLock = performDatabaseInitialization(onProgress);
 
   try {
     return await initializationLock;
@@ -439,22 +424,32 @@ async function performDatabaseInitialization(
     await backupDb.exec(czechSchema);
 
     // Import same data into backup
-    for (const { tableName, content, csvFile, lang } of fetchResults) {
+    for (const { tableName, content, csvFile } of fetchResults) {
       if (content) {
         try {
           const { headers, rows } = parseCSV(content);
           if (headers.length === 0 || rows.length === 0) continue;
 
           const columns = headers.join(', ');
-          const placeholders = headers.map((_, i) => `$${i + 1}`).join(', ');
-          const insertSql = `INSERT INTO ${tableName} (${columns}) VALUES (${placeholders})`;
+          const BATCH_SIZE = 50;
 
-          for (const row of rows) {
-            const values = row.map((val) => {
-              if (val === 'NULL' || val === '' || val === 'null') return null;
-              return val;
-            });
-            await backupDb.query(insertSql, values);
+          for (let batchStart = 0; batchStart < rows.length; batchStart += BATCH_SIZE) {
+            const batch = rows.slice(batchStart, batchStart + BATCH_SIZE);
+            const allValues: (string | null)[] = [];
+            const valueTuples: string[] = [];
+
+            for (let r = 0; r < batch.length; r++) {
+              const offset = r * headers.length;
+              valueTuples.push(`(${headers.map((_, i) => `$${offset + i + 1}`).join(', ')})`);
+              for (const val of batch[r]) {
+                allValues.push(val === 'NULL' || val === '' || val === 'null' ? null : val);
+              }
+            }
+
+            await backupDb.query(
+              `INSERT INTO ${tableName} (${columns}) VALUES ${valueTuples.join(', ')}`,
+              allValues
+            );
           }
         } catch (error) {
           console.warn(`Failed to import ${csvFile} to backup:`, error);
@@ -618,7 +613,7 @@ export async function closeDatabase(): Promise<void> {
   if (db) {
     try {
       await db.close();
-      console.log('PGlite database closed successfully');
+      // PGlite database closed successfully
     } catch (error) {
       console.warn('Error closing PGlite database:', error);
     } finally {

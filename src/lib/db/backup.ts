@@ -122,9 +122,9 @@ export async function restoreFromBackup(
       AND table_name != '_zoodb_init'
     `);
 
-    const tables = tablesResult.rows.map(
-      (row: any) => row.table_name
-    ) as string[];
+    const tables = (tablesResult.rows as Record<string, unknown>[]).map(
+      (row) => row.table_name as string
+    );
 
     onProgress?.(`Restoring ${tables.length} tables...`);
 
@@ -137,12 +137,12 @@ export async function restoreFromBackup(
       const dataResult = await backup.query(`SELECT * FROM ${table}`);
 
       if (dataResult.rows.length > 0) {
-        const columnNames = Object.keys(dataResult.rows[0]).filter(col => col !== 'id');
+        const columnNames = Object.keys(dataResult.rows[0] as Record<string, unknown>).filter(col => col !== 'id');
         const placeholders = columnNames.map((_, i) => `$${i + 1}`).join(', ');
         const insertSql = `INSERT INTO ${table} (${columnNames.join(', ')}) VALUES (${placeholders})`;
 
         for (const row of dataResult.rows) {
-          const values = columnNames.map(col => (row as any)[col]);
+          const values = columnNames.map(col => (row as Record<string, unknown>)[col]);
           try {
             await mainDb.query(insertSql, values);
           } catch (error) {

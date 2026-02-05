@@ -1,5 +1,3 @@
-"use client"
-
 import React from 'react'
 import { useLanguage } from '@/contexts/language-context'
 import { Button } from '@/components/ui/button'

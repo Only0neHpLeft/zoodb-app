@@ -260,7 +260,7 @@ export function AppSidebar() {
                         "group-data-[collapsible=icon]:justify-center"
                       )}
                     >
-                      <Link to={"/scheme" as any}>
+                      <Link to="/scheme">
                         <Database className="size-4 shrink-0" />
                       </Link>
                     </SidebarMenuButton>
@@ -351,7 +351,7 @@ export function AppSidebar() {
                   "group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:p-0"
                 )}
               >
-                <Link to={"/sign-in" as any} className="flex items-center gap-3 group-data-[collapsible=icon]:justify-center">
+                <Link to="/sign-in" className="flex items-center gap-3 group-data-[collapsible=icon]:justify-center">
                   <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/60">
                     <LogIn className="size-4 text-primary-foreground" />
                   </div>

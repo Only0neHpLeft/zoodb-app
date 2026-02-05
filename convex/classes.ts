@@ -1,6 +1,5 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
-import { Id } from "./_generated/dataModel";
 
 // Generate a random class code
 function generateClassCode(): string {
@@ -17,6 +16,11 @@ export const createClass = mutation({
     maxStudents: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity || identity.subject !== args.teacherClerkId) {
+      throw new Error("Unauthorized");
+    }
+
     const code = generateClassCode();
 
     const id = await ctx.db.insert("classes", {
@@ -41,6 +45,11 @@ export const joinClass = mutation({
     classCode: v.string(),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity || identity.subject !== args.studentClerkId) {
+      throw new Error("Unauthorized");
+    }
+
     // Find the class by code
     const classDoc = await ctx.db
       .query("classes")
@@ -216,6 +225,11 @@ export const leaveClass = mutation({
     classId: v.id("classes"),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity || identity.subject !== args.studentClerkId) {
+      throw new Error("Unauthorized");
+    }
+
     const enrollment = await ctx.db
       .query("classEnrollments")
       .withIndex("by_class_and_student", (q) =>
@@ -243,6 +257,11 @@ export const deleteClass = mutation({
     classId: v.id("classes"),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity || identity.subject !== args.teacherClerkId) {
+      throw new Error("Unauthorized");
+    }
+
     const classDoc = await ctx.db.get(args.classId);
 
     if (!classDoc) {
@@ -282,6 +301,11 @@ export const updateClass = mutation({
     maxStudents: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity || identity.subject !== args.teacherClerkId) {
+      throw new Error("Unauthorized");
+    }
+
     const classDoc = await ctx.db.get(args.classId);
 
     if (!classDoc) {

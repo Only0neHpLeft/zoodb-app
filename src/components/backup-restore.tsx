@@ -123,18 +123,18 @@ export function BackupRestore() {
             <FieldContent className="flex-1">
               <FieldTitle>{t.backup.title}</FieldTitle>
               <FieldDescription>
-                <div className="space-y-2">
-                  <div>{t.backup.description}</div>
+                <span className="block space-y-2">
+                  <span className="block">{t.backup.description}</span>
                   {backupExists && backupDate && (
-                    <div className="text-xs">
+                    <span className="block text-xs">
                       <span className="font-medium">{t.backup.createdOn}:</span>{' '}
                       {backupDate.toLocaleDateString()} {backupDate.toLocaleTimeString()}
-                    </div>
+                    </span>
                   )}
                   {!backupExists && (
-                    <div className="text-xs text-muted-foreground">{t.backup.noBackup}</div>
+                    <span className="block text-xs text-muted-foreground">{t.backup.noBackup}</span>
                   )}
-                </div>
+                </span>
               </FieldDescription>
             </FieldContent>
             <Button
@@ -162,12 +162,12 @@ export function BackupRestore() {
               <AlertTriangle className="size-5 text-destructive" />
               {t.backup.confirmDialog.title}
             </AlertDialogTitle>
-            <AlertDialogDescription>
-              <div className="space-y-3">
-                <div>{t.backup.confirmDialog.description}</div>
-                <div className="font-semibold text-destructive">
+            <AlertDialogDescription asChild>
+              <div className="space-y-3 text-muted-foreground text-sm">
+                <p>{t.backup.confirmDialog.description}</p>
+                <p className="font-semibold text-destructive">
                   {t.backup.confirmDialog.warningCount}
-                </div>
+                </p>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">
                     {t.backup.confirmDialog.typeToConfirm}

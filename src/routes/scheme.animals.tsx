@@ -57,17 +57,17 @@ function AnimalsPage() {
           ])
         }
 
-        const mappedAnimals = animalsResult.rows.map((row: any) => ({
-          id: row.id,
-          type: isCzech ? row.druh : row.type,
-          name: isCzech ? row.jmeno : row.name,
+        const mappedAnimals = (animalsResult.rows as Record<string, unknown>[]).map((row) => ({
+          id: row.id as number,
+          type: (isCzech ? row.druh : row.type) as number,
+          name: (isCzech ? row.jmeno : row.name) as string,
           weight: Number(isCzech ? row.vaha : row.weight) || 0,
-          born: (isCzech ? row.narozen : row.born) || '',
+          born: ((isCzech ? row.narozen : row.born) || '') as string,
           consumption: (isCzech ? row.spotreba : row.consumption) !== null ? Number(isCzech ? row.spotreba : row.consumption) : null,
         }))
-        const mappedTypes = typesResult.rows.map((row: any) => ({
-          id: row.id,
-          title: isCzech ? row.nazev : row.name
+        const mappedTypes = (typesResult.rows as Record<string, unknown>[]).map((row) => ({
+          id: row.id as number,
+          title: (isCzech ? row.nazev : row.name) as string
         }))
         setAnimals(mappedAnimals)
         setTypes(mappedTypes)

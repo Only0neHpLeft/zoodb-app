@@ -135,7 +135,7 @@ function Home() {
                       ? "opacity-60 cursor-not-allowed"
                       : "cursor-pointer hover:shadow-lg hover:scale-105 hover:border-primary"
                   }`}
-                  onClick={() => isUnlocked && navigate({ to: "/editor" as any, search: { lesson: category.letter, task: 1 } as any })}
+                  onClick={() => isUnlocked && navigate({ to: "/editor", search: { lesson: category.letter, task: 1 } })}
                 >
                 <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">

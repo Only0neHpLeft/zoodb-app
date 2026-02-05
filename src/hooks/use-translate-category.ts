@@ -1,12 +1,17 @@
 import { useLanguage } from '@/contexts/language-context'
 import type { Category } from '@/data/types'
 
+type CategoryTranslation = {
+  title: string
+  description: string
+  tasks: Record<string, { title: string; description: string; hint: string }>
+}
+
 export function useTranslateCategory() {
   const { categoryTranslations } = useLanguage()
 
   const translateCategory = (category: Category): Category => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const translation = categoryTranslations[category.letter as keyof typeof categoryTranslations] as any
+    const translation = categoryTranslations[category.letter as keyof typeof categoryTranslations] as CategoryTranslation | undefined
 
     if (!translation) {
       // Return original if no translation found

@@ -16,6 +16,11 @@ export const getMembership = query({
 export const getOrCreateMembership = mutation({
   args: { clerkId: v.string() },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity || identity.subject !== args.clerkId) {
+      throw new Error("Unauthorized");
+    }
+
     const existing = await ctx.db
       .query("userMemberships")
       .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
@@ -42,6 +47,11 @@ export const updateMembership = mutation({
     licenseExpiresAt: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity || identity.subject !== args.clerkId) {
+      throw new Error("Unauthorized");
+    }
+
     const existing = await ctx.db
       .query("userMemberships")
       .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))

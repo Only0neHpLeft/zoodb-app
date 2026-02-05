@@ -177,7 +177,7 @@ function TaskEditorPage() {
               <div className="text-center">
                 <h3 className="text-xl font-semibold mb-2">{t.task.taskNotFound}</h3>
                 <p className="text-muted-foreground mb-4">{t.task.taskNotFoundMessage}</p>
-                <Button onClick={() => navigate({ to: '/editor' as any, search: { lesson: category.letter } as any })}>
+                <Button onClick={() => navigate({ to: '/editor', search: { lesson: category.letter } })}>
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   {t.task.backToCategory}
                 </Button>
@@ -197,7 +197,7 @@ function TaskEditorPage() {
           <nav className="flex items-center gap-2 text-sm">
             <span
               className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-              onClick={() => navigate({ to: '/editor' as any, search: { lesson: category.letter } as any })}
+              onClick={() => navigate({ to: '/editor', search: { lesson: category.letter } })}
             >
               {t.category.category} {category.letter}
             </span>
@@ -206,7 +206,7 @@ function TaskEditorPage() {
           </nav>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => navigate({ to: '/editor' as any, search: { lesson: category.letter } as any })}>
+          <Button variant="outline" onClick={() => navigate({ to: '/editor', search: { lesson: category.letter } })}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             {t.category.backToCategory} {category.letter}
           </Button>
@@ -423,14 +423,14 @@ SELECT * FROM animals;"
             {taskParam > 1 ? (
               <Button
                 variant="outline"
-                onClick={() => navigate({ to: '/editor/task' as any, search: { lesson: category.letter, task: taskParam - 1 } as any })}
+                onClick={() => navigate({ to: '/editor/task', search: { lesson: category.letter, task: taskParam - 1 } })}
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 {t.task.previousTask}
               </Button>
             ) : <div />}
             {taskParam < category.tasks.length && (
-              <Button onClick={() => navigate({ to: '/editor/task' as any, search: { lesson: category.letter, task: taskParam + 1 } as any })}>
+              <Button onClick={() => navigate({ to: '/editor/task', search: { lesson: category.letter, task: taskParam + 1 } })}>
                 {t.task.nextTask}
                 <ArrowLeft className="ml-2 h-4 w-4 rotate-180" />
               </Button>

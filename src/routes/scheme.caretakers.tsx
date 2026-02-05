@@ -41,10 +41,10 @@ function CaretakersPage() {
           ? await executeQuery("SELECT id, jmeno, narozen FROM osetrovatele ORDER BY id")
           : await executeQuery("SELECT id, name, born FROM caretakers ORDER BY id")
 
-        const mappedCaretakers = result.rows.map((row: any) => ({
-          id: row.id,
-          name: isCzech ? row.jmeno : row.name,
-          born: (isCzech ? row.narozen : row.born) || '',
+        const mappedCaretakers = (result.rows as Record<string, unknown>[]).map((row) => ({
+          id: row.id as number,
+          name: (isCzech ? row.jmeno : row.name) as string,
+          born: ((isCzech ? row.narozen : row.born) || '') as string,
         }))
         setCaretakers(mappedCaretakers)
       } catch (error) {

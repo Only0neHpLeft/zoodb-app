@@ -21,6 +21,11 @@ export const upsertProfile = mutation({
     role: v.optional(v.union(v.literal("student"), v.literal("teacher"), v.literal("admin"))),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity || identity.subject !== args.clerkId) {
+      throw new Error("Unauthorized");
+    }
+
     const existing = await ctx.db
       .query("userProfiles")
       .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
@@ -75,6 +80,11 @@ export const updateSettings = mutation({
     customThemeCss: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity || identity.subject !== args.clerkId) {
+      throw new Error("Unauthorized");
+    }
+
     const profile = await ctx.db
       .query("userProfiles")
       .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
@@ -112,6 +122,11 @@ export const updateSettings = mutation({
 export const updateLastSeen = mutation({
   args: { clerkId: v.string() },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity || identity.subject !== args.clerkId) {
+      throw new Error("Unauthorized");
+    }
+
     const profile = await ctx.db
       .query("userProfiles")
       .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))

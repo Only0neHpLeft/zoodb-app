@@ -42,9 +42,9 @@ function TypesPage() {
           ? await executeQuery("SELECT id, nazev, vaha_min, vaha_max FROM druhy ORDER BY id")
           : await executeQuery("SELECT id, name, weight_min, weight_max FROM types ORDER BY id")
 
-        const mappedTypes = result.rows.map((row: any) => ({
-          id: row.id,
-          name: isCzech ? row.nazev : row.name,
+        const mappedTypes = (result.rows as Record<string, unknown>[]).map((row) => ({
+          id: row.id as number,
+          name: (isCzech ? row.nazev : row.name) as string,
           weightMin: Number(isCzech ? row.vaha_min : row.weight_min) || 0,
           weightMax: Number(isCzech ? row.vaha_max : row.weight_max) || 0,
         }))

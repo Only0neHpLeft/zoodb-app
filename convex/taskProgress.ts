@@ -13,6 +13,11 @@ export const saveTaskProgress = mutation({
     timeSpentSeconds: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity || identity.subject !== args.clerkId) {
+      throw new Error("Unauthorized");
+    }
+
     const now = Date.now();
 
     // Find existing progress for this task
@@ -144,6 +149,11 @@ export const getCompletionStats = query({
 export const resetStudentProgress = mutation({
   args: { clerkId: v.string() },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity || identity.subject !== args.clerkId) {
+      throw new Error("Unauthorized");
+    }
+
     const progress = await ctx.db
       .query("taskProgress")
       .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))

@@ -56,18 +56,18 @@ function LikesPage() {
           ])
         }
 
-        const mappedCaretakers = caretakersResult.rows.map((row: any) => ({
-          id: row.id,
-          name: isCzech ? row.jmeno : row.name
+        const mappedCaretakers = (caretakersResult.rows as Record<string, unknown>[]).map((row) => ({
+          id: row.id as number,
+          name: (isCzech ? row.jmeno : row.name) as string
         }))
-        const mappedTypes = typesResult.rows.map((row: any) => ({
-          id: row.id,
-          name: isCzech ? row.nazev : row.name
+        const mappedTypes = (typesResult.rows as Record<string, unknown>[]).map((row) => ({
+          id: row.id as number,
+          name: (isCzech ? row.nazev : row.name) as string
         }))
-        const mappedLikes = likesResult.rows.map((row: any) => ({
-          id: row.id,
-          caretakerId: isCzech ? row.osetrovatel : row.caretaker,
-          typeId: isCzech ? row.druh : row.type,
+        const mappedLikes = (likesResult.rows as Record<string, unknown>[]).map((row) => ({
+          id: row.id as number,
+          caretakerId: (isCzech ? row.osetrovatel : row.caretaker) as number,
+          typeId: (isCzech ? row.druh : row.type) as number,
         }))
 
         setCaretakers(mappedCaretakers)

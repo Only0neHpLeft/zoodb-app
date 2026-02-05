@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
-import { useNetworkStatus } from '@/hooks/useNetworkStatus';
+import { useNetworkStatus } from '@/hooks/use-network-status';
 import {
   getQueuedOperations,
   updateOperationRetry,
@@ -9,7 +9,7 @@ import {
   QueuedOperation,
 } from '@/lib/db/offline-queue';
 import { isDatabaseInitialized } from '@/lib/db/pglite';
-import { ConvexHttpClient } from 'convex/browser';
+import { useConvex } from 'convex/react';
 
 interface OfflineContextValue {
   isOnline: boolean;
@@ -26,6 +26,7 @@ const MAX_RETRIES = 5;
 
 export function OfflineProvider({ children }: { children: React.ReactNode }) {
   const isOnline = useNetworkStatus();
+  const convex = useConvex();
   const [isSyncing, setIsSyncing] = useState(false);
   const [failedOperations, setFailedOperations] = useState<QueuedOperation[]>([]);
   const [queuedCount, setQueuedCount] = useState(0);
@@ -76,7 +77,6 @@ export function OfflineProvider({ children }: { children: React.ReactNode }) {
     setIsSyncing(true);
     try {
       const operations = await getQueuedOperations();
-      const httpClient = new ConvexHttpClient(import.meta.env.VITE_CONVEX_URL as string);
 
       for (const op of operations) {
         // Skip if already exceeded max retries
@@ -93,12 +93,13 @@ export function OfflineProvider({ children }: { children: React.ReactNode }) {
             // Dynamic import of the mutation endpoint
             const { api } = await import('../../convex/_generated/api');
             const endpointParts = op.endpoint.split('.');
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Dynamic mutation resolution requires runtime API traversal
             let mutationFn: any = api;
             for (const part of endpointParts) {
               mutationFn = mutationFn[part];
             }
 
-            await httpClient.mutation(mutationFn, payload);
+            await convex.mutation(mutationFn, payload);
           }
 
           // Success - remove from queue
@@ -128,7 +129,7 @@ export function OfflineProvider({ children }: { children: React.ReactNode }) {
       isSyncingRef.current = false;
       setIsSyncing(false);
     }
-  }, [isOnline, loadFailedOperations, loadQueuedCount]);
+  }, [isOnline, convex, loadFailedOperations, loadQueuedCount]);
 
   const clearFailedOps = useCallback(async () => {
     await clearFailedOperations();
@@ -140,6 +141,7 @@ export function OfflineProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     loadFailedOperations();
     loadQueuedCount();
+    // Intentionally empty deps — one-time mount effect; callbacks are stable refs via useCallback
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

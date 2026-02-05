@@ -70,9 +70,6 @@ const config = defineConfig({
             // Radix UI - many small packages, group them
             if (id.includes('@radix-ui')) return 'vendor-radix'
             
-            // Charts - heavy, only load when needed
-            if (id.includes('recharts') || id.includes('d3-')) return 'vendor-charts'
-            
             // Convex - API client
             if (id.includes('convex')) return 'vendor-convex'
             
@@ -85,11 +82,6 @@ const config = defineConfig({
             return 'vendor'
           }
           
-          // Split heavy local modules
-          // Chart component is heavy due to recharts - lazy loaded
-          if (id.includes('/components/ui/chart')) {
-            return 'ui-charts'
-          }
         },
       },
     },

@@ -3,12 +3,54 @@ import { TanStackRouterVite } from '@tanstack/router-plugin/vite'
 import viteReact from '@vitejs/plugin-react'
 import viteTsConfigPaths from 'vite-tsconfig-paths'
 import tailwindcss from '@tailwindcss/vite'
+import type { Plugin } from 'vite'
+
+// Dev-only middleware: relays OAuth OTT from system browser to Tauri app.
+// Browser redirects to /auth-callback?ott=xxx → middleware stores it.
+// Tauri app polls /api/auth-ott → gets the OTT and exchanges it.
+function authCallbackPlugin(): Plugin {
+  let pendingOtt: string | null = null
+
+  return {
+    name: 'auth-callback-relay',
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        if (req.url?.startsWith('/auth-callback')) {
+          const url = new URL(req.url, 'http://localhost:3000')
+          pendingOtt = url.searchParams.get('ott')
+          res.setHeader('Content-Type', 'text/html')
+          res.end(`<!DOCTYPE html>
+<html><head><title>ZooDB</title><style>
+  body { font-family: system-ui; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #0a0a0a; color: #fafafa; }
+  .card { text-align: center; padding: 2rem; }
+  h1 { font-size: 1.25rem; margin-bottom: 0.5rem; }
+  p { color: #888; font-size: 0.875rem; }
+</style></head>
+<body><div class="card"><h1>Sign-in successful</h1><p>You can close this tab and return to Zoo Database.</p></div></body></html>`)
+          return
+        }
+
+        if (req.url === '/api/auth-ott') {
+          res.setHeader('Content-Type', 'application/json')
+          res.setHeader('Access-Control-Allow-Origin', '*')
+          const ott = pendingOtt
+          pendingOtt = null // one-time use
+          res.end(JSON.stringify({ ott }))
+          return
+        }
+
+        next()
+      })
+    },
+  }
+}
 
 const config = defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(process.env.npm_package_version ?? '0.0.0'),
   },
   plugins: [
+    authCallbackPlugin(),
     TanStackRouterVite({
       // Enable automatic code splitting for routes (bundle-dynamic-imports rule)
       // Route configs stay in main bundle, components load on navigation

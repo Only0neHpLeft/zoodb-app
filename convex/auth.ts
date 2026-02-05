@@ -1,5 +1,6 @@
 import { createClient, type GenericCtx } from "@convex-dev/better-auth";
 import { convex, crossDomain } from "@convex-dev/better-auth/plugins";
+import { tauri } from "@daveyplate/better-auth-tauri/plugin";
 import { components } from "./_generated/api";
 import type { DataModel } from "./_generated/dataModel";
 import { query } from "./_generated/server";
@@ -12,15 +13,22 @@ export const authComponent = createClient<DataModel>(components.betterAuth);
 
 export const createAuth = (ctx: GenericCtx<DataModel>) => {
   return betterAuth({
-    trustedOrigins: [siteUrl, "tauri://localhost", "http://localhost:3000"],
+    trustedOrigins: [siteUrl, "tauri://localhost", "http://localhost:3000", "zoodb://"],
     database: authComponent.adapter(ctx),
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: false,
     },
+    socialProviders: {
+      google: {
+        clientId: process.env.GOOGLE_CLIENT_ID!,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      },
+    },
     plugins: [
       crossDomain({ siteUrl }),
       convex({ authConfig }),
+      tauri({ scheme: "zoodb" }),
     ],
   });
 };

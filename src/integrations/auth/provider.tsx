@@ -1,7 +1,9 @@
-import { ReactNode, Suspense } from "react";
+import { ReactNode, Suspense, useCallback, useEffect } from "react";
 import { ConvexReactClient } from "convex/react";
 import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
+import { useBetterAuthTauri } from "@daveyplate/better-auth-tauri/react";
 import { authClient } from "@/lib/auth-client";
+import { isTauri } from "@/lib/tauri";
 
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
 
@@ -60,10 +62,56 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+function TauriAuthSetup() {
+  const onSuccess = useCallback((callbackURL?: string | null) => {
+    window.location.href = callbackURL || "/";
+  }, []);
+
+  useBetterAuthTauri({
+    authClient,
+    scheme: "zoodb",
+    onSuccess,
+  });
+
+  // Fallback deep link handler for OAuth redirects (zoodb:///?ott=xxx)
+  // useBetterAuthTauri only handles zoodb://api/auth/... URLs
+  useEffect(() => {
+    if (!isTauri()) return;
+
+    let unlisten: (() => void) | undefined;
+
+    const setup = async () => {
+      const { onOpenUrl } = await import("@tauri-apps/plugin-deep-link");
+      unlisten = await onOpenUrl((urls) => {
+        for (const url of urls) {
+          if (url.startsWith("zoodb://") && !url.includes("/api/auth/")) {
+            try {
+              const parsed = new URL(url);
+              const ott = parsed.searchParams.get("ott");
+              if (ott) {
+                // Navigate with OTT so crossDomainClient exchanges it
+                window.location.href = `/?ott=${ott}`;
+                return;
+              }
+            } catch { /* invalid URL, fall through */ }
+            window.location.href = "/";
+          }
+        }
+      });
+    };
+
+    setup();
+    return () => unlisten?.();
+  }, []);
+
+  return null;
+}
+
 export function AuthProvider({ children }: AuthProviderProps) {
   return (
     <Suspense fallback={<LoadingScreen />}>
       <ConvexBetterAuthProvider client={convex} authClient={authClient}>
+        <TauriAuthSetup />
         {children}
       </ConvexBetterAuthProvider>
     </Suspense>

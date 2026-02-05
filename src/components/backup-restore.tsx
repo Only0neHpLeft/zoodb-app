@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Database, AlertTriangle } from 'lucide-react';
+import { Database } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Field, FieldContent, FieldTitle, FieldDescription } from '@/components/ui/field';
 import {
@@ -92,17 +92,19 @@ export function BackupRestore() {
   if (loading) {
     return (
       <div className="flex flex-col gap-4">
-        <h3 className="text-lg font-semibold">{t.backup.title}</h3>
-        <Field className="border rounded-lg p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-lg bg-muted">
-              <Database className="size-5 animate-pulse" />
+        <h3 className="text-lg font-semibold text-destructive">{t.backup.dangerZone}</h3>
+        <div className="grid gap-4">
+          <Field className="border border-destructive/50 rounded-lg p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-destructive/10">
+                <Database className="size-5 animate-pulse text-destructive" />
+              </div>
+              <FieldContent>
+                <FieldTitle>Loading...</FieldTitle>
+              </FieldContent>
             </div>
-            <FieldContent>
-              <FieldTitle>Loading...</FieldTitle>
-            </FieldContent>
-          </div>
-        </Field>
+          </Field>
+        </div>
       </div>
     );
   }
@@ -110,56 +112,53 @@ export function BackupRestore() {
   return (
     <>
       <div className="flex flex-col gap-4">
-        <div className="flex items-center gap-2">
-          <AlertTriangle className="size-5 text-destructive" />
-          <h3 className="text-lg font-semibold text-destructive">{t.backup.dangerZone}</h3>
+        <h3 className="text-lg font-semibold text-destructive">{t.backup.dangerZone}</h3>
+        <div className="grid gap-4">
+          <Field className="border border-destructive/50 rounded-lg p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-destructive/10">
+                <Database className="size-5 text-destructive" />
+              </div>
+              <FieldContent className="flex-1">
+                <FieldTitle>{t.backup.title}</FieldTitle>
+                <FieldDescription>
+                  <span className="block space-y-1">
+                    <span className="block">{t.backup.description}</span>
+                    {backupExists && backupDate && (
+                      <span className="block text-xs">
+                        <span className="font-medium">{t.backup.createdOn}:</span>{' '}
+                        {backupDate.toLocaleDateString()} {backupDate.toLocaleTimeString()}
+                      </span>
+                    )}
+                    {!backupExists && (
+                      <span className="block text-xs text-muted-foreground">{t.backup.noBackup}</span>
+                    )}
+                  </span>
+                </FieldDescription>
+              </FieldContent>
+              <Button
+                variant="destructive"
+                onClick={handleRestoreClick}
+                disabled={!backupExists || isRestoring}
+              >
+                {isRestoring ? t.backup.progress.restoring : t.backup.restoreButton}
+              </Button>
+            </div>
+
+            {isRestoring && (
+              <div className="mt-4 space-y-2">
+                <Progress value={undefined} className="h-2" />
+                <p className="text-sm text-muted-foreground">{restoreProgress}</p>
+              </div>
+            )}
+          </Field>
         </div>
-
-        <Field className="border-2 border-destructive/50 rounded-lg p-4 bg-destructive/5">
-          <div className="flex items-start gap-3">
-            <div className="flex size-10 items-center justify-center rounded-lg bg-destructive/20">
-              <Database className="size-5 text-destructive" />
-            </div>
-            <FieldContent className="flex-1">
-              <FieldTitle>{t.backup.title}</FieldTitle>
-              <FieldDescription>
-                <span className="block space-y-2">
-                  <span className="block">{t.backup.description}</span>
-                  {backupExists && backupDate && (
-                    <span className="block text-xs">
-                      <span className="font-medium">{t.backup.createdOn}:</span>{' '}
-                      {backupDate.toLocaleDateString()} {backupDate.toLocaleTimeString()}
-                    </span>
-                  )}
-                  {!backupExists && (
-                    <span className="block text-xs text-muted-foreground">{t.backup.noBackup}</span>
-                  )}
-                </span>
-              </FieldDescription>
-            </FieldContent>
-            <Button
-              variant="destructive"
-              onClick={handleRestoreClick}
-              disabled={!backupExists || isRestoring}
-            >
-              {isRestoring ? t.backup.progress.restoring : t.backup.restoreButton}
-            </Button>
-          </div>
-
-          {isRestoring && (
-            <div className="mt-4 space-y-2">
-              <Progress value={undefined} className="h-2" />
-              <p className="text-sm text-muted-foreground">{restoreProgress}</p>
-            </div>
-          )}
-        </Field>
       </div>
 
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="size-5 text-destructive" />
+            <AlertDialogTitle>
               {t.backup.confirmDialog.title}
             </AlertDialogTitle>
             <AlertDialogDescription asChild>

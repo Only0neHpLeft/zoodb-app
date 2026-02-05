@@ -9,15 +9,17 @@
     "process:default",
     "opener:default",
     "store:default",
-    "clerk:default",
+    "deep-link:default",
+    "os:default",
     "updater:default",
     {
       "identifier": "http:default",
       "allow": [
-        { "url": "https://*.clerk.accounts.dev/*" },
-        { "url": "https://*.clerk.com/*" },
         { "url": "https://*.convex.cloud/*" },
-        { "url": "wss://*.convex.cloud/*" }
+        { "url": "wss://*.convex.cloud/*" },
+        { "url": "https://*.convex.site/*" },
+        { "url": "https://github.com/*" },
+        { "url": "https://api.github.com/*" }
       ]
     }
   ]

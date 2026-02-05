@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router"
 import { useState, useEffect, useMemo, useCallback } from "react"
 import { Home, Database, Settings, User, ChevronRight, Bug, Lightbulb, Ambulance, Heart, Bandage, ChevronDown, PawPrint, Utensils, Carrot, Ham, LogOut, GraduationCap, LogIn, Shield, Coins } from "lucide-react"
-import { useAuth } from "@/hooks/use-clerk-auth"
+import { useAuth } from "@/hooks/use-auth"
 import { useStableCallback } from "@/hooks/use-latest"
 import {
   Sidebar,
@@ -315,7 +315,7 @@ export function AppSidebar() {
                 </div>
                 <div className="flex flex-col items-start min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
                   <span className="text-sm font-semibold truncate w-full">
-                    {user.fullName || profile?.full_name || 'User'}
+                    {user.name || profile?.full_name || 'User'}
                   </span>
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs text-muted-foreground capitalize">

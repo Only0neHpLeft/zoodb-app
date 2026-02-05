@@ -5,6 +5,9 @@ import viteTsConfigPaths from 'vite-tsconfig-paths'
 import tailwindcss from '@tailwindcss/vite'
 
 const config = defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(process.env.npm_package_version ?? '0.0.0'),
+  },
   plugins: [
     TanStackRouterVite({
       // Enable automatic code splitting for routes (bundle-dynamic-imports rule)
@@ -35,8 +38,8 @@ const config = defineConfig({
   },
   build: {
     outDir: 'dist',
-    // Clerk is ~3MB, pglite assets are large - this is expected
-    chunkSizeWarningLimit: 3500,
+    // pglite assets are large - this is expected
+    chunkSizeWarningLimit: 2000,
     // Enable module preload for faster chunk loading (Vite optimization)
     modulePreload: {
       polyfill: true,
@@ -61,8 +64,8 @@ const config = defineConfig({
             if (id.includes('@electric-sql/pglite')) return undefined
             
             // Group by major library to avoid circular deps
-            // Clerk is the largest - keep it separate
-            if (id.includes('@clerk') || id.includes('clerk')) return 'vendor-clerk'
+            // Better Auth
+            if (id.includes('better-auth') || id.includes('@convex-dev/better-auth') || id.includes('@daveyplate')) return 'vendor-better-auth'
             
             // TanStack packages together
             if (id.includes('@tanstack')) return 'vendor-tanstack'

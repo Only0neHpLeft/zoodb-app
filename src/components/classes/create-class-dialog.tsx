@@ -8,11 +8,11 @@ import { Plus } from "lucide-react"
 import { useCreateClass } from "@/lib/db/convex-db"
 
 interface CreateClassDialogProps {
-  clerkId: string
+  userId: string // userId passed from parent
   t: { pages: { classes: Record<string, string> } }
 }
 
-export function CreateClassDialog({ clerkId, t }: CreateClassDialogProps) {
+export function CreateClassDialog({ userId, t }: CreateClassDialogProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -25,7 +25,7 @@ export function CreateClassDialog({ clerkId, t }: CreateClassDialogProps) {
     setIsCreating(true)
     try {
       await createClass({
-        teacherClerkId: clerkId,
+        teacherUserId: userId,
         name: name.trim(),
         description: description.trim() || undefined,
       })

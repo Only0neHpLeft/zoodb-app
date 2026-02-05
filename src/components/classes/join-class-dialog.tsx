@@ -8,11 +8,11 @@ import { BookOpen } from "lucide-react"
 import { useJoinClass } from "@/lib/db/convex-db"
 
 interface JoinClassDialogProps {
-  clerkId: string
+  userId: string // userId passed from parent
   t: { pages: { classes: Record<string, string> } }
 }
 
-export function JoinClassDialog({ clerkId, t }: JoinClassDialogProps) {
+export function JoinClassDialog({ userId, t }: JoinClassDialogProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [joinCode, setJoinCode] = useState('')
   const [isJoining, setIsJoining] = useState(false)
@@ -24,7 +24,7 @@ export function JoinClassDialog({ clerkId, t }: JoinClassDialogProps) {
     setIsJoining(true)
     try {
       await joinClass({
-        studentClerkId: clerkId,
+        studentUserId: userId,
         classCode: joinCode.trim(),
       })
       toast.success(t.pages.classes.classJoined)

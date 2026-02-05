@@ -2,9 +2,9 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export default defineSchema({
-  // User profiles - synced from Clerk
+  // User profiles
   userProfiles: defineTable({
-    clerkId: v.string(),
+    userId: v.string(),
     email: v.string(),
     fullName: v.optional(v.string()),
     role: v.union(v.literal("student"), v.literal("teacher"), v.literal("admin")),
@@ -17,21 +17,21 @@ export default defineSchema({
     onboardingCompleted: v.optional(v.boolean()),
     lastSeenAt: v.optional(v.number()),
   })
-    .index("by_clerk_id", ["clerkId"])
+    .index("by_user_id", ["userId"])
     .index("by_email", ["email"]),
 
   // User memberships / subscriptions
   userMemberships: defineTable({
-    clerkId: v.string(),
+    userId: v.string(),
     planType: v.string(), // 'free', 'pro', 'enterprise', etc.
     licenseKey: v.optional(v.string()),
     licenseStatus: v.optional(v.string()),
     licenseExpiresAt: v.optional(v.number()),
-  }).index("by_clerk_id", ["clerkId"]),
+  }).index("by_user_id", ["userId"]),
 
   // Task progress tracking
   taskProgress: defineTable({
-    clerkId: v.string(),
+    userId: v.string(),
     categoryLetter: v.string(),
     taskIndex: v.number(),
     taskId: v.string(),
@@ -44,12 +44,12 @@ export default defineSchema({
     hintsUsed: v.number(),
     timeSpentSeconds: v.number(),
   })
-    .index("by_clerk_id", ["clerkId"])
-    .index("by_clerk_and_task", ["clerkId", "categoryLetter", "taskIndex"]),
+    .index("by_user_id", ["userId"])
+    .index("by_user_and_task", ["userId", "categoryLetter", "taskIndex"]),
 
   // Classes (for teachers)
   classes: defineTable({
-    teacherClerkId: v.string(),
+    teacherUserId: v.string(),
     name: v.string(),
     description: v.optional(v.string()),
     code: v.string(), // Unique join code
@@ -60,19 +60,19 @@ export default defineSchema({
     startDate: v.optional(v.number()),
     endDate: v.optional(v.number()),
   })
-    .index("by_teacher", ["teacherClerkId"])
+    .index("by_teacher", ["teacherUserId"])
     .index("by_code", ["code"]),
 
   // Class enrollments (students in classes)
   classEnrollments: defineTable({
     classId: v.id("classes"),
-    studentClerkId: v.string(),
+    studentUserId: v.string(),
     status: v.union(v.literal("active"), v.literal("inactive"), v.literal("removed")),
     joinedAt: v.number(),
     removedAt: v.optional(v.number()),
     removedBy: v.optional(v.string()),
   })
     .index("by_class", ["classId"])
-    .index("by_student", ["studentClerkId"])
-    .index("by_class_and_student", ["classId", "studentClerkId"]),
+    .index("by_student", ["studentUserId"])
+    .index("by_class_and_student", ["classId", "studentUserId"]),
 });

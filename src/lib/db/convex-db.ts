@@ -33,7 +33,7 @@ export interface UserSettings {
 
 export interface UserMembership {
   id: string;
-  clerkId: string;
+  userId: string;
   planType: string;
   licenseKey?: string;
   licenseStatus?: string;
@@ -45,7 +45,7 @@ export interface Class {
   name: string;
   description?: string;
   code: string;
-  teacherClerkId: string;
+  teacherUserId: string;
   language: "en" | "cz";
   maxStudents: number;
   isActive: boolean;
@@ -68,7 +68,7 @@ export interface ClassStudent {
 
 export interface TaskProgressRecord {
   id: string;
-  clerkId: string;
+  userId: string;
   categoryLetter: string;
   taskIndex: number;
   taskId: string;
@@ -86,10 +86,10 @@ export interface TaskProgressRecord {
 // User Profile Hooks
 // ============================================================================
 
-export function useProfile(clerkId: string | undefined) {
+export function useProfile(userId: string | undefined) {
   return useQuery(
     api.users.getProfile,
-    clerkId ? { clerkId } : "skip"
+    userId ? { userId } : "skip"
   );
 }
 
@@ -101,10 +101,10 @@ export function useUpsertProfile() {
 // User Settings Hooks
 // ============================================================================
 
-export function useSettings(clerkId: string | undefined) {
+export function useSettings(userId: string | undefined) {
   return useQuery(
     api.users.getSettings,
-    clerkId ? { clerkId } : "skip"
+    userId ? { userId } : "skip"
   );
 }
 
@@ -116,10 +116,10 @@ export function useUpdateSettings() {
 // Membership Hooks
 // ============================================================================
 
-export function useMembership(clerkId: string | undefined) {
+export function useMembership(userId: string | undefined) {
   return useQuery(
     api.memberships.getMembership,
-    clerkId ? { clerkId } : "skip"
+    userId ? { userId } : "skip"
   );
 }
 
@@ -131,10 +131,10 @@ export function useUpdateMembership() {
   return useMutation(api.memberships.updateMembership);
 }
 
-export function useHasPremiumAccess(clerkId: string | undefined) {
+export function useHasPremiumAccess(userId: string | undefined) {
   return useQuery(
     api.memberships.hasPremiumAccess,
-    clerkId ? { clerkId } : "skip"
+    userId ? { userId } : "skip"
   );
 }
 
@@ -142,28 +142,28 @@ export function useHasPremiumAccess(clerkId: string | undefined) {
 // Task Progress Hooks
 // ============================================================================
 
-export function useStudentProgress(clerkId: string | undefined) {
+export function useStudentProgress(userId: string | undefined) {
   return useQuery(
     api.taskProgress.getStudentProgress,
-    clerkId ? { clerkId } : "skip"
+    userId ? { userId } : "skip"
   );
 }
 
 export function useTaskProgress(
-  clerkId: string | undefined,
+  userId: string | undefined,
   categoryLetter: string,
   taskIndex: number
 ) {
   return useQuery(
     api.taskProgress.getTaskProgress,
-    clerkId ? { clerkId, categoryLetter, taskIndex } : "skip"
+    userId ? { userId, categoryLetter, taskIndex } : "skip"
   );
 }
 
-export function useCompletionStats(clerkId: string | undefined) {
+export function useCompletionStats(userId: string | undefined) {
   return useQuery(
     api.taskProgress.getCompletionStats,
-    clerkId ? { clerkId } : "skip"
+    userId ? { userId } : "skip"
   );
 }
 
@@ -179,17 +179,17 @@ export function useResetStudentProgress() {
 // Classes Hooks
 // ============================================================================
 
-export function useTeacherClasses(teacherClerkId: string | undefined) {
+export function useTeacherClasses(teacherUserId: string | undefined) {
   return useQuery(
     api.classes.getTeacherClasses,
-    teacherClerkId ? { teacherClerkId } : "skip"
+    teacherUserId ? { teacherUserId } : "skip"
   );
 }
 
-export function useStudentClasses(studentClerkId: string | undefined) {
+export function useStudentClasses(studentUserId: string | undefined) {
   return useQuery(
     api.classes.getStudentClasses,
-    studentClerkId ? { studentClerkId } : "skip"
+    studentUserId ? { studentUserId } : "skip"
   );
 }
 
@@ -226,4 +226,3 @@ export function useDeleteClass() {
 export function useUpdateClass() {
   return useMutation(api.classes.updateClass);
 }
-

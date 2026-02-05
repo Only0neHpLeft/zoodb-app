@@ -9,7 +9,7 @@ function generateClassCode(): string {
 // Create a new class
 export const createClass = mutation({
   args: {
-    teacherClerkId: v.string(),
+    teacherUserId: v.string(),
     name: v.string(),
     description: v.optional(v.string()),
     language: v.optional(v.union(v.literal("en"), v.literal("cz"))),
@@ -17,14 +17,14 @@ export const createClass = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity || identity.subject !== args.teacherClerkId) {
+    if (!identity || identity.subject !== args.teacherUserId) {
       throw new Error("Unauthorized");
     }
 
     const code = generateClassCode();
 
     const id = await ctx.db.insert("classes", {
-      teacherClerkId: args.teacherClerkId,
+      teacherUserId: args.teacherUserId,
       name: args.name,
       description: args.description,
       code,
@@ -41,12 +41,12 @@ export const createClass = mutation({
 // Join a class with a code
 export const joinClass = mutation({
   args: {
-    studentClerkId: v.string(),
+    studentUserId: v.string(),
     classCode: v.string(),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity || identity.subject !== args.studentClerkId) {
+    if (!identity || identity.subject !== args.studentUserId) {
       throw new Error("Unauthorized");
     }
 
@@ -68,7 +68,7 @@ export const joinClass = mutation({
     const existing = await ctx.db
       .query("classEnrollments")
       .withIndex("by_class_and_student", (q) =>
-        q.eq("classId", classDoc._id).eq("studentClerkId", args.studentClerkId)
+        q.eq("classId", classDoc._id).eq("studentUserId", args.studentUserId)
       )
       .first();
 
@@ -99,7 +99,7 @@ export const joinClass = mutation({
     // Create enrollment
     const id = await ctx.db.insert("classEnrollments", {
       classId: classDoc._id,
-      studentClerkId: args.studentClerkId,
+      studentUserId: args.studentUserId,
       status: "active",
       joinedAt: Date.now(),
     });
@@ -110,11 +110,11 @@ export const joinClass = mutation({
 
 // Get classes where user is teacher
 export const getTeacherClasses = query({
-  args: { teacherClerkId: v.string() },
+  args: { teacherUserId: v.string() },
   handler: async (ctx, args) => {
     const classes = await ctx.db
       .query("classes")
-      .withIndex("by_teacher", (q) => q.eq("teacherClerkId", args.teacherClerkId))
+      .withIndex("by_teacher", (q) => q.eq("teacherUserId", args.teacherUserId))
       .collect();
 
     // Add student count to each class
@@ -139,11 +139,11 @@ export const getTeacherClasses = query({
 
 // Get classes where user is enrolled as student
 export const getStudentClasses = query({
-  args: { studentClerkId: v.string() },
+  args: { studentUserId: v.string() },
   handler: async (ctx, args) => {
     const enrollments = await ctx.db
       .query("classEnrollments")
-      .withIndex("by_student", (q) => q.eq("studentClerkId", args.studentClerkId))
+      .withIndex("by_student", (q) => q.eq("studentUserId", args.studentUserId))
       .filter((q) => q.eq(q.field("status"), "active"))
       .collect();
 
@@ -186,13 +186,13 @@ export const getClassStudents = query({
         // Get user profile
         const profile = await ctx.db
           .query("userProfiles")
-          .withIndex("by_clerk_id", (q) => q.eq("clerkId", enrollment.studentClerkId))
+          .withIndex("by_user_id", (q) => q.eq("userId", enrollment.studentUserId))
           .first();
 
         // Get task progress
         const progress = await ctx.db
           .query("taskProgress")
-          .withIndex("by_clerk_id", (q) => q.eq("clerkId", enrollment.studentClerkId))
+          .withIndex("by_user_id", (q) => q.eq("userId", enrollment.studentUserId))
           .collect();
 
         const tasksCompleted = progress.filter((p) => p.completed).length;
@@ -202,7 +202,7 @@ export const getClassStudents = query({
           : undefined;
 
         return {
-          studentId: enrollment.studentClerkId,
+          studentId: enrollment.studentUserId,
           studentName: profile?.fullName ?? profile?.email ?? "Unknown",
           studentEmail: profile?.email ?? "",
           status: enrollment.status,
@@ -221,19 +221,19 @@ export const getClassStudents = query({
 // Leave a class
 export const leaveClass = mutation({
   args: {
-    studentClerkId: v.string(),
+    studentUserId: v.string(),
     classId: v.id("classes"),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity || identity.subject !== args.studentClerkId) {
+    if (!identity || identity.subject !== args.studentUserId) {
       throw new Error("Unauthorized");
     }
 
     const enrollment = await ctx.db
       .query("classEnrollments")
       .withIndex("by_class_and_student", (q) =>
-        q.eq("classId", args.classId).eq("studentClerkId", args.studentClerkId)
+        q.eq("classId", args.classId).eq("studentUserId", args.studentUserId)
       )
       .first();
 
@@ -253,12 +253,12 @@ export const leaveClass = mutation({
 // Delete a class (teacher only)
 export const deleteClass = mutation({
   args: {
-    teacherClerkId: v.string(),
+    teacherUserId: v.string(),
     classId: v.id("classes"),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity || identity.subject !== args.teacherClerkId) {
+    if (!identity || identity.subject !== args.teacherUserId) {
       throw new Error("Unauthorized");
     }
 
@@ -268,7 +268,7 @@ export const deleteClass = mutation({
       throw new Error("Class not found");
     }
 
-    if (classDoc.teacherClerkId !== args.teacherClerkId) {
+    if (classDoc.teacherUserId !== args.teacherUserId) {
       throw new Error("Not authorized to delete this class");
     }
 
@@ -292,7 +292,7 @@ export const deleteClass = mutation({
 // Update class settings
 export const updateClass = mutation({
   args: {
-    teacherClerkId: v.string(),
+    teacherUserId: v.string(),
     classId: v.id("classes"),
     name: v.optional(v.string()),
     description: v.optional(v.string()),
@@ -302,7 +302,7 @@ export const updateClass = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity || identity.subject !== args.teacherClerkId) {
+    if (!identity || identity.subject !== args.teacherUserId) {
       throw new Error("Unauthorized");
     }
 
@@ -312,7 +312,7 @@ export const updateClass = mutation({
       throw new Error("Class not found");
     }
 
-    if (classDoc.teacherClerkId !== args.teacherClerkId) {
+    if (classDoc.teacherUserId !== args.teacherUserId) {
       throw new Error("Not authorized to update this class");
     }
 

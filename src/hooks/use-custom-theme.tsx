@@ -1,12 +1,12 @@
 import { useEffect, useState, useCallback } from "react"
-import { useAuth } from "@clerk/clerk-react"
+import { useSession } from "@/lib/auth-client"
 import { useUpdateSettings } from "@/lib/db/convex-db"
 
 export function useCustomTheme() {
   const [theme, setThemeState] = useState<string>("caffeine")
 
-  const { userId, isSignedIn } = useAuth()
-  const clerkId = isSignedIn ? (userId ?? undefined) : undefined
+  const { data: session } = useSession()
+  const userId = session?.user?.id ?? undefined
   const updateSettings = useUpdateSettings()
 
   const syncTheme = useCallback(() => {
@@ -63,14 +63,14 @@ export function useCustomTheme() {
     window.dispatchEvent(new CustomEvent("theme-change"))
 
     // If user is logged in, persist to database
-    if (clerkId) {
+    if (userId) {
       try {
-        await updateSettings({ clerkId, theme: newTheme })
+        await updateSettings({ userId, theme: newTheme })
       } catch (error) {
         console.error('Failed to save theme to database:', error)
       }
     }
-  }, [clerkId, updateSettings])
+  }, [userId, updateSettings])
 
   return { theme, setTheme }
 }

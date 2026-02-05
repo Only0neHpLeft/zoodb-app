@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Kbd } from "@/components/ui/kbd"
 import { useLanguage } from "@/contexts/language-context"
-import { useClerk } from "@clerk/clerk-react"
+import { authClient } from "@/lib/auth-client"
 import { toast } from "sonner"
 import { isTauri } from "@/lib/tauri"
 import {
@@ -25,7 +25,6 @@ import { Command as CommandIcon } from "lucide-react"
 
 export function CommandPalette() {
   const { language, setLanguage } = useLanguage()
-  const { signOut } = useClerk()
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const [inputValue, setInputValue] = useState("")
@@ -169,8 +168,8 @@ export function CommandPalette() {
           }
           break
         case "signOut":
-          await signOut()
-          navigate({ to: "/" })
+          await authClient.signOut()
+          window.location.href = "/sign-in"
           break
         case "showShortcuts":
           setShowShortcutsDialog(true)
@@ -182,7 +181,7 @@ export function CommandPalette() {
           console.warn(`Unknown function: ${functionId}`)
       }
     },
-    [language, setLanguage, signOut, navigate, isDesktopApp]
+    [language, setLanguage, navigate, isDesktopApp]
   )
 
   // Handle command selection

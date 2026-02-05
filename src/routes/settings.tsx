@@ -7,7 +7,7 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { LanguageToggle } from "@/components/language-toggle"
 import { BackupRestore } from "@/components/backup-restore"
 import { useLanguage } from "@/contexts/language-context"
-import { useAuth } from "@/hooks/use-clerk-auth"
+import { useAuth } from "@/hooks/use-auth"
 import { useMembership } from "@/contexts/membership-context"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -64,7 +64,7 @@ function SettingsPage() {
                   </div>
                   <FieldContent>
                     <FieldTitle>{t.settings.name}</FieldTitle>
-                    <FieldDescription>{profile?.full_name || user?.fullName || t.settings.notSet}</FieldDescription>
+                    <FieldDescription>{profile?.full_name || user?.name || t.settings.notSet}</FieldDescription>
                   </FieldContent>
                 </div>
               </Field>
@@ -75,7 +75,7 @@ function SettingsPage() {
                   </div>
                   <FieldContent>
                     <FieldTitle>{t.settings.email}</FieldTitle>
-                    <FieldDescription>{user?.primaryEmailAddress?.emailAddress || t.settings.notSet}</FieldDescription>
+                    <FieldDescription>{user?.email || t.settings.notSet}</FieldDescription>
                   </FieldContent>
                 </div>
               </Field>

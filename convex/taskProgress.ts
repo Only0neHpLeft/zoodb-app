@@ -4,7 +4,7 @@ import { query, mutation } from "./_generated/server";
 // Save or update task progress
 export const saveTaskProgress = mutation({
   args: {
-    clerkId: v.string(),
+    userId: v.string(),
     categoryLetter: v.string(),
     taskIndex: v.number(),
     taskId: v.string(),
@@ -14,7 +14,7 @@ export const saveTaskProgress = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity || identity.subject !== args.clerkId) {
+    if (!identity || identity.subject !== args.userId) {
       throw new Error("Unauthorized");
     }
 
@@ -23,9 +23,9 @@ export const saveTaskProgress = mutation({
     // Find existing progress for this task
     const existing = await ctx.db
       .query("taskProgress")
-      .withIndex("by_clerk_and_task", (q) =>
+      .withIndex("by_user_and_task", (q) =>
         q
-          .eq("clerkId", args.clerkId)
+          .eq("userId", args.userId)
           .eq("categoryLetter", args.categoryLetter)
           .eq("taskIndex", args.taskIndex)
       )
@@ -57,7 +57,7 @@ export const saveTaskProgress = mutation({
 
     // Create new progress record
     const id = await ctx.db.insert("taskProgress", {
-      clerkId: args.clerkId,
+      userId: args.userId,
       categoryLetter: args.categoryLetter,
       taskIndex: args.taskIndex,
       taskId: args.taskId,
@@ -76,11 +76,11 @@ export const saveTaskProgress = mutation({
 
 // Get all task progress for a student
 export const getStudentProgress = query({
-  args: { clerkId: v.string() },
+  args: { userId: v.string() },
   handler: async (ctx, args) => {
     return await ctx.db
       .query("taskProgress")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+      .withIndex("by_user_id", (q) => q.eq("userId", args.userId))
       .collect();
   },
 });
@@ -88,16 +88,16 @@ export const getStudentProgress = query({
 // Get progress for a specific task
 export const getTaskProgress = query({
   args: {
-    clerkId: v.string(),
+    userId: v.string(),
     categoryLetter: v.string(),
     taskIndex: v.number(),
   },
   handler: async (ctx, args) => {
     return await ctx.db
       .query("taskProgress")
-      .withIndex("by_clerk_and_task", (q) =>
+      .withIndex("by_user_and_task", (q) =>
         q
-          .eq("clerkId", args.clerkId)
+          .eq("userId", args.userId)
           .eq("categoryLetter", args.categoryLetter)
           .eq("taskIndex", args.taskIndex)
       )
@@ -107,11 +107,11 @@ export const getTaskProgress = query({
 
 // Get completion stats for a student
 export const getCompletionStats = query({
-  args: { clerkId: v.string() },
+  args: { userId: v.string() },
   handler: async (ctx, args) => {
     const progress = await ctx.db
       .query("taskProgress")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+      .withIndex("by_user_id", (q) => q.eq("userId", args.userId))
       .collect();
 
     const totalTasks = progress.length;
@@ -147,16 +147,16 @@ export const getCompletionStats = query({
 
 // Reset all progress for a student (for database reset)
 export const resetStudentProgress = mutation({
-  args: { clerkId: v.string() },
+  args: { userId: v.string() },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity || identity.subject !== args.clerkId) {
+    if (!identity || identity.subject !== args.userId) {
       throw new Error("Unauthorized");
     }
 
     const progress = await ctx.db
       .query("taskProgress")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+      .withIndex("by_user_id", (q) => q.eq("userId", args.userId))
       .collect();
 
     for (const record of progress) {

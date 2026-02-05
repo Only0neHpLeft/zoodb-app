@@ -8,7 +8,7 @@ type Language = 'en' | 'cz'
 
 interface LanguageContextType {
   language: Language
-  setLanguage: (lang: Language, clerkId?: string) => void
+  setLanguage: (lang: Language) => void
   t: typeof en | typeof cz
   categoryTranslations: typeof categoriesEn | typeof categoriesCz
 }
@@ -41,8 +41,8 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     setIsHydrated(true)
   }, [])
 
-  // setLanguage updates localStorage. DB persistence is handled by LanguageDbSync
-  // which lives inside ClerkProvider + ConvexClientProvider.
+  // setLanguage updates localStorage. DB persistence is handled by SettingsSyncProvider
+  // which lives inside AuthProvider.
   const setLanguage = useCallback((lang: Language) => {
     setLanguageState(lang)
     localStorage.setItem('language', lang)

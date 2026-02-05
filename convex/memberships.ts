@@ -3,34 +3,34 @@ import { query, mutation } from "./_generated/server";
 
 // Get membership for a user
 export const getMembership = query({
-  args: { clerkId: v.string() },
+  args: { userId: v.string() },
   handler: async (ctx, args) => {
     return await ctx.db
       .query("userMemberships")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+      .withIndex("by_user_id", (q) => q.eq("userId", args.userId))
       .first();
   },
 });
 
 // Get or create membership (ensures user has at least free tier)
 export const getOrCreateMembership = mutation({
-  args: { clerkId: v.string() },
+  args: { userId: v.string() },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity || identity.subject !== args.clerkId) {
+    if (!identity || identity.subject !== args.userId) {
       throw new Error("Unauthorized");
     }
 
     const existing = await ctx.db
       .query("userMemberships")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+      .withIndex("by_user_id", (q) => q.eq("userId", args.userId))
       .first();
 
     if (existing) return existing;
 
     // Create free membership
     const id = await ctx.db.insert("userMemberships", {
-      clerkId: args.clerkId,
+      userId: args.userId,
       planType: "free",
     });
     return await ctx.db.get(id);
@@ -40,7 +40,7 @@ export const getOrCreateMembership = mutation({
 // Update membership
 export const updateMembership = mutation({
   args: {
-    clerkId: v.string(),
+    userId: v.string(),
     planType: v.string(),
     licenseKey: v.optional(v.string()),
     licenseStatus: v.optional(v.string()),
@@ -48,13 +48,13 @@ export const updateMembership = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity || identity.subject !== args.clerkId) {
+    if (!identity || identity.subject !== args.userId) {
       throw new Error("Unauthorized");
     }
 
     const existing = await ctx.db
       .query("userMemberships")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+      .withIndex("by_user_id", (q) => q.eq("userId", args.userId))
       .first();
 
     if (existing) {
@@ -69,7 +69,7 @@ export const updateMembership = mutation({
 
     // Create new membership
     const id = await ctx.db.insert("userMemberships", {
-      clerkId: args.clerkId,
+      userId: args.userId,
       planType: args.planType,
       licenseKey: args.licenseKey,
       licenseStatus: args.licenseStatus,
@@ -81,11 +81,11 @@ export const updateMembership = mutation({
 
 // Check if user has premium access
 export const hasPremiumAccess = query({
-  args: { clerkId: v.string() },
+  args: { userId: v.string() },
   handler: async (ctx, args) => {
     const membership = await ctx.db
       .query("userMemberships")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+      .withIndex("by_user_id", (q) => q.eq("userId", args.userId))
       .first();
 
     if (!membership) return false;

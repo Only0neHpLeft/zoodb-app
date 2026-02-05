@@ -14,18 +14,18 @@ interface StudentClassCardProps {
     studentCount?: number
     joinedAt?: number
   }
-  clerkId: string
+  userId: string // userId passed from parent
   formatDate: (timestamp: number | undefined) => string
   t: { pages: { classes: Record<string, string> }; common: Record<string, string> }
 }
 
-export function StudentClassCard({ cls, clerkId, formatDate, t }: StudentClassCardProps) {
+export function StudentClassCard({ cls, userId, formatDate, t }: StudentClassCardProps) {
   const leaveClass = useLeaveClass()
 
   async function handleLeave() {
     try {
       await leaveClass({
-        studentClerkId: clerkId,
+        studentUserId: userId,
         classId: cls._id,
       })
       toast.success(t.pages.classes.leftClass)

@@ -1,6 +1,7 @@
-import { useUser, useClerk } from "@clerk/clerk-react"
 import { useNavigate, useLocation } from "@tanstack/react-router"
 import { useEffect, useRef } from "react"
+import { useAuth } from "@/hooks/use-auth"
+import { authClient } from "@/lib/auth-client"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SidebarInset } from "@/components/ui/sidebar"
 import { Spinner } from "@/components/ui/spinner"
@@ -12,8 +13,7 @@ const authRoutes = ["/sign-in", "/sign-up"]
 const AUTH_TIMEOUT_MS = 5000
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
-  const { isLoaded, isSignedIn } = useUser()
-  const { signOut } = useClerk()
+  const { isLoaded, isSignedIn } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const pathname = location.pathname
@@ -27,7 +27,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       timeoutRef.current = setTimeout(async () => {
         console.warn("Auth timeout - clearing stale session")
         try {
-          await signOut()
+          await authClient.signOut()
         } catch {
           // Ignore signOut errors, just redirect
         }
@@ -41,7 +41,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         timeoutRef.current = null
       }
     }
-  }, [isLoaded, isAuthRoute, signOut, navigate])
+  }, [isLoaded, isAuthRoute, navigate])
 
   useEffect(() => {
     if (!isLoaded) return
@@ -72,7 +72,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   // Show loading spinner while auth is loading or user not signed in
   if (!isLoaded || !isSignedIn) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen w-full items-center justify-center">
         <Spinner className="size-8" />
       </div>
     )

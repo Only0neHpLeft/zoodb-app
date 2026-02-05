@@ -12,7 +12,7 @@ export interface QueuedOperation {
 }
 
 export interface AuthCache {
-  clerk_token: string;
+  auth_token: string;
   user_info: string; // JSON stringified user data
   membership_tier: string;
   cached_at: string;
@@ -41,7 +41,7 @@ export async function initializeOfflineTables(): Promise<void> {
   await db.exec(`
     CREATE TABLE IF NOT EXISTS _auth_cache (
       id SERIAL PRIMARY KEY,
-      clerk_token TEXT,
+      auth_token TEXT,
       user_info TEXT,
       membership_tier VARCHAR(256),
       cached_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -139,7 +139,7 @@ export async function cacheAuth(
 
   // Insert new cache
   await db.query(
-    `INSERT INTO _auth_cache (clerk_token, user_info, membership_tier, expires_at)
+    `INSERT INTO _auth_cache (auth_token, user_info, membership_tier, expires_at)
      VALUES ($1, $2, $3, $4)`,
     [token, JSON.stringify(userInfo), membershipTier, expiresAt?.toISOString() || null]
   );
@@ -149,7 +149,7 @@ export async function getCachedAuth(): Promise<AuthCache | null> {
   const db = await getDb();
   const result = await db.query(`
     SELECT
-      clerk_token,
+      auth_token,
       user_info,
       membership_tier,
       cached_at::text,

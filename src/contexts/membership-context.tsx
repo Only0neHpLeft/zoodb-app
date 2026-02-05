@@ -1,6 +1,6 @@
 import { createContext, useContext, ReactNode, useMemo } from "react"
-import { useUser } from "@clerk/clerk-react"
-import { 
+import { useSession } from "@/lib/auth-client"
+import {
   useMembership as useConvexMembership,
   useProfile as useConvexProfile,
   useGetOrCreateMembership,
@@ -31,24 +31,26 @@ interface MembershipContextType {
 const MembershipContext = createContext<MembershipContextType | undefined>(undefined)
 
 export function MembershipProvider({ children }: { children: ReactNode }) {
-  const { user, isLoaded: isUserLoaded, isSignedIn } = useUser()
-  const clerkId = isSignedIn && user ? user.id : undefined
+  const { data: session, isPending } = useSession()
+  const isUserLoaded = !isPending
+  const isSignedIn = !!session?.user
+  const userId = isSignedIn ? (session.user.id ?? undefined) : undefined
 
   // Reactive Convex queries - automatically update when data changes
-  const convexMembership = useConvexMembership(clerkId)
-  const convexProfile = useConvexProfile(clerkId)
-  
+  const convexMembership = useConvexMembership(userId)
+  const convexProfile = useConvexProfile(userId)
+
   // Mutations
   const getOrCreateMembership = useGetOrCreateMembership()
   const updateMembershipMutation = useConvexUpdateMembership()
 
   // Ensure membership exists when user is signed in
   useEffect(() => {
-    if (clerkId && convexMembership === null && isUserLoaded) {
+    if (userId && convexMembership === null && isUserLoaded) {
       // Create membership if it doesn't exist
-      getOrCreateMembership({ clerkId })
+      getOrCreateMembership({ userId })
     }
-  }, [clerkId, convexMembership, isUserLoaded, getOrCreateMembership])
+  }, [userId, convexMembership, isUserLoaded, getOrCreateMembership])
 
   // Check if user is admin - admins get zooPlus by default
   const isAdmin = convexProfile?.isAdmin === true
@@ -59,7 +61,7 @@ export function MembershipProvider({ children }: { children: ReactNode }) {
 
     return {
       id: convexMembership._id,
-      user_id: convexMembership.clerkId,
+      user_id: convexMembership.userId,
       // Admin override: admins always get zooPlus
       plan_type: isAdmin ? "zooPlus" : (convexMembership.planType as PlanType),
       license_key: convexMembership.licenseKey || undefined,
@@ -78,8 +80,8 @@ export function MembershipProvider({ children }: { children: ReactNode }) {
   const refreshMembership = async () => {
     // With reactive queries, this is a no-op - data auto-refreshes
     // But we can force a re-creation if needed
-    if (clerkId) {
-      await getOrCreateMembership({ clerkId })
+    if (userId) {
+      await getOrCreateMembership({ userId })
     }
   }
 
@@ -89,10 +91,10 @@ export function MembershipProvider({ children }: { children: ReactNode }) {
     licenseStatus?: string,
     expiresAt?: string
   ) => {
-    if (!clerkId) return
+    if (!userId) return
 
     await updateMembershipMutation({
-      clerkId,
+      userId,
       planType,
       licenseKey,
       licenseStatus,

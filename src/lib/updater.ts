@@ -223,5 +223,5 @@ export async function downloadAndInstallUpdate(
  * Get the GitHub release URL for viewing details
  */
 export function getGitHubReleaseUrl(version: string): string {
-  return `https://github.com/Only0neHpLeft/zoo-databejs/releases/tag/v${version}`;
+  return `https://github.com/Only0neHpLeft/zoodb-app/releases/tag/v${version}`;
 }

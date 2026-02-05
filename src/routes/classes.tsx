@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router"
 import { useState } from "react"
-import { useUser } from "@clerk/clerk-react"
+import { useAuth } from "@/hooks/use-auth"
 import { toast } from "sonner"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Breadcrumbs } from "@/components/breadcrumbs"
@@ -45,16 +45,16 @@ function timeAgo(timestamp: number | undefined) {
 
 function ClassesPage() {
   const { t } = useLanguage()
-  const { user, isLoaded, isSignedIn } = useUser()
-  const clerkId = isSignedIn && user ? user.id : undefined
+  const { user, isLoaded, isSignedIn } = useAuth()
+  const userId = isSignedIn && user ? user.id : undefined
 
-  const convexProfile = useProfile(clerkId)
+  const convexProfile = useProfile(userId)
   const teacherClasses = useTeacherClasses(
     convexProfile && (convexProfile.role === 'teacher' || convexProfile.role === 'admin')
-      ? clerkId
+      ? userId
       : undefined
   )
-  const studentClasses = useStudentClasses(clerkId)
+  const studentClasses = useStudentClasses(userId)
 
   const [selectedClassId, setSelectedClassId] = useState<Id<"classes"> | null>(null)
   const classStudents = useClassStudents(selectedClassId ?? undefined)
@@ -65,7 +65,7 @@ function ClassesPage() {
   async function handleDeleteClass(classId: Id<"classes">) {
     if (!user) return
     try {
-      await deleteClass({ teacherClerkId: user.id, classId })
+      await deleteClass({ teacherUserId: user.id, classId })
       if (selectedClassId === classId) setSelectedClassId(null)
       toast.success(t.pages.classes.classDeleted)
     } catch (error) {
@@ -153,8 +153,8 @@ function ClassesPage() {
               <p className="text-muted-foreground">{t.pages.classes.description}</p>
             </div>
             <div className="flex gap-2">
-              <JoinClassDialog clerkId={user!.id} t={t} />
-              {isTeacher && <CreateClassDialog clerkId={user!.id} t={t} />}
+              <JoinClassDialog userId={user!.id} t={t} />
+              {isTeacher && <CreateClassDialog userId={user!.id} t={t} />}
             </div>
           </div>
 
@@ -226,7 +226,7 @@ function ClassesPage() {
                       <StudentClassCard
                         key={cls._id}
                         cls={cls}
-                        clerkId={user!.id}
+                        userId={user!.id}
                         formatDate={formatDate}
                         t={t}
                       />

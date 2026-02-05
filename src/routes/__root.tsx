@@ -1,11 +1,12 @@
+declare const __APP_VERSION__: string
+
 import { createRootRouteWithContext, Outlet, useRouter } from '@tanstack/react-router'
-import { useEffect, Suspense } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { getVersion } from '@tauri-apps/api/app'
-import { AlertTriangle, RefreshCw, Home } from 'lucide-react'
+import { AlertTriangle, RefreshCw, Home, Copy, Check } from 'lucide-react'
 
-import ClerkProvider from '../integrations/clerk/provider'
-import { ConvexClientProvider } from '../integrations/convex/provider'
+import { AuthProvider } from '../integrations/auth/provider'
 import { ThemeProvider } from '../components/theme-provider'
 import { LanguageProvider, useLanguage } from '../contexts/language-context'
 import { MembershipProvider } from '../contexts/membership-context'
@@ -14,6 +15,7 @@ import { SettingsSyncProvider } from '../hooks/use-settings-sync'
 import { AppLayout } from '../components/app-layout'
 import { DbInitProvider } from '../components/db-init-background'
 import { AppSkeleton } from '../components/app-skeleton'
+import { UpdateChecker } from '../components/update-checker'
 import { Button } from '../components/ui/button'
 import { SidebarProvider } from '../components/ui/sidebar'
 
@@ -21,6 +23,55 @@ import type { QueryClient } from '@tanstack/react-query'
 
 interface MyRouterContext {
   queryClient: QueryClient
+}
+
+function ErrorDetails({ error }: { error: Error }) {
+  const [copied, setCopied] = useState(false)
+
+  const errorText = [
+    `Error: ${error.message}`,
+    error.stack ? `\nStack trace:\n${error.stack}` : '',
+    `\nApp version: ${__APP_VERSION__ ?? 'unknown'}`,
+    `User agent: ${navigator.userAgent}`,
+    `Timestamp: ${new Date().toISOString()}`,
+  ].join('\n')
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(errorText)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  return (
+    <details className="rounded-lg border bg-muted/50 p-4 text-left">
+      <summary className="cursor-pointer text-sm font-medium">
+        Error details
+      </summary>
+      <div className="relative mt-2">
+        <button
+          onClick={handleCopy}
+          className="absolute right-2 top-2 rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          title="Copy error details"
+        >
+          {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+        </button>
+        <pre className="overflow-auto rounded-md bg-muted p-3 pr-10 text-xs text-muted-foreground max-h-64">
+          {errorText}
+        </pre>
+      </div>
+      <p className="mt-2 text-xs text-muted-foreground">
+        Copy the error above when filing a{' '}
+        <a
+          href="https://github.com/Only0neHpLeft/zoodb-app/issues/new"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline hover:text-foreground"
+        >
+          bug report
+        </a>.
+      </p>
+    </details>
+  )
 }
 
 function RootErrorComponent({ error }: { error: Error }) {
@@ -52,18 +103,7 @@ function RootErrorComponent({ error }: { error: Error }) {
             </p>
           </div>
 
-          {/* Error details (in development) */}
-          {import.meta.env.DEV && (
-            <details className="rounded-lg border bg-muted/50 p-4 text-left">
-              <summary className="cursor-pointer text-sm font-medium">
-                Error details
-              </summary>
-              <pre className="mt-2 overflow-auto text-xs text-muted-foreground">
-                {error.message}
-                {error.stack && `\n\n${error.stack}`}
-              </pre>
-            </details>
-          )}
+          <ErrorDetails error={error} />
 
           {/* Action buttons */}
           <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
@@ -125,23 +165,22 @@ function RootComponent() {
       <SidebarProvider>
         <LanguageProvider>
           <WindowTitle />
+          <UpdateChecker />
           <DbInitProvider>
-            <ClerkProvider>
-              <ConvexClientProvider>
-                <OfflineProvider>
-                  <MembershipProvider>
-                    <SettingsSyncProvider>
-                      {/* Suspense boundary for app shell - shows skeleton while AppLayout loads */}
-                      <Suspense fallback={<AppSkeleton />}>
-                        <AppLayout>
-                          <Outlet />
-                        </AppLayout>
-                      </Suspense>
-                    </SettingsSyncProvider>
-                  </MembershipProvider>
-                </OfflineProvider>
-              </ConvexClientProvider>
-            </ClerkProvider>
+            <AuthProvider>
+              <OfflineProvider>
+                <MembershipProvider>
+                  <SettingsSyncProvider>
+                    {/* Suspense boundary for app shell - shows skeleton while AppLayout loads */}
+                    <Suspense fallback={<AppSkeleton />}>
+                      <AppLayout>
+                        <Outlet />
+                      </AppLayout>
+                    </Suspense>
+                  </SettingsSyncProvider>
+                </MembershipProvider>
+              </OfflineProvider>
+            </AuthProvider>
           </DbInitProvider>
         </LanguageProvider>
       </SidebarProvider>

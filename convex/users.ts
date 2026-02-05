@@ -1,13 +1,13 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 
-// Get user profile by Clerk ID
+// Get user profile by user ID
 export const getProfile = query({
-  args: { clerkId: v.string() },
+  args: { userId: v.string() },
   handler: async (ctx, args) => {
     return await ctx.db
       .query("userProfiles")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+      .withIndex("by_user_id", (q) => q.eq("userId", args.userId))
       .first();
   },
 });
@@ -15,20 +15,20 @@ export const getProfile = query({
 // Create or update user profile
 export const upsertProfile = mutation({
   args: {
-    clerkId: v.string(),
+    userId: v.string(),
     email: v.string(),
     fullName: v.optional(v.string()),
     role: v.optional(v.union(v.literal("student"), v.literal("teacher"), v.literal("admin"))),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity || identity.subject !== args.clerkId) {
+    if (!identity || identity.subject !== args.userId) {
       throw new Error("Unauthorized");
     }
 
     const existing = await ctx.db
       .query("userProfiles")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+      .withIndex("by_user_id", (q) => q.eq("userId", args.userId))
       .first();
 
     if (existing) {
@@ -41,7 +41,7 @@ export const upsertProfile = mutation({
     }
 
     const id = await ctx.db.insert("userProfiles", {
-      clerkId: args.clerkId,
+      userId: args.userId,
       email: args.email,
       fullName: args.fullName,
       role: args.role ?? "student",
@@ -52,11 +52,11 @@ export const upsertProfile = mutation({
 
 // Get user settings
 export const getSettings = query({
-  args: { clerkId: v.string() },
+  args: { userId: v.string() },
   handler: async (ctx, args) => {
     const profile = await ctx.db
       .query("userProfiles")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+      .withIndex("by_user_id", (q) => q.eq("userId", args.userId))
       .first();
 
     if (!profile) return null;
@@ -73,7 +73,7 @@ export const getSettings = query({
 // Update user settings
 export const updateSettings = mutation({
   args: {
-    clerkId: v.string(),
+    userId: v.string(),
     language: v.optional(v.union(v.literal("en"), v.literal("cz"))),
     theme: v.optional(v.string()),
     darkMode: v.optional(v.boolean()),
@@ -81,19 +81,19 @@ export const updateSettings = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity || identity.subject !== args.clerkId) {
+    if (!identity || identity.subject !== args.userId) {
       throw new Error("Unauthorized");
     }
 
     const profile = await ctx.db
       .query("userProfiles")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+      .withIndex("by_user_id", (q) => q.eq("userId", args.userId))
       .first();
 
     if (!profile) {
       // Create profile with settings
       const id = await ctx.db.insert("userProfiles", {
-        clerkId: args.clerkId,
+        userId: args.userId,
         email: "", // Will be updated later
         role: "student",
         language: args.language,
@@ -120,16 +120,16 @@ export const updateSettings = mutation({
 
 // Update last seen timestamp
 export const updateLastSeen = mutation({
-  args: { clerkId: v.string() },
+  args: { userId: v.string() },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity || identity.subject !== args.clerkId) {
+    if (!identity || identity.subject !== args.userId) {
       throw new Error("Unauthorized");
     }
 
     const profile = await ctx.db
       .query("userProfiles")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+      .withIndex("by_user_id", (q) => q.eq("userId", args.userId))
       .first();
 
     if (profile) {

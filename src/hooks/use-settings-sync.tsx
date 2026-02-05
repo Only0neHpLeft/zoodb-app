@@ -1,7 +1,7 @@
 // Settings Sync Provider - syncs user settings & progress across sessions via Convex hooks
-// This provider MUST live inside both ClerkProvider and ConvexClientProvider.
+// This provider MUST live inside AuthProvider.
 import { createContext, useContext, useEffect, useRef, type ReactNode } from 'react'
-import { useAuth } from '@clerk/clerk-react'
+import { useSession } from '@/lib/auth-client'
 import { useStudentProgress, useSaveTaskProgress, useSettings, useUpdateSettings } from '@/lib/db/convex-db'
 import { useLanguage } from '@/contexts/language-context'
 import {
@@ -29,20 +29,21 @@ interface SettingsSyncProviderProps {
 }
 
 export function SettingsSyncProvider({ children }: SettingsSyncProviderProps) {
-  const { userId, isSignedIn } = useAuth()
-  const clerkId = isSignedIn ? (userId ?? undefined) : undefined
+  const { data: session, isPending } = useSession()
+  const isSignedIn = !!session?.user
+  const userId = session?.user?.id ?? null
 
   // ---- Language & Theme DB sync ----
-  const dbSettings = useSettings(clerkId)
+  const dbSettings = useSettings(userId ?? undefined)
   const updateSettings = useUpdateSettings()
   const { language, setLanguage } = useLanguage()
   const hasSettingsSyncedRef = useRef<string | null>(null)
 
   // On sign-in: pull language/theme from DB → localStorage
   useEffect(() => {
-    if (!clerkId || dbSettings === undefined || dbSettings === null) return
-    if (hasSettingsSyncedRef.current === clerkId) return
-    hasSettingsSyncedRef.current = clerkId
+    if (!userId || dbSettings === undefined || dbSettings === null) return
+    if (hasSettingsSyncedRef.current === userId) return
+    hasSettingsSyncedRef.current = userId
 
     // Sync language
     if (dbSettings.language) {
@@ -63,21 +64,21 @@ export function SettingsSyncProvider({ children }: SettingsSyncProviderProps) {
     }
     // Intentionally omit language and setLanguage to prevent sync loops on initial load
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clerkId, dbSettings])
+  }, [userId, dbSettings])
 
   // When language changes (user action), persist to DB
   useEffect(() => {
-    if (!clerkId || !hasSettingsSyncedRef.current) return
+    if (!userId || !hasSettingsSyncedRef.current) return
     // Only persist if we've already done the initial sync (avoid writing local value over DB on mount)
-    updateSettings({ clerkId, language }).catch((err: unknown) => {
+    updateSettings({ userId, language }).catch((err: unknown) => {
       console.error('Failed to save language to database:', err)
     })
-    // Intentionally omit clerkId and updateSettings — both are stable refs; including them would re-trigger on every auth state change
+    // Intentionally omit userId and updateSettings — both are stable refs; including them would re-trigger on every auth state change
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [language])
 
   // ---- Task Progress sync ----
-  const dbProgress = useStudentProgress(clerkId)
+  const dbProgress = useStudentProgress(userId ?? undefined)
   const saveTaskProgress = useSaveTaskProgress()
   const hasProgressSyncedRef = useRef<string | null>(null)
 
@@ -95,7 +96,7 @@ export function SettingsSyncProvider({ children }: SettingsSyncProviderProps) {
           if (student) {
             for (const task of Object.values(student.tasks)) {
               await saveTaskProgress({
-                clerkId: userId!,
+                userId: userId!,
                 categoryLetter: task.categoryLetter,
                 taskIndex: task.taskIndex,
                 taskId: `${task.categoryLetter}-${task.taskIndex}`,
@@ -180,7 +181,7 @@ export function SettingsSyncProvider({ children }: SettingsSyncProviderProps) {
   const isSyncing = !!(isSignedIn && userId && hasProgressSyncedRef.current !== userId)
 
   return (
-    <SettingsSyncContext.Provider value={{ isSyncing, userId: userId ?? null }}>
+    <SettingsSyncContext.Provider value={{ isSyncing, userId }}>
       {children}
     </SettingsSyncContext.Provider>
   )

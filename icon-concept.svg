@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="100%" stop-color="#0f0f1a"/>
+    </linearGradient>
+    <linearGradient id="snake" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0%" stop-color="#818cf8"/>
+      <stop offset="50%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#4338ca"/>
+    </linearGradient>
+    <linearGradient id="snakeLight" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#a5b4fc"/>
+      <stop offset="100%" stop-color="#6366f1"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.45">
+      <stop offset="0%" stop-color="#6366f1" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#6366f1" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1024" height="1024" rx="0" fill="url(#bg)"/>
+  <rect width="1024" height="1024" rx="0" fill="url(#glow)"/>
+
+  <!-- Subtle grid (database hint) -->
+  <g opacity="0.06" stroke="#6366f1" stroke-width="1.5">
+    <line x1="180" y1="720" x2="844" y2="720"/>
+    <line x1="180" y1="770" x2="844" y2="770"/>
+    <line x1="180" y1="820" x2="844" y2="820"/>
+    <line x1="380" y1="720" x2="380" y2="820"/>
+    <line x1="580" y1="720" x2="580" y2="820"/>
+  </g>
+
+  <!-- Snake body - coiled S-shape (also hints at SQL "S") -->
+  <g fill="none" stroke-linecap="round">
+
+    <!-- Main body coil - thick path -->
+    <path
+      d="M 350,680
+         C 250,680 180,620 180,540
+         C 180,440 280,380 380,380
+         C 500,380 560,440 560,520
+         C 560,590 510,630 450,630
+         C 390,630 350,590 350,540
+         C 350,490 390,460 430,460"
+      stroke="url(#snake)"
+      stroke-width="62"
+      fill="none"
+    />
+
+    <!-- Body continues to neck/head -->
+    <path
+      d="M 430,460
+         C 520,460 580,410 620,340
+         C 660,270 680,220 680,180"
+      stroke="url(#snakeLight)"
+      stroke-width="56"
+      fill="none"
+    />
+  </g>
+
+  <!-- Snake head -->
+  <g transform="translate(680, 160)">
+    <!-- Head shape - slightly triangular -->
+    <ellipse cx="0" cy="0" rx="52" ry="44" fill="#818cf8" transform="rotate(-15)"/>
+    <ellipse cx="10" cy="-4" rx="46" ry="38" fill="#6366f1" transform="rotate(-15)"/>
+
+    <!-- Eyes -->
+    <circle cx="-18" cy="-18" r="10" fill="#1a1a2e"/>
+    <circle cx="18" cy="-22" r="10" fill="#1a1a2e"/>
+    <!-- Eye slits (vertical pupils) -->
+    <ellipse cx="-18" cy="-18" rx="3.5" ry="8" fill="#a5b4fc" opacity="0.8"/>
+    <ellipse cx="18" cy="-22" rx="3.5" ry="8" fill="#a5b4fc" opacity="0.8"/>
+    <!-- Eye highlights -->
+    <circle cx="-14" cy="-22" r="3" fill="white" opacity="0.7"/>
+    <circle cx="22" cy="-26" r="3" fill="white" opacity="0.7"/>
+
+    <!-- Tongue -->
+    <g stroke="#ef4444" stroke-width="4" stroke-linecap="round" fill="none">
+      <line x1="42" y1="2" x2="68" y2="-8"/>
+      <line x1="68" y1="-8" x2="80" y2="-18"/>
+      <line x1="68" y1="-8" x2="82" y2="2"/>
+    </g>
+  </g>
+
+  <!-- Scale pattern on body (subtle) -->
+  <g opacity="0.12" fill="none" stroke="#a5b4fc" stroke-width="1.5">
+    <circle cx="280" cy="540" r="8"/>
+    <circle cx="310" cy="520" r="6"/>
+    <circle cx="250" cy="560" r="7"/>
+    <circle cx="380" cy="400" r="7"/>
+    <circle cx="420" cy="420" r="6"/>
+    <circle cx="460" cy="400" r="8"/>
+    <circle cx="500" cy="430" r="6"/>
+    <circle cx="520" cy="500" r="7"/>
+    <circle cx="480" cy="550" r="6"/>
+    <circle cx="440" cy="590" r="7"/>
+    <circle cx="400" cy="570" r="6"/>
+    <circle cx="560" cy="380" r="6"/>
+    <circle cx="600" cy="340" r="7"/>
+    <circle cx="640" cy="280" r="6"/>
+    <circle cx="660" cy="230" r="7"/>
+  </g>
+
+  <!-- SQL brackets at bottom -->
+  <g transform="translate(512, 880)" fill="none" stroke="#6366f1" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity="0.4">
+    <polyline points="-55,-18 -73,0 -55,18"/>
+    <polyline points="55,-18 73,0 55,18"/>
+    <line x1="-18" y1="-18" x2="18" y2="18"/>
+  </g>
+</svg>

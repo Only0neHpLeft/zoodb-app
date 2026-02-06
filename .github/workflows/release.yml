@@ -170,7 +170,7 @@ jobs:
         run: bun run build
 
       - name: Build and sign Tauri app (no notarization)
-        uses: tauri-apps/tauri-action@v1
+        uses: tauri-apps/tauri-action@v0.6.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VITE_CONVEX_URL: https://necessary-dog-518.convex.cloud

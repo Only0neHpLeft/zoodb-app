@@ -170,7 +170,7 @@ jobs:
         run: bun run build
 
       - name: Build and sign Tauri app (no notarization)
-        uses: tauri-apps/tauri-action@v0
+        uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VITE_CONVEX_URL: https://necessary-dog-518.convex.cloud
@@ -181,12 +181,71 @@ jobs:
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-          # Windows code signing (uncomment when ready)
-          # WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
-          # WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
         with:
           releaseId: ${{ needs.create-release.outputs.release_id }}
+          tagName: v__VERSION__
           args: ${{ matrix.args }}
+
+      - name: Sign updater bundle and generate latest.json
+        run: |
+          VERSION="${{ needs.create-release.outputs.version }}"
+
+          # Find the repackaged tar.gz on disk (tauri-action overwrites the original)
+          TARGZ=$(find src-tauri/target -name "*.app.tar.gz" -not -name "*.sig" -type f | head -1)
+          if [ -z "$TARGZ" ]; then
+            echo "::error::No .app.tar.gz found"
+            exit 1
+          fi
+          echo "Found tar.gz: $TARGZ"
+
+          # Re-sign with updater key (original sig was invalidated by repackaging)
+          bunx tauri signer sign -k "$TAURI_SIGNING_PRIVATE_KEY" -p "$TAURI_SIGNING_PRIVATE_KEY_PASSWORD" "$TARGZ"
+          SIG_CONTENT=$(cat "${TARGZ}.sig")
+          echo "Signature generated (${#SIG_CONTENT} chars)"
+
+          # Determine release asset name and updater platform key
+          case "${{ matrix.target }}" in
+            aarch64-apple-darwin)
+              ASSET_NAME="ZooDB_aarch64.app.tar.gz"
+              PLATFORM="darwin-aarch64"
+              ;;
+            x86_64-apple-darwin)
+              ASSET_NAME="ZooDB_x86_64.app.tar.gz"
+              PLATFORM="darwin-x86_64"
+              ;;
+          esac
+
+          # Create latest.json using jq for proper JSON escaping
+          DOWNLOAD_URL="https://github.com/Only0neHpLeft/zoodb-app/releases/download/v${VERSION}/${ASSET_NAME}"
+          jq -n \
+            --arg version "$VERSION" \
+            --arg notes "See https://github.com/Only0neHpLeft/zoodb-app/releases/tag/v${VERSION}" \
+            --arg pub_date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg platform "$PLATFORM" \
+            --arg sig "$SIG_CONTENT" \
+            --arg url "$DOWNLOAD_URL" \
+            '{
+              version: $version,
+              notes: $notes,
+              pub_date: $pub_date,
+              platforms: {
+                ($platform): {
+                  signature: $sig,
+                  url: $url
+                }
+              }
+            }' > latest.json
+
+          echo "Created latest.json:"
+          cat latest.json
+
+          # Upload to release
+          gh release upload "v${VERSION}" latest.json --clobber
+          echo "Uploaded latest.json"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
       - name: Notarize app with verbose output
         run: |

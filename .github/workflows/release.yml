@@ -110,7 +110,7 @@ jobs:
     needs: create-release
     permissions:
       contents: write
-    timeout-minutes: 180
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
@@ -164,10 +164,7 @@ jobs:
       - name: Sync version from tag
         run: bun run version:sync
 
-      - name: Build frontend
-        run: bun run build
-
-      # tauri-action builds, signs updater bundles, uploads artifacts + latest.json
+      # tauri-action builds, signs, notarizes, and uploads artifacts + latest.json
       - name: Build and sign Tauri app
         uses: tauri-apps/tauri-action@v0
         env:
@@ -177,6 +174,9 @@ jobs:
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
@@ -185,98 +185,35 @@ jobs:
           updaterJsonPreferNsis: true
           args: ${{ matrix.args }}
 
-      # ── macOS: Notarize ──
-      - name: Notarize app
+      # ── Rename assets via GitHub API (lightweight PATCH, no re-upload) ──
+      - name: Rename DMG asset
         if: matrix.os_type == 'macos'
         run: |
-          DMG_PATH=$(find src-tauri/target -name "*.dmg" -type f | head -1)
-          if [ -z "$DMG_PATH" ]; then
-            echo "::error::No DMG file found!"
-            exit 1
-          fi
-
-          echo "Found DMG: $DMG_PATH"
-          echo "Submitting to Apple notary service..."
-
-          xcrun notarytool submit "$DMG_PATH" \
-            --apple-id "$APPLE_ID" \
-            --password "$APPLE_PASSWORD" \
-            --team-id "$APPLE_TEAM_ID" \
-            --wait \
-            --verbose
-
-          echo "Notarization complete!"
-        env:
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-
-      - name: Staple notarization ticket
-        if: matrix.os_type == 'macos'
-        run: |
-          DMG_PATH=$(find src-tauri/target -name "*.dmg" -type f | head -1)
-          if [ -n "$DMG_PATH" ]; then
-            xcrun stapler staple "$DMG_PATH"
-            echo "Stapled ticket to DMG"
-          fi
-
-          APP_PATH=$(find src-tauri/target -name "*.app" -type d | head -1)
-          if [ -n "$APP_PATH" ]; then
-            xcrun stapler staple "$APP_PATH"
-            echo "Stapled ticket to .app"
-          fi
-
-      # ── macOS: Upload notarized DMG (replaces the un-notarized one) ──
-      - name: Upload notarized DMG to release
-        if: matrix.os_type == 'macos'
-        run: |
-          DMG_PATH=$(find src-tauri/target -name "*.dmg" -type f | head -1)
-          OLD_NAME=$(basename "$DMG_PATH")
           VERSION="${{ needs.create-release.outputs.version }}"
-
-          case "${{ matrix.target }}" in
-            aarch64-apple-darwin) ARCH="arm64" ;;
-            x86_64-apple-darwin)  ARCH="x64" ;;
-            *)                    ARCH="${{ matrix.target }}" ;;
-          esac
-
-          NEW_NAME="ZooDB-v${VERSION}-${ARCH}.dmg"
-          NEW_PATH="$(dirname "$DMG_PATH")/$NEW_NAME"
-          mv "$DMG_PATH" "$NEW_PATH"
-
-          echo "Uploading $NEW_NAME (was $OLD_NAME)..."
-
           RELEASE_ID="${{ needs.create-release.outputs.release_id }}"
-          EXISTING=$(gh api "repos/${{ github.repository }}/releases/${RELEASE_ID}/assets" --jq ".[] | select(.name == \"$OLD_NAME\") | .id" 2>/dev/null || true)
-          if [ -n "$EXISTING" ]; then
-            gh api -X DELETE "repos/${{ github.repository }}/releases/assets/${EXISTING}"
+          ASSET_ID=$(gh api "repos/${{ github.repository }}/releases/${RELEASE_ID}/assets" \
+            --jq '.[] | select(.name | endswith(".dmg")) | .id')
+          if [ -n "$ASSET_ID" ]; then
+            gh api -X PATCH "repos/${{ github.repository }}/releases/assets/${ASSET_ID}" \
+              -f name="ZooDB-v${VERSION}-arm64.dmg"
           fi
-          gh api \
-            -H "Content-Type: application/octet-stream" \
-            "https://uploads.github.com/repos/${{ github.repository }}/releases/${RELEASE_ID}/assets?name=${NEW_NAME}" \
-            --input "$NEW_PATH"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # ── macOS: Verify signature ──
-      - name: Verify code signature and notarization
-        if: matrix.os_type == 'macos'
+      - name: Rename EXE asset
+        if: matrix.os_type == 'windows'
+        shell: bash
         run: |
-          APP_PATH=$(find src-tauri/target -name "*.app" -type d | head -1)
-          if [ -z "$APP_PATH" ]; then
-            echo "::warning::No .app bundle found to verify"
-            exit 0
+          VERSION="${{ needs.create-release.outputs.version }}"
+          RELEASE_ID="${{ needs.create-release.outputs.release_id }}"
+          ASSET_ID=$(gh api "repos/${{ github.repository }}/releases/${RELEASE_ID}/assets" \
+            --jq '.[] | select(.name | endswith("-setup.exe")) | .id')
+          if [ -n "$ASSET_ID" ]; then
+            gh api -X PATCH "repos/${{ github.repository }}/releases/assets/${ASSET_ID}" \
+              -f name="ZooDB-v${VERSION}-x64-setup.exe"
           fi
-
-          echo "=== Code Signature Verification ==="
-          codesign -vvv --deep --strict "$APP_PATH" 2>&1 || {
-            echo "::error::Code signature verification failed"
-            exit 1
-          }
-          echo "Code signature valid"
-
-          echo "=== Signature Details ==="
-          codesign -dvv "$APP_PATH" 2>&1 | grep -E "(Authority|TeamIdentifier|Signature)" || true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   publish-release:
     needs: [create-release, build-tauri]

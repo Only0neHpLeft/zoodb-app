@@ -27,9 +27,9 @@ function SettingsPage() {
     const planType = membership?.plan_type || 'free'
     switch (planType) {
       case 'zooPlus':
-        return { name: 'Zoo+', icon: Crown, color: 'text-yellow-500', bgColor: 'bg-gradient-to-br from-yellow-500/20 to-amber-500/20', badge: 'bg-gradient-to-r from-yellow-500 to-amber-500 text-white', descriptionKey: 'lifetimeAccess' as const }
+        return { name: 'Zoo+', icon: Crown, color: 'text-primary', bgColor: 'bg-primary/10', badge: 'bg-primary text-primary-foreground', descriptionKey: 'lifetimeAccess' as const }
       case 'zoo':
-        return { name: 'Zoo', icon: Zap, color: 'text-primary', bgColor: 'bg-primary/10', badge: 'bg-blue-500 text-white', descriptionKey: 'premiumMonthly' as const }
+        return { name: 'Zoo', icon: Zap, color: 'text-primary', bgColor: 'bg-primary/10', badge: 'bg-primary/80 text-primary-foreground', descriptionKey: 'premiumMonthly' as const }
       default:
         return { name: t.settings.free, icon: Sparkles, color: 'text-primary', bgColor: 'bg-primary/10', badge: 'bg-muted text-muted-foreground', descriptionKey: 'basicAccess' as const }
     }

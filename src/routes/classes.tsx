@@ -146,7 +146,7 @@ function ClassesPage() {
       </header>
 
       <main className="flex-1 p-6 overflow-auto">
-        <div className="max-w-6xl mx-auto space-y-6">
+        <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold">{t.pages.classes.title}</h1>

@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "ZooDB",
-  "version": "0.0.3",
+  "version": "0.0.1",
   "identifier": "com.only0nehpleft.zoodb",
   "build": {
     "frontendDist": "../dist",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Zoo Database | v0.0.3",
+        "title": "Zoo Database | v0.0.1",
         "width": 1400,
         "height": 1000,
         "resizable": true,

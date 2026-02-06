@@ -1,5 +1,7 @@
 declare const __APP_VERSION__: string;
 
+import { Loader } from 'lucide-react';
+
 // Loading screen translations
 const loadingTexts = {
   en: {
@@ -39,19 +41,10 @@ export function LoadingScreen() {
         }}
       />
 
-      {/* Logo with animated rings */}
+      {/* Logo */}
       <div className="relative mb-8 opacity-0 animate-[fadeIn_0.6s_ease-out_0.1s_forwards]">
-        {/* Outer pulse ring */}
-        <div className="absolute -inset-4 rounded-full border border-primary/10 animate-[ping_3s_ease-in-out_infinite]" />
-        {/* Middle ring */}
-        <div className="absolute -inset-2 rounded-full border border-primary/20 animate-pulse [animation-duration:2s]" />
-        {/* Icon container */}
         <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/20">
-          <svg className="h-8 w-8 text-primary-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 2C6.48 2 2 6 2 10c0 2.5 1.5 4.5 3.5 6C4 18 3 20 3 22h18c0-2-1-4-2.5-6C20.5 14.5 22 12.5 22 10c0-4-4.48-8-10-8z" />
-            <circle cx="9" cy="10" r="1.5" fill="currentColor" />
-            <circle cx="15" cy="10" r="1.5" fill="currentColor" />
-          </svg>
+          <Loader className="h-8 w-8 text-primary-foreground animate-spin [animation-duration:2s]" />
         </div>
       </div>
 

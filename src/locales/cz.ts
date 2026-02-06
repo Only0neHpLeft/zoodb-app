@@ -851,6 +851,9 @@ export const cz = {
     criticalUpdate: 'Kritická Bezpečnostní Aktualizace',
     criticalUpdateDesc:
       'Probíhá instalace kritické aktualizace. Aplikace se automaticky restartuje.',
+    downloadAndInstall: 'Stáhnout a Nainstalovat',
+    restartingApp: 'Restartování...',
+    releaseNotes: 'Poznámky k Vydání',
   },
 
   // Offline Mode

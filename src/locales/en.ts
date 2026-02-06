@@ -847,6 +847,9 @@ export const en = {
     criticalUpdate: 'Critical Security Update',
     criticalUpdateDesc:
       'A critical update is being installed. The app will restart automatically.',
+    downloadAndInstall: 'Download & Install',
+    restartingApp: 'Restarting...',
+    releaseNotes: 'Release Notes',
   },
 
   // Offline Mode

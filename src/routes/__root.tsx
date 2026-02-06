@@ -1,7 +1,7 @@
 declare const __APP_VERSION__: string
 
 import { createRootRouteWithContext, Outlet, useRouter } from '@tanstack/react-router'
-import { useEffect, useState, Suspense } from 'react'
+import { useEffect, useState, Suspense, type ReactNode } from 'react'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { getVersion } from '@tauri-apps/api/app'
 import { AlertTriangle, RefreshCw, Home, Copy, Check } from 'lucide-react'
@@ -15,7 +15,9 @@ import { SettingsSyncProvider } from '../hooks/use-settings-sync'
 import { AppLayout } from '../components/app-layout'
 import { DbInitProvider } from '../components/db-init-background'
 import { LoadingScreen } from '../components/loading-screen'
-import { UpdateChecker } from '../components/update-checker'
+import { UpdateScreen } from '../components/update-screen'
+import { UpdateToast, storeUpdateApplied } from '../components/update-checker'
+import { useUpdater } from '../hooks/use-updater'
 import { Button } from '../components/ui/button'
 import { SidebarProvider } from '../components/ui/sidebar'
 
@@ -154,6 +156,35 @@ function WindowTitle() {
   return null
 }
 
+function UpdateGate({ children }: { children: ReactNode }) {
+  const { updateInfo, phase, downloadProgress, error, installUpdate } = useUpdater();
+
+const handleInstall = () => {
+    if (updateInfo) {
+      storeUpdateApplied({
+        version: updateInfo.version,
+        notes: updateInfo.notes,
+        isCritical: updateInfo.isCritical,
+      });
+    }
+    installUpdate();
+  };
+
+  if (updateInfo) {
+    return (
+      <UpdateScreen
+        updateInfo={updateInfo}
+        phase={phase}
+        downloadProgress={downloadProgress}
+        error={error}
+        onInstall={handleInstall}
+      />
+    );
+  }
+
+  return <>{children}</>;
+}
+
 function RootComponent() {
   return (
     <ThemeProvider
@@ -165,22 +196,24 @@ function RootComponent() {
       <SidebarProvider>
         <LanguageProvider>
           <WindowTitle />
-          <UpdateChecker />
-          <DbInitProvider>
-            <AuthProvider>
-              <OfflineProvider>
-                <MembershipProvider>
-                  <SettingsSyncProvider>
-                    <Suspense fallback={<LoadingScreen />}>
-                      <AppLayout>
-                        <Outlet />
-                      </AppLayout>
-                    </Suspense>
-                  </SettingsSyncProvider>
-                </MembershipProvider>
-              </OfflineProvider>
-            </AuthProvider>
-          </DbInitProvider>
+          <UpdateGate>
+            <DbInitProvider>
+              <AuthProvider>
+                <OfflineProvider>
+                  <MembershipProvider>
+                    <SettingsSyncProvider>
+                      <UpdateToast />
+                      <Suspense fallback={<LoadingScreen />}>
+                        <AppLayout>
+                          <Outlet />
+                        </AppLayout>
+                      </Suspense>
+                    </SettingsSyncProvider>
+                  </MembershipProvider>
+                </OfflineProvider>
+              </AuthProvider>
+            </DbInitProvider>
+          </UpdateGate>
         </LanguageProvider>
       </SidebarProvider>
     </ThemeProvider>

@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/use-auth"
 import { authClient } from "@/lib/auth-client"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SidebarInset } from "@/components/ui/sidebar"
-import { Spinner } from "@/components/ui/spinner"
+import { LoadingScreen } from "@/components/loading-screen"
 
 // Routes that don't require authentication and shouldn't show sidebar
 const authRoutes = ["/sign-in", "/sign-up"]
@@ -69,13 +69,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     return <>{children}</>
   }
 
-  // Show loading spinner while auth is loading or user not signed in
+  // Show loading screen while auth is loading or user not signed in
   if (!isLoaded || !isSignedIn) {
-    return (
-      <div className="flex min-h-screen w-full items-center justify-center">
-        <Spinner className="size-8" />
-      </div>
-    )
+    return <LoadingScreen />
   }
 
   // Render with sidebar for authenticated users (SidebarProvider is in __root.tsx)

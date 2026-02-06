@@ -14,7 +14,7 @@ import { OfflineProvider } from '../contexts/offline-context'
 import { SettingsSyncProvider } from '../hooks/use-settings-sync'
 import { AppLayout } from '../components/app-layout'
 import { DbInitProvider } from '../components/db-init-background'
-import { AppSkeleton } from '../components/app-skeleton'
+import { LoadingScreen } from '../components/loading-screen'
 import { UpdateChecker } from '../components/update-checker'
 import { Button } from '../components/ui/button'
 import { SidebarProvider } from '../components/ui/sidebar'
@@ -171,8 +171,7 @@ function RootComponent() {
               <OfflineProvider>
                 <MembershipProvider>
                   <SettingsSyncProvider>
-                    {/* Suspense boundary for app shell - shows skeleton while AppLayout loads */}
-                    <Suspense fallback={<AppSkeleton />}>
+                    <Suspense fallback={<LoadingScreen />}>
                       <AppLayout>
                         <Outlet />
                       </AppLayout>

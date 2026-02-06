@@ -61,6 +61,7 @@ coverage
 count.txt
 todos.json
 .claude
+CLAUDE.md
 
 # Samael agent artifacts
 docs/reports/

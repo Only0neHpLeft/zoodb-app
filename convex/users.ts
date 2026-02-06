@@ -45,6 +45,7 @@ export const upsertProfile = mutation({
       email: args.email,
       fullName: args.fullName,
       role: args.role ?? "student",
+      language: "en",
     });
     return await ctx.db.get(id);
   },
@@ -96,7 +97,7 @@ export const updateSettings = mutation({
         userId: args.userId,
         email: "", // Will be updated later
         role: "student",
-        language: args.language,
+        language: args.language ?? "en",
         theme: args.theme,
         darkMode: args.darkMode,
         customThemeCss: args.customThemeCss,

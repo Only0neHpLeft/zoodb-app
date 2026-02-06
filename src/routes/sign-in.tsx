@@ -248,8 +248,9 @@ function SignInPage() {
           </div>
 
           {/* Social login */}
-          <div className="auth-animate-fade-up auth-stagger-6">
+          <div className="auth-animate-fade-up auth-stagger-6 space-y-3">
             <GoogleButton loading={loading} />
+            <GitHubButton loading={loading} />
           </div>
 
           {/* Footer */}
@@ -351,6 +352,82 @@ function GoogleButton({ loading }: { loading: boolean }) {
         </svg>
       )}
       Google
+    </Button>
+  )
+}
+
+function GitHubButton({ loading }: { loading: boolean }) {
+  const [socialLoading, setSocialLoading] = useState(false)
+
+  const handleGitHubSignIn = async () => {
+    setSocialLoading(true)
+    try {
+      const { isTauri } = await import("@/lib/tauri")
+      if (isTauri()) {
+        const isDev = window.location.protocol === "http:"
+        const callbackURL = isDev
+          ? "http://localhost:3000/auth-callback"
+          : "zoodb:///"
+
+        const result = await authClient.signIn.social({
+          provider: "github",
+          callbackURL,
+          disableRedirect: true,
+        })
+
+        if (result.error) {
+          console.error("[auth] GitHub sign-in error:", result.error)
+          setSocialLoading(false)
+          return
+        }
+
+        if (result.data?.url) {
+          const { openUrl } = await import("@tauri-apps/plugin-opener")
+          await openUrl(result.data.url)
+
+          if (isDev) {
+            for (let i = 0; i < 120; i++) {
+              await new Promise(r => setTimeout(r, 1000))
+              try {
+                const res = await globalThis.fetch("/api/auth-ott")
+                const { ott } = await res.json()
+                if (ott) {
+                  window.location.href = `/?ott=${ott}`
+                  return
+                }
+              } catch { /* keep polling */ }
+            }
+            setSocialLoading(false)
+          }
+        } else {
+          console.error("[auth] GitHub sign-in: no redirect URL returned")
+          setSocialLoading(false)
+        }
+      } else {
+        await authClient.signIn.social({ provider: "github", callbackURL: "/" })
+      }
+    } catch (err) {
+      console.error("[auth] GitHub sign-in failed:", err)
+      setSocialLoading(false)
+    }
+  }
+
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      className="h-10 w-full text-sm font-medium gap-2"
+      disabled={loading || socialLoading}
+      onClick={handleGitHubSignIn}
+    >
+      {socialLoading ? (
+        <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+      ) : (
+        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
+        </svg>
+      )}
+      GitHub
     </Button>
   )
 }

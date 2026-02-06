@@ -1,6 +1,6 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "Zoo Database",
+  "productName": "ZooDB",
   "version": "0.0.1",
   "identifier": "com.only0nehpleft.zoodb",
   "build": {

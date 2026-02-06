@@ -77,7 +77,7 @@ jobs:
               '| Platform | Architecture | Download |',
               '|:---------|:-------------|:---------|',
               '| macOS | Apple Silicon (M1–M5) | `ZooDB-v' + version + '-arm64.dmg` |',
-              '| Windows | x64 | `ZooDB-v' + version + '-x64-setup.exe` |',
+              '| Windows | x64 | `ZooDB_' + version + '_x64-setup.exe` |',
               '',
               '---',
               '',
@@ -200,20 +200,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Rename EXE asset
-        if: matrix.os_type == 'windows'
-        shell: bash
-        run: |
-          VERSION="${{ needs.create-release.outputs.version }}"
-          RELEASE_ID="${{ needs.create-release.outputs.release_id }}"
-          ASSET_ID=$(gh api "repos/${{ github.repository }}/releases/${RELEASE_ID}/assets" \
-            --jq '.[] | select(.name | endswith("-setup.exe")) | .id')
-          if [ -n "$ASSET_ID" ]; then
-            gh api -X PATCH "repos/${{ github.repository }}/releases/assets/${ASSET_ID}" \
-              -f name="ZooDB-v${VERSION}-x64-setup.exe"
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # NOTE: Do NOT rename the EXE — latest.json references the original
+      # Tauri filename (ZooDB_X.X.X_x64-setup.exe) and renaming causes a 404
+      # during auto-update downloads.
 
   publish-release:
     needs: [create-release, build-tauri]

@@ -111,7 +111,7 @@ export function AppSidebar() {
       title: t.nav.classes,
       icon: GraduationCap,
       url: "/classes",
-      badge: null,
+      badge: "soon",
     },
     {
       title: t.sidebar.membership,
@@ -218,14 +218,21 @@ export function AppSidebar() {
                     <Link to={item.url} className="flex items-center gap-3 group-data-[collapsible=icon]:justify-center">
                       <item.icon className="size-4 shrink-0" />
                       <span className="font-medium flex-1 truncate group-data-[collapsible=icon]:hidden">{item.title}</span>
-                      {item.badge && (
+                      {item.badge === "soon" ? (
+                        <Badge
+                          variant="secondary"
+                          className="shrink-0 text-xs px-2 py-0 h-5 bg-red-500/10 text-red-500 group-data-[collapsible=icon]:hidden"
+                        >
+                          {t.sidebar.soon}
+                        </Badge>
+                      ) : item.badge ? (
                         <Badge
                           variant="secondary"
                           className="shrink-0 text-xs px-2 py-0 h-5 bg-primary/10 text-primary group-data-[collapsible=icon]:hidden"
                         >
                           {item.badge}
                         </Badge>
-                      )}
+                      ) : null}
                       <ChevronRight className="size-4 shrink-0 opacity-0 -ml-4 transition-all group-hover/item:opacity-100 group-hover/item:ml-0 group-data-[collapsible=icon]:hidden" />
                     </Link>
                   </SidebarMenuButton>

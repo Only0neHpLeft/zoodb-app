@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { getCategoryByLetter } from "@/data/categories"
 import { useLanguage } from "@/contexts/language-context"
+import { tableNames, columnNames, type TableKey } from "@/lib/db/schema-mapping"
 import { useTranslateDifficulty } from "@/hooks/use-translate-difficulty"
 import { useTranslateCategory } from "@/hooks/use-translate-category"
 import { executeQuery } from "@/lib/db/pglite"
@@ -35,7 +36,7 @@ export const Route = createFileRoute("/editor/task")({
 function TaskEditorPage() {
   const navigate = useNavigate()
   const { lesson: lessonParam, task: taskParam } = Route.useSearch()
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const { translateDifficulty, difficultyColors } = useTranslateDifficulty()
   const { translateCategory } = useTranslateCategory()
 
@@ -264,8 +265,31 @@ function TaskEditorPage() {
               <span className="text-xs text-muted-foreground">{showHint ? t.task.hide : t.task.show}</span>
             </Button>
             {showHint && (
-              <div className="p-4 bg-yellow-50/50 dark:bg-yellow-950/20 border-t">
+              <div className="p-4 bg-yellow-50/50 dark:bg-yellow-950/20 border-t space-y-3">
                 <p className="text-sm">{currentTask.hint}</p>
+                {category.tables && category.tables.length > 0 && (
+                  <div className="p-3 rounded-md bg-muted/50 border">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{t.task.availableTables || "Available Tables"}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {category.tables.map((tableKey) => {
+                        const schemaLang = language === "cz" ? "cs" : "en"
+                        const tbl = tableNames[tableKey as TableKey]
+                        const cols = columnNames[tableKey as TableKey]
+                        if (!tbl || !cols) return null
+                        const tableName = tbl[schemaLang as "cs" | "en"]
+                        const colList = Object.entries(cols)
+                          .filter(([key]) => key !== "user_id" && key !== "created_at")
+                          .map(([, val]) => (val as { cs: string; en: string })[schemaLang as "cs" | "en"])
+                        return (
+                          <div key={tableKey} className="rounded-md border bg-background px-2.5 py-1.5 text-xs">
+                            <span className="font-semibold text-primary">{tableName}</span>
+                            <span className="text-muted-foreground ml-1">({colList.join(", ")})</span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

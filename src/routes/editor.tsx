@@ -19,6 +19,7 @@ import { notifyDataChange } from "@/lib/db/events"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { validateTask, getTaskRules, type ValidationResult } from "@/lib/validation"
+import { tableNames, columnNames, type TableKey } from "@/lib/db/schema-mapping"
 
 type EditorSearch = {
   lesson?: string
@@ -40,7 +41,7 @@ export const Route = createFileRoute("/editor")({
 function EditorPage() {
   const navigate = useNavigate()
   const { lesson: lessonParam, task: taskParam } = Route.useSearch()
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const { translateDifficulty, difficultyColors } = useTranslateDifficulty()
   const { translateCategory } = useTranslateCategory()
 
@@ -312,8 +313,33 @@ function EditorPage() {
             <p className="text-sm text-muted-foreground">{currentTask.description}</p>
 
             {showHint && (
-              <div className="mt-3 p-3 rounded-md bg-secondary/40 text-sm">
-                {currentTask.hint}
+              <div className="mt-3 space-y-3">
+                <div className="p-3 rounded-md bg-secondary/40 text-sm">
+                  {currentTask.hint}
+                </div>
+                {category.tables && category.tables.length > 0 && (
+                  <div className="p-3 rounded-md bg-muted/50 border">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{t.task.availableTables || "Available Tables"}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {category.tables.map((tableKey) => {
+                        const schemaLang = language === "cz" ? "cs" : "en"
+                        const tbl = tableNames[tableKey as TableKey]
+                        const cols = columnNames[tableKey as TableKey]
+                        if (!tbl || !cols) return null
+                        const tableName = tbl[schemaLang as "cs" | "en"]
+                        const colList = Object.entries(cols)
+                          .filter(([key]) => key !== "user_id" && key !== "created_at")
+                          .map(([, val]) => (val as { cs: string; en: string })[schemaLang as "cs" | "en"])
+                        return (
+                          <div key={tableKey} className="rounded-md border bg-background px-2.5 py-1.5 text-xs">
+                            <span className="font-semibold text-primary">{tableName}</span>
+                            <span className="text-muted-foreground ml-1">({colList.join(", ")})</span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

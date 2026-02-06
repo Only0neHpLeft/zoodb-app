@@ -74,6 +74,7 @@ export const en = {
     noTaskSelected: "No Task Selected",
     chooseTaskMessage: "Choose a task from the lesson page to start practicing",
     hint: "Hint",
+    availableTables: "Available Tables",
     show: "Show",
     hide: "Hide",
     sqlEditor: "SQL Query Editor",

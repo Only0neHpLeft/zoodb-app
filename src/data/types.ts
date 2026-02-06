@@ -42,6 +42,7 @@ export type Category = {
   letter: string
   title: string
   description: string
+  tables?: string[]
   tasks: Task[]
 }
 

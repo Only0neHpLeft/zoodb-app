@@ -31,7 +31,6 @@ jobs:
           if [ -z "$APPLE_PASSWORD" ]; then missing="$missing APPLE_PASSWORD"; fi
           if [ -z "$APPLE_TEAM_ID" ]; then missing="$missing APPLE_TEAM_ID"; fi
           if [ -z "$TAURI_SIGNING_PRIVATE_KEY" ]; then missing="$missing TAURI_SIGNING_PRIVATE_KEY"; fi
-          if [ -z "$TAURI_SIGNING_PRIVATE_KEY_PASSWORD" ]; then missing="$missing TAURI_SIGNING_PRIVATE_KEY_PASSWORD"; fi
           if [ -n "$missing" ]; then
             echo "::error::Missing required secrets:$missing"
             exit 1
@@ -45,7 +44,6 @@ jobs:
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
   create-release:
     needs: validate-secrets
@@ -78,7 +76,7 @@ jobs:
               '',
               '| Platform | Architecture | Download |',
               '|:---------|:-------------|:---------|',
-              '| macOS | Apple Silicon (M1\u2013M5) | `ZooDB-v' + version + '-arm64.dmg` |',
+              '| macOS | Apple Silicon (M1–M5) | `ZooDB-v' + version + '-arm64.dmg` |',
               '| Windows | x64 | `ZooDB-v' + version + '-x64-setup.exe` |',
               '',
               '---',
@@ -122,11 +120,6 @@ jobs:
             args: '--target aarch64-apple-darwin --verbose'
             target: aarch64-apple-darwin
             os_type: macos
-          # macOS Intel (disabled during development)
-          # - platform: macos-latest
-          #   args: '--target x86_64-apple-darwin --verbose'
-          #   target: x86_64-apple-darwin
-          #   os_type: macos
           # Windows x64
           - platform: windows-latest
             args: '--verbose'
@@ -174,12 +167,13 @@ jobs:
       - name: Build frontend
         run: bun run build
 
+      # tauri-action builds, signs updater bundles, uploads artifacts + latest.json
       - name: Build and sign Tauri app
-        uses: tauri-apps/tauri-action@v0.6.1
+        uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VITE_CONVEX_URL: https://necessary-dog-518.convex.cloud
-          VITE_CONVEX_SITE_URL: https://necessary-dog-518.convex.site
+          VITE_CONVEX_URL: https://intent-robin-412.convex.cloud
+          VITE_CONVEX_SITE_URL: https://intent-robin-412.convex.site
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
@@ -188,92 +182,8 @@ jobs:
         with:
           releaseId: ${{ needs.create-release.outputs.release_id }}
           tagName: v__VERSION__
+          updaterJsonPreferNsis: true
           args: ${{ matrix.args }}
-
-      # ── macOS: Sign updater bundle + upload platform-specific JSON ──
-      - name: Sign updater bundle (macOS)
-        if: matrix.os_type == 'macos'
-        run: |
-          VERSION="${{ needs.create-release.outputs.version }}"
-
-          TARGZ=$(find src-tauri/target -name "*.app.tar.gz" -not -name "*.sig" -type f | head -1)
-          if [ -z "$TARGZ" ]; then
-            echo "::error::No .app.tar.gz found"
-            exit 1
-          fi
-          echo "Found tar.gz: $TARGZ"
-
-          bunx tauri signer sign -k "$TAURI_SIGNING_PRIVATE_KEY" -p "$TAURI_SIGNING_PRIVATE_KEY_PASSWORD" "$TARGZ"
-          SIG_CONTENT=$(cat "${TARGZ}.sig")
-          echo "Signature generated (${#SIG_CONTENT} chars)"
-
-          case "${{ matrix.target }}" in
-            aarch64-apple-darwin)
-              ASSET_NAME="ZooDB_aarch64.app.tar.gz"
-              PLATFORM="darwin-aarch64"
-              ;;
-            x86_64-apple-darwin)
-              ASSET_NAME="ZooDB_x86_64.app.tar.gz"
-              PLATFORM="darwin-x86_64"
-              ;;
-          esac
-
-          DOWNLOAD_URL="https://github.com/Only0neHpLeft/zoodb-app/releases/download/v${VERSION}/${ASSET_NAME}"
-
-          # Upload platform-specific JSON (merged later)
-          jq -n \
-            --arg platform "$PLATFORM" \
-            --arg sig "$SIG_CONTENT" \
-            --arg url "$DOWNLOAD_URL" \
-            '{($platform): {signature: $sig, url: $url}}' > "updater-${PLATFORM}.json"
-
-          RELEASE_ID="${{ needs.create-release.outputs.release_id }}"
-          gh api \
-            -H "Content-Type: application/json" \
-            "https://uploads.github.com/repos/${{ github.repository }}/releases/${RELEASE_ID}/assets?name=updater-${PLATFORM}.json" \
-            --input "updater-${PLATFORM}.json"
-          echo "Uploaded updater-${PLATFORM}.json"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-
-      # ── Windows: Sign updater bundle + upload platform-specific JSON ──
-      - name: Sign updater bundle (Windows)
-        if: matrix.os_type == 'windows'
-        shell: pwsh
-        run: |
-          $VERSION = "${{ needs.create-release.outputs.version }}"
-
-          $NSIS_ZIP = Get-ChildItem -Path src-tauri/target -Recurse -Filter "*.nsis.zip" | Select-Object -First 1
-          if (-not $NSIS_ZIP) {
-            Write-Error "No .nsis.zip found"
-            exit 1
-          }
-          Write-Host "Found nsis.zip: $($NSIS_ZIP.FullName)"
-
-          bunx tauri signer sign -k "$env:TAURI_SIGNING_PRIVATE_KEY" -p "$env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD" "$($NSIS_ZIP.FullName)"
-          $SIG_CONTENT = (Get-Content "$($NSIS_ZIP.FullName).sig" -Raw).Trim()
-          Write-Host "Signature generated ($($SIG_CONTENT.Length) chars)"
-
-          $ASSET_NAME = "ZooDB_x64-setup.nsis.zip"
-          $PLATFORM = "windows-x86_64"
-          $DOWNLOAD_URL = "https://github.com/Only0neHpLeft/zoodb-app/releases/download/v${VERSION}/${ASSET_NAME}"
-
-          # Create platform-specific JSON
-          $json = @{ $PLATFORM = @{ signature = $SIG_CONTENT; url = $DOWNLOAD_URL } } | ConvertTo-Json -Depth 3
-          $json | Out-File -FilePath "updater-${PLATFORM}.json" -Encoding utf8
-
-          $RELEASE_ID = "${{ needs.create-release.outputs.release_id }}"
-          gh api `
-            -H "Content-Type: application/json" `
-            "https://uploads.github.com/repos/${{ github.repository }}/releases/${RELEASE_ID}/assets?name=updater-${PLATFORM}.json" `
-            --input "updater-${PLATFORM}.json"
-          Write-Host "Uploaded updater-${PLATFORM}.json"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
       # ── macOS: Notarize ──
       - name: Notarize app
@@ -316,7 +226,7 @@ jobs:
             echo "Stapled ticket to .app"
           fi
 
-      # ── macOS: Upload notarized DMG ──
+      # ── macOS: Upload notarized DMG (replaces the un-notarized one) ──
       - name: Upload notarized DMG to release
         if: matrix.os_type == 'macos'
         run: |
@@ -348,39 +258,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # ── Windows: Rename and upload setup exe ──
-      - name: Upload Windows installer to release
-        if: matrix.os_type == 'windows'
-        shell: pwsh
-        run: |
-          $VERSION = "${{ needs.create-release.outputs.version }}"
-          $RELEASE_ID = "${{ needs.create-release.outputs.release_id }}"
-
-          $SETUP_EXE = Get-ChildItem -Path src-tauri/target -Recurse -Filter "*-setup.exe" | Select-Object -First 1
-          if (-not $SETUP_EXE) {
-            Write-Host "::warning::No setup exe found, tauri-action may have uploaded it already"
-            exit 0
-          }
-
-          $OLD_NAME = $SETUP_EXE.Name
-          $NEW_NAME = "ZooDB-v${VERSION}-x64-setup.exe"
-          $NEW_PATH = Join-Path $SETUP_EXE.DirectoryName $NEW_NAME
-          Move-Item $SETUP_EXE.FullName $NEW_PATH
-
-          Write-Host "Uploading $NEW_NAME (was $OLD_NAME)..."
-
-          $existing = gh api "repos/${{ github.repository }}/releases/${RELEASE_ID}/assets" --jq ".[] | select(.name == `"$OLD_NAME`") | .id" 2>$null
-          if ($existing) {
-            gh api -X DELETE "repos/${{ github.repository }}/releases/assets/${existing}"
-          }
-
-          gh api `
-            -H "Content-Type: application/octet-stream" `
-            "https://uploads.github.com/repos/${{ github.repository }}/releases/${RELEASE_ID}/assets?name=${NEW_NAME}" `
-            --input "$NEW_PATH"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       # ── macOS: Verify signature ──
       - name: Verify code signature and notarization
         if: matrix.os_type == 'macos'
@@ -398,88 +275,11 @@ jobs:
           }
           echo "Code signature valid"
 
-          echo "=== Notarization Verification ==="
-          spctl -a -vvv "$APP_PATH" 2>&1 || {
-            echo "::warning::spctl assessment returned non-zero (may be expected in CI)"
-          }
-
           echo "=== Signature Details ==="
           codesign -dvv "$APP_PATH" 2>&1 | grep -E "(Authority|TeamIdentifier|Signature)" || true
 
-  # ── Merge all platform updater JSONs into latest.json ──
-  merge-updater-json:
-    needs: [create-release, build-tauri]
-    permissions:
-      contents: write
-    runs-on: ubuntu-latest
-    steps:
-      - name: Merge platform updater files into latest.json
-        run: |
-          VERSION="${{ needs.create-release.outputs.version }}"
-          RELEASE_ID="${{ needs.create-release.outputs.release_id }}"
-
-          # Download all updater-*.json assets
-          ASSETS=$(gh api "repos/${{ github.repository }}/releases/${RELEASE_ID}/assets" \
-            --jq '.[] | select(.name | startswith("updater-")) | "\(.id) \(.name)"')
-
-          if [ -z "$ASSETS" ]; then
-            echo "::warning::No updater JSON files found"
-            exit 0
-          fi
-
-          # Download each platform file and merge platforms
-          PLATFORMS="{}"
-          while IFS=' ' read -r asset_id asset_name; do
-            echo "Downloading $asset_name (id: $asset_id)..."
-            gh api "repos/${{ github.repository }}/releases/assets/${asset_id}" \
-              -H "Accept: application/octet-stream" > "$asset_name"
-            cat "$asset_name"
-
-            # Merge this platform's data into the combined object
-            PLATFORMS=$(echo "$PLATFORMS" | jq --slurpfile new "$asset_name" '. * $new[0]')
-
-            # Clean up the temp asset from the release
-            gh api -X DELETE "repos/${{ github.repository }}/releases/assets/${asset_id}"
-            echo "Deleted temp asset $asset_name"
-          done <<< "$ASSETS"
-
-          echo "Merged platforms:"
-          echo "$PLATFORMS" | jq .
-
-          # Build final latest.json
-          jq -n \
-            --arg version "$VERSION" \
-            --arg notes "[CRITICAL] See https://github.com/Only0neHpLeft/zoodb-app/releases/tag/v${VERSION}" \
-            --arg pub_date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-            --argjson platforms "$PLATFORMS" \
-            '{
-              version: $version,
-              notes: $notes,
-              pub_date: $pub_date,
-              platforms: $platforms
-            }' > latest.json
-
-          echo "Final latest.json:"
-          cat latest.json
-
-          # Delete any existing latest.json on the release
-          EXISTING=$(gh api "repos/${{ github.repository }}/releases/${RELEASE_ID}/assets" \
-            --jq '.[] | select(.name == "latest.json") | .id' 2>/dev/null || true)
-          if [ -n "$EXISTING" ]; then
-            gh api -X DELETE "repos/${{ github.repository }}/releases/assets/${EXISTING}"
-          fi
-
-          # Upload merged latest.json
-          gh api \
-            -H "Content-Type: application/json" \
-            "https://uploads.github.com/repos/${{ github.repository }}/releases/${RELEASE_ID}/assets?name=latest.json" \
-            --input latest.json
-          echo "Uploaded merged latest.json with all platforms"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   publish-release:
-    needs: [create-release, build-tauri, merge-updater-json]
+    needs: [create-release, build-tauri]
     permissions:
       contents: write
     runs-on: ubuntu-latest

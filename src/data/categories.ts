@@ -5,6 +5,7 @@ export const categories: Categories = {
     letter: 'A',
     title: "Základní Dotazy",
     description: "Prozkoumejte základní SQL dotazy pro práci s databází zvířat",
+    tables: ["animals", "types"],
     tasks: [
       {
         id: "a1",
@@ -76,6 +77,7 @@ export const categories: Categories = {
     letter: 'B',
     title: "Pokročilé Vyhledávání",
     description: "Naučte se vyhledávat specifická data v databázi",
+    tables: ["animals", "types"],
     tasks: [
       {
         id: "b1",
@@ -107,6 +109,7 @@ export const categories: Categories = {
     letter: 'C',
     title: "Řazení a Limity",
     description: "Naučte se pracovat s řazením a omezením výsledků",
+    tables: ["animals", "types"],
     tasks: [
       {
         id: "c1",
@@ -138,6 +141,7 @@ export const categories: Categories = {
     letter: 'D',
     title: "Komplexní Podmínky",
     description: "Zvládněte složitější podmínky v dotazech",
+    tables: ["animals", "types"],
     tasks: [
       {
         id: "d1",
@@ -169,6 +173,7 @@ export const categories: Categories = {
     letter: 'E',
     title: "Pokročilé Dotazy",
     description: "Řešte komplexní dotazy s více podmínkami",
+    tables: ["animals", "types"],
     tasks: [
       {
         id: "e1",
@@ -200,6 +205,7 @@ export const categories: Categories = {
     letter: 'F',
     title: "Subdotazy",
     description: "Zvládněte pokročilé dotazy s poddotazy",
+    tables: ["animals", "types"],
     tasks: [
       {
         id: "f1",
@@ -215,6 +221,7 @@ export const categories: Categories = {
     letter: 'G',
     title: "Vztahy Mezi Tabulkami",
     description: "Naučte se propojovat data z více tabulek",
+    tables: ["animals", "types", "caretakers", "treats", "likes"],
     tasks: [
       {
         id: "g1",
@@ -246,6 +253,7 @@ export const categories: Categories = {
     letter: 'H',
     title: "Komplexní Spojení",
     description: "Zvládněte složitější propojení tabulek",
+    tables: ["animals", "types", "caretakers", "treats", "likes"],
     tasks: [
       {
         id: "h1",
@@ -277,6 +285,7 @@ export const categories: Categories = {
     letter: 'I',
     title: "Porovnání",
     description: "Porovnejte hodnoty z různých tabulek",
+    tables: ["animals", "types", "caretakers", "treats"],
     tasks: [
       {
         id: "i1",
@@ -292,6 +301,7 @@ export const categories: Categories = {
     letter: 'J',
     title: "Agregační Funkce",
     description: "Pracujte s agregačními funkcemi v SQL",
+    tables: ["animals", "types", "caretakers", "treats", "likes"],
     tasks: [
       {
         id: "j1",
@@ -323,6 +333,7 @@ export const categories: Categories = {
     letter: 'K',
     title: "Složité Vztahy",
     description: "Řešte komplexní vztahy mezi tabulkami",
+    tables: ["animals", "types", "caretakers", "treats", "likes"],
     tasks: [
       {
         id: "k1",
@@ -354,6 +365,7 @@ export const categories: Categories = {
     letter: 'L',
     title: "SQL Teorie",
     description: "Pochopte teoretické koncepty SQL",
+    tables: ["animals", "types", "caretakers", "treats", "likes"],
     tasks: [
       {
         id: "l1",
@@ -377,6 +389,7 @@ export const categories: Categories = {
     letter: 'M',
     title: "Agregace a Statistiky",
     description: "Pracujte s agregačními funkcemi a statistikami",
+    tables: ["animals", "types", "caretakers", "treats", "likes"],
     tasks: [
       {
         id: "m1",
@@ -408,6 +421,7 @@ export const categories: Categories = {
     letter: 'N',
     title: "Pokročilé Filtry",
     description: "Naučte se pracovat s pokročilými filtry",
+    tables: ["animals", "types", "caretakers", "treats", "likes"],
     tasks: [
       {
         id: "n1",
@@ -439,6 +453,7 @@ export const categories: Categories = {
     letter: 'O',
     title: "Specifické Agregace",
     description: "Pracujte se specifickými agregačními funkcemi",
+    tables: ["animals", "types", "caretakers", "treats", "likes"],
     tasks: [
       {
         id: "o1",
@@ -462,6 +477,7 @@ export const categories: Categories = {
     letter: 'P',
     title: "Komplexní Dotazy",
     description: "Řešte komplexní dotazy s více podmínkami",
+    tables: ["animals", "types", "caretakers", "treats", "likes"],
     tasks: [
       {
         id: "p1",
@@ -501,6 +517,7 @@ export const categories: Categories = {
     letter: 'Q',
     title: "Agregační Výpočty",
     description: "Pracujte s agregačními výpočty",
+    tables: ["animals", "types", "caretakers", "treats", "likes"],
     tasks: [
       {
         id: "q1",
@@ -532,6 +549,7 @@ export const categories: Categories = {
     letter: 'R',
     title: "Negace a Podmínky",
     description: "Pracujte s negací a podmínkami",
+    tables: ["animals", "types", "caretakers", "treats", "likes"],
     tasks: [
       {
         id: "r1",
@@ -563,6 +581,7 @@ export const categories: Categories = {
     letter: 'S',
     title: "Komplexní Vztahy",
     description: "Pracujte s komplexními vztahy",
+    tables: ["animals", "types", "caretakers", "treats", "likes"],
     tasks: [
       {
         id: "s1",
@@ -594,6 +613,7 @@ export const categories: Categories = {
     letter: 'T',
     title: "Milovaná Zvířata",
     description: "Pracujte s vazbami mezi ošetřovateli a zvířaty",
+    tables: ["animals", "types", "caretakers", "treats", "likes"],
     tasks: [
       {
         id: "t1",
@@ -609,6 +629,7 @@ export const categories: Categories = {
     letter: 'U',
     title: "Extrémní Hodnoty",
     description: "Hledejte extrémní hodnoty v datech",
+    tables: ["animals", "types", "caretakers", "treats"],
     tasks: [
       {
         id: "u1",
@@ -640,6 +661,7 @@ export const categories: Categories = {
     letter: 'V',
     title: "Komplexní Analýza",
     description: "Řešte složité analytické úlohy",
+    tables: ["animals", "types", "caretakers", "treats", "likes"],
     tasks: [
       {
         id: "v1",
@@ -671,6 +693,7 @@ export const categories: Categories = {
     letter: 'W',
     title: "Statistická Analýza",
     description: "Řešte statistické výpočty",
+    tables: ["animals", "types"],
     tasks: [
       {
         id: "w1",
@@ -686,6 +709,7 @@ export const categories: Categories = {
     letter: 'X',
     title: "Časová Analýza",
     description: "Analyzujte časová data",
+    tables: ["animals", "types", "caretakers", "treats", "likes"],
     tasks: [
       {
         id: "x1",
@@ -717,6 +741,7 @@ export const categories: Categories = {
     letter: 'Y',
     title: "Negované Vztahy",
     description: "Pracujte s negovanými vztahy mezi entitami",
+    tables: ["animals", "types", "caretakers", "treats", "likes"],
     tasks: [
       {
         id: "y1",
@@ -748,6 +773,7 @@ export const categories: Categories = {
     letter: 'Z',
     title: "Pokročilá Časová Analýza",
     description: "Analyzujte pokročilé časové vzory",
+    tables: ["animals", "types"],
     tasks: [
       {
         id: "z1",

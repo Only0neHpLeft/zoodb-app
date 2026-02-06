@@ -74,6 +74,7 @@ export const cz = {
     noTaskSelected: "Nebyl Vybrán Úkol",
     chooseTaskMessage: "Vyberte úkol ze stránky lekce pro zahájení cvičení",
     hint: "Nápověda",
+    availableTables: "Dostupné Tabulky",
     show: "Zobrazit",
     hide: "Skrýt",
     sqlEditor: "Prostředí Dotazů",

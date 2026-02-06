@@ -119,10 +119,10 @@ jobs:
           - platform: macos-latest
             args: '--target aarch64-apple-darwin --verbose'
             target: aarch64-apple-darwin
-          # macOS Intel
-          - platform: macos-latest
-            args: '--target x86_64-apple-darwin --verbose'
-            target: x86_64-apple-darwin
+          # macOS Intel (disabled during development)
+          # - platform: macos-latest
+          #   args: '--target x86_64-apple-darwin --verbose'
+          #   target: x86_64-apple-darwin
 
     runs-on: ${{ matrix.platform }}
 

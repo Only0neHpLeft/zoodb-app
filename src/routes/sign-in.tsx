@@ -48,14 +48,14 @@ function SignInPage() {
       const result = await authClient.signIn.email({ email, password })
 
       if (result.error) {
-        setError(result.error.message || "Sign in failed")
+        setError(result.error.message || result.error.statusText || JSON.stringify(result.error))
         setLoading(false)
         return
       }
 
       window.location.href = "/"
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Sign in failed")
+      setError(err instanceof Error ? err.message : String(err))
       setLoading(false)
     }
   }
@@ -259,8 +259,8 @@ function SignInPage() {
 
           {/* Social login */}
           <div className="auth-animate-fade-up auth-stagger-6 space-y-3">
-            <GoogleButton loading={loading} />
-            <GitHubButton loading={loading} />
+            <GoogleButton loading={loading} onError={setError} />
+            <GitHubButton loading={loading} onError={setError} />
           </div>
 
           {/* Footer */}
@@ -283,11 +283,12 @@ function SignInPage() {
 
 /* ── Shared bento tile ── */
 
-function GoogleButton({ loading }: { loading: boolean }) {
+function GoogleButton({ loading, onError }: { loading: boolean; onError: (msg: string) => void }) {
   const [socialLoading, setSocialLoading] = useState(false)
 
   const handleGoogleSignIn = async () => {
     setSocialLoading(true)
+    onError("")
     try {
       const { isTauri } = await import("@/lib/tauri")
       if (isTauri()) {
@@ -303,7 +304,7 @@ function GoogleButton({ loading }: { loading: boolean }) {
         })
 
         if (result.error) {
-          console.error("[auth] Google sign-in error:", result.error)
+          onError(`Google: ${result.error.message || result.error.statusText || JSON.stringify(result.error)}`)
           setSocialLoading(false)
           return
         }
@@ -312,7 +313,6 @@ function GoogleButton({ loading }: { loading: boolean }) {
           const { openUrl } = await import("@tauri-apps/plugin-opener")
           await openUrl(result.data.url)
 
-          // In dev mode, poll for OTT from the Vite middleware relay
           if (isDev) {
             for (let i = 0; i < 120; i++) {
               await new Promise(r => setTimeout(r, 1000))
@@ -320,7 +320,6 @@ function GoogleButton({ loading }: { loading: boolean }) {
                 const res = await globalThis.fetch("/api/auth-ott")
                 const { ott } = await res.json()
                 if (ott) {
-                  // Reload with OTT so crossDomainClient exchanges it
                   window.location.href = `/?ott=${ott}`
                   return
                 }
@@ -329,13 +328,14 @@ function GoogleButton({ loading }: { loading: boolean }) {
             setSocialLoading(false)
           }
         } else {
-          console.error("[auth] Google sign-in: no redirect URL returned")
+          onError("Google: No redirect URL returned")
           setSocialLoading(false)
         }
       } else {
         await authClient.signIn.social({ provider: "google", callbackURL: "/" })
       }
-    } catch {
+    } catch (err) {
+      onError(`Google: ${err instanceof Error ? err.message : String(err)}`)
       setSocialLoading(false)
     }
   }
@@ -375,11 +375,12 @@ function GoogleButton({ loading }: { loading: boolean }) {
   )
 }
 
-function GitHubButton({ loading }: { loading: boolean }) {
+function GitHubButton({ loading, onError }: { loading: boolean; onError: (msg: string) => void }) {
   const [socialLoading, setSocialLoading] = useState(false)
 
   const handleGitHubSignIn = async () => {
     setSocialLoading(true)
+    onError("")
     try {
       const { isTauri } = await import("@/lib/tauri")
       if (isTauri()) {
@@ -395,7 +396,7 @@ function GitHubButton({ loading }: { loading: boolean }) {
         })
 
         if (result.error) {
-          console.error("[auth] GitHub sign-in error:", result.error)
+          onError(`GitHub: ${result.error.message || result.error.statusText || JSON.stringify(result.error)}`)
           setSocialLoading(false)
           return
         }
@@ -419,14 +420,14 @@ function GitHubButton({ loading }: { loading: boolean }) {
             setSocialLoading(false)
           }
         } else {
-          console.error("[auth] GitHub sign-in: no redirect URL returned")
+          onError("GitHub: No redirect URL returned")
           setSocialLoading(false)
         }
       } else {
         await authClient.signIn.social({ provider: "github", callbackURL: "/" })
       }
     } catch (err) {
-      console.error("[auth] GitHub sign-in failed:", err)
+      onError(`GitHub: ${err instanceof Error ? err.message : String(err)}`)
       setSocialLoading(false)
     }
   }

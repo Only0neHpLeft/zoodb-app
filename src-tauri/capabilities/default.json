@@ -19,6 +19,7 @@
         { "url": "https://*.convex.cloud/*" },
         { "url": "wss://*.convex.cloud/*" },
         { "url": "https://*.convex.site/*" },
+        { "url": "https://api.zoodb.app/*" },
         { "url": "https://github.com/*" },
         { "url": "https://api.github.com/*" }
       ]

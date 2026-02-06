@@ -181,7 +181,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           releaseId: ${{ needs.create-release.outputs.release_id }}
-          tagName: v__VERSION__
+          tagName: v${{ needs.create-release.outputs.version }}
           updaterJsonPreferNsis: true
           args: ${{ matrix.args }}
 

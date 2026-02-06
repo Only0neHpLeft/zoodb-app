@@ -39,18 +39,20 @@ export async function checkForUpdates(): Promise<UpdateInfo | null> {
       const currentVersion = await getVersion();
       console.log('[Updater] Current app version:', currentVersion);
     } catch (e) {
-      console.log('[Updater] Could not get app version:', e);
+      console.warn('[Updater] Could not get app version:', e);
     }
 
     // Dynamic import to avoid loading in non-Tauri environments
+    console.log('[Updater] Importing plugin-updater...');
     const updaterModule = await import('@tauri-apps/plugin-updater');
     if (!updaterModule || !updaterModule.check) {
-      console.warn('[Updater] Module not available');
+      console.error('[Updater] Module loaded but check() not available:', Object.keys(updaterModule));
       return null;
     }
 
     console.log('[Updater] Calling check()...');
     const update = await updaterModule.check();
+    console.log('[Updater] check() returned:', update ? { available: update.available, version: update.version } : 'null/undefined');
 
     if (update?.available) {
       const notes = update.body || '';
@@ -75,7 +77,7 @@ export async function checkForUpdates(): Promise<UpdateInfo | null> {
     return null;
   } catch (error) {
     console.error('[Updater] Check failed:', error);
-    return null;
+    throw error;
   }
 }
 

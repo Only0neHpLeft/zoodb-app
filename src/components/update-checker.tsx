@@ -137,15 +137,17 @@ export function UpdateChecker() {
   useEffect(() => {
     try {
       const inTauri = isTauri();
+      console.log('[UpdateChecker] isTauri:', inTauri);
       setIsTauriEnv(inTauri);
       if (inTauri) {
         const timer = setTimeout(() => {
+          console.log('[UpdateChecker] Ready, mounting updater');
           setIsReady(true);
         }, 500);
         return () => clearTimeout(timer);
       }
     } catch (e) {
-      console.error('Failed to detect Tauri environment:', e);
+      console.error('[UpdateChecker] Failed to detect Tauri:', e);
     }
   }, []);
 

@@ -60,16 +60,19 @@ export function useUpdater(): UseUpdaterReturn {
           // App will restart, won't reach here
         } else {
           // Normal updates: download in background
-          console.log('[useUpdater] Normal update, downloading in background...');
+          console.log(`[useUpdater] Downloading update v${info.version}...`);
           setIsDownloading(true);
           const success = await downloadUpdateInBackground((progress) => {
             setDownloadProgress(progress);
+            if (progress % 25 === 0 || progress === 100) {
+              console.log(`[useUpdater] Download progress: ${progress}%`);
+            }
           });
           setIsDownloading(false);
 
           if (success) {
             setIsReadyToInstall(true);
-            console.log('[useUpdater] Update downloaded and ready to install');
+            console.log(`[useUpdater] Update v${info.version} downloaded, will install on close`);
           }
         }
       }
@@ -128,7 +131,7 @@ export function useUpdater(): UseUpdaterReturn {
           }
 
           // Has pending update - try to install it
-          console.log('[useUpdater] App closing, installing pending update...');
+          console.log('[useUpdater] Installing pending update before close...');
           event.preventDefault();
           isClosing = true;
 

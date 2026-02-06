@@ -239,9 +239,19 @@ jobs:
           echo "Created latest.json:"
           cat latest.json
 
-          # Upload to release
-          gh release upload "v${VERSION}" latest.json --clobber
-          echo "Uploaded latest.json"
+          # Upload to draft release using API with release ID (gh release upload by tag fails on drafts)
+          RELEASE_ID="${{ needs.create-release.outputs.release_id }}"
+          # Delete existing latest.json asset if present
+          EXISTING=$(gh api "repos/${{ github.repository }}/releases/${RELEASE_ID}/assets" --jq '.[] | select(.name == "latest.json") | .id' 2>/dev/null || true)
+          if [ -n "$EXISTING" ]; then
+            gh api -X DELETE "repos/${{ github.repository }}/releases/assets/${EXISTING}"
+          fi
+          # Upload new latest.json
+          gh api \
+            -H "Content-Type: application/json" \
+            "https://uploads.github.com/repos/${{ github.repository }}/releases/${RELEASE_ID}/assets?name=latest.json" \
+            --input latest.json
+          echo "Uploaded latest.json to release ${RELEASE_ID}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
@@ -313,9 +323,17 @@ jobs:
 
           echo "📤 Uploading $NEW_NAME (was $OLD_NAME)..."
 
-          # Delete the original DMG uploaded by tauri-action
-          gh release delete-asset "v${VERSION}" "$OLD_NAME" --yes 2>/dev/null || true
-          gh release upload "v${VERSION}" "$NEW_PATH" --clobber
+          # Delete the original DMG uploaded by tauri-action (use API with release ID for draft releases)
+          RELEASE_ID="${{ needs.create-release.outputs.release_id }}"
+          EXISTING=$(gh api "repos/${{ github.repository }}/releases/${RELEASE_ID}/assets" --jq ".[] | select(.name == \"$OLD_NAME\") | .id" 2>/dev/null || true)
+          if [ -n "$EXISTING" ]; then
+            gh api -X DELETE "repos/${{ github.repository }}/releases/assets/${EXISTING}"
+          fi
+          # Upload renamed DMG
+          gh api \
+            -H "Content-Type: application/octet-stream" \
+            "https://uploads.github.com/repos/${{ github.repository }}/releases/${RELEASE_ID}/assets?name=${NEW_NAME}" \
+            --input "$NEW_PATH"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

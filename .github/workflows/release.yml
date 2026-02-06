@@ -172,7 +172,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VITE_CONVEX_URL: https://necessary-dog-518.convex.cloud
-          VITE_CONVEX_SITE_URL: ${{ secrets.VITE_CONVEX_SITE_URL }}
+          VITE_CONVEX_SITE_URL: https://necessary-dog-518.convex.site
           # macOS code signing ONLY (no APPLE_ID/PASSWORD/TEAM_ID = skip notarization)
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}

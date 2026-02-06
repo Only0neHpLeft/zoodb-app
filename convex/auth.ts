@@ -13,7 +13,7 @@ export const authComponent = createClient<DataModel>(components.betterAuth);
 
 export const createAuth = (ctx: GenericCtx<DataModel>) => {
   return betterAuth({
-    trustedOrigins: [siteUrl, "tauri://localhost", "http://tauri.localhost", "https://tauri.localhost", "http://localhost:3000", "zoodb://"],
+    trustedOrigins: [siteUrl, "https://api.zoodb.app", "tauri://localhost", "http://tauri.localhost", "https://tauri.localhost", "http://localhost:3000", "zoodb://"],
     database: authComponent.adapter(ctx),
     emailAndPassword: {
       enabled: true,

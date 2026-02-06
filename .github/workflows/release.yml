@@ -253,7 +253,7 @@ jobs:
 
           # Delete the original DMG uploaded by tauri-action
           gh release delete-asset "v${VERSION}" "$OLD_NAME" --yes 2>/dev/null || true
-          gh release upload "v${VERSION}" "$NEW_PATH"
+          gh release upload "v${VERSION}" "$NEW_PATH" --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

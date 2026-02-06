@@ -302,6 +302,12 @@ function GoogleButton({ loading }: { loading: boolean }) {
           disableRedirect: true,
         })
 
+        if (result.error) {
+          console.error("[auth] Google sign-in error:", result.error)
+          setSocialLoading(false)
+          return
+        }
+
         if (result.data?.url) {
           const { openUrl } = await import("@tauri-apps/plugin-opener")
           await openUrl(result.data.url)
@@ -322,6 +328,9 @@ function GoogleButton({ loading }: { loading: boolean }) {
             }
             setSocialLoading(false)
           }
+        } else {
+          console.error("[auth] Google sign-in: no redirect URL returned")
+          setSocialLoading(false)
         }
       } else {
         await authClient.signIn.social({ provider: "google", callbackURL: "/" })

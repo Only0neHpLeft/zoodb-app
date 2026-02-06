@@ -1,0 +1,182 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 660 400" width="660" height="400">
+  <defs>
+    <linearGradient id="caveBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0c0a1a"/>
+      <stop offset="60%" stop-color="#110e22"/>
+      <stop offset="100%" stop-color="#0a0816"/>
+    </linearGradient>
+    <radialGradient id="centerLight" cx="0.5" cy="0.55" r="0.45">
+      <stop offset="0%" stop-color="#7c3aed" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#7c3aed" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="crystalA" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#a78bfa"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+    <linearGradient id="crystalB" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#5b21b6"/>
+    </linearGradient>
+    <linearGradient id="crystalC" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#6d28d9"/>
+      <stop offset="100%" stop-color="#4c1d95"/>
+    </linearGradient>
+    <linearGradient id="crystalD" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0%" stop-color="#c4b5fd"/>
+      <stop offset="100%" stop-color="#a78bfa"/>
+    </linearGradient>
+    <linearGradient id="rockTop" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#1a1730"/>
+      <stop offset="100%" stop-color="#12101f"/>
+    </linearGradient>
+    <linearGradient id="rockBot" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a1730"/>
+      <stop offset="100%" stop-color="#12101f"/>
+    </linearGradient>
+    <linearGradient id="vein" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e9d5ff"/>
+      <stop offset="50%" stop-color="#c084fc"/>
+      <stop offset="100%" stop-color="#a78bfa"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+    <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
+    <!-- Arrow gradient -->
+    <linearGradient id="arrowGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.6"/>
+      <stop offset="50%" stop-color="#c4b5fd" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#a78bfa" stop-opacity="0.6"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Cave background -->
+  <rect width="660" height="400" fill="url(#caveBg)"/>
+  <rect width="660" height="400" fill="url(#centerLight)"/>
+
+  <!-- Cave ceiling (stalactite-like rock formations along top) -->
+  <g fill="url(#rockTop)">
+    <polygon points="0,0 0,45 30,55 60,35 100,50 140,30 170,42 200,25 230,38 260,22 290,40 320,28 350,45 380,20 410,35 440,28 470,40 500,22 530,35 560,30 590,42 620,25 660,40 660,0"/>
+    <!-- Deeper stalactites -->
+    <polygon points="80,35 95,70 110,35" fill="#161330" opacity="0.8"/>
+    <polygon points="230,22 242,58 254,25" fill="#161330" opacity="0.7"/>
+    <polygon points="440,28 450,62 460,30" fill="#161330" opacity="0.8"/>
+    <polygon points="590,30 598,55 606,28" fill="#161330" opacity="0.6"/>
+    <polygon points="150,30 158,48 166,32" fill="#161330" opacity="0.5"/>
+    <polygon points="350,20 356,42 362,22" fill="#161330" opacity="0.6"/>
+  </g>
+
+  <!-- Cave floor (stalagmite-like rock formations along bottom) -->
+  <g fill="url(#rockBot)">
+    <polygon points="0,400 0,365 25,355 50,370 80,350 120,368 160,345 200,360 240,348 280,365 310,340 340,358 370,348 400,362 430,342 460,355 490,348 520,360 550,345 580,358 610,350 640,365 660,355 660,400"/>
+    <!-- Taller stalagmites -->
+    <polygon points="120,368 132,330 144,365" fill="#161330" opacity="0.8"/>
+    <polygon points="310,340 320,305 330,338" fill="#161330" opacity="0.7"/>
+    <polygon points="520,360 530,328 540,355" fill="#161330" opacity="0.8"/>
+    <polygon points="50,370 58,345 66,368" fill="#161330" opacity="0.5"/>
+    <polygon points="460,355 468,325 476,352" fill="#161330" opacity="0.6"/>
+  </g>
+
+  <!-- Small crystals on ceiling -->
+  <g filter="url(#glow)">
+    <!-- Ceiling crystal left -->
+    <g transform="translate(95, 50) rotate(180)">
+      <polygon points="-4,-18 -8,2 -2,8 4,0" fill="url(#crystalC)" opacity="0.6"/>
+      <polygon points="4,0 -2,8 4,12 8,-8" fill="url(#crystalA)" opacity="0.6"/>
+      <polygon points="-4,-18 2,-20 8,-8 4,0" fill="url(#crystalD)" opacity="0.5"/>
+    </g>
+    <!-- Ceiling crystal mid-left -->
+    <g transform="translate(242, 38) rotate(175)">
+      <polygon points="-3,-14 -7,2 -1,6 3,0" fill="url(#crystalB)" opacity="0.5"/>
+      <polygon points="3,0 -1,6 3,10 7,-6" fill="url(#crystalA)" opacity="0.5"/>
+      <polygon points="-3,-14 2,-16 7,-6 3,0" fill="url(#crystalD)" opacity="0.45"/>
+    </g>
+    <!-- Ceiling crystal right -->
+    <g transform="translate(450, 44) rotate(185)">
+      <polygon points="-5,-20 -10,2 -3,10 5,0" fill="url(#crystalC)" opacity="0.55"/>
+      <polygon points="5,0 -3,10 5,14 10,-8" fill="url(#crystalA)" opacity="0.55"/>
+      <polygon points="-5,-20 3,-22 10,-8 5,0" fill="url(#crystalD)" opacity="0.5"/>
+    </g>
+  </g>
+
+  <!-- Small crystals on floor -->
+  <g filter="url(#glow)">
+    <!-- Floor crystal left -->
+    <g transform="translate(132, 340)">
+      <polygon points="-4,-20 -9,0 -2,6 4,-2" fill="url(#crystalC)" opacity="0.55"/>
+      <polygon points="4,-2 -2,6 4,10 9,-10" fill="url(#crystalA)" opacity="0.55"/>
+      <polygon points="-4,-20 3,-22 9,-10 4,-2" fill="url(#crystalD)" opacity="0.5"/>
+    </g>
+    <!-- Floor crystal center-left -->
+    <g transform="translate(260, 355)">
+      <polygon points="-3,-14 -6,0 -1,5 3,-1" fill="url(#crystalB)" opacity="0.45"/>
+      <polygon points="3,-1 -1,5 3,8 6,-6" fill="url(#crystalA)" opacity="0.45"/>
+      <polygon points="-3,-14 2,-15 6,-6 3,-1" fill="url(#crystalD)" opacity="0.4"/>
+    </g>
+    <!-- Floor crystal right -->
+    <g transform="translate(530, 338)">
+      <polygon points="-5,-22 -10,2 -3,8 5,-2" fill="url(#crystalC)" opacity="0.5"/>
+      <polygon points="5,-2 -3,8 5,12 10,-10" fill="url(#crystalA)" opacity="0.5"/>
+      <polygon points="-5,-22 3,-24 10,-10 5,-2" fill="url(#crystalD)" opacity="0.45"/>
+    </g>
+    <!-- Floor crystal far left -->
+    <g transform="translate(58, 352)">
+      <polygon points="-3,-12 -6,0 -1,4 3,-2" fill="url(#crystalB)" opacity="0.4"/>
+      <polygon points="3,-2 -1,4 3,6 5,-5" fill="url(#crystalA)" opacity="0.4"/>
+    </g>
+    <!-- Floor crystal far right -->
+    <g transform="translate(468, 335)">
+      <polygon points="-3,-16 -7,0 -2,5 3,-1" fill="url(#crystalC)" opacity="0.45"/>
+      <polygon points="3,-1 -2,5 3,8 7,-8" fill="url(#crystalA)" opacity="0.45"/>
+      <polygon points="-3,-16 2,-18 7,-8 3,-1" fill="url(#crystalD)" opacity="0.4"/>
+    </g>
+  </g>
+
+  <!-- Glowing crystal veins on cave walls -->
+  <g stroke="url(#vein)" fill="none" stroke-linecap="round" opacity="0.2">
+    <!-- Left wall veins -->
+    <path d="M 0,120 L 15,135 L 8,160 L 20,180" stroke-width="1.5"/>
+    <path d="M 0,250 L 12,240 L 5,220" stroke-width="1"/>
+    <!-- Right wall veins -->
+    <path d="M 660,150 L 648,165 L 655,185 L 642,200" stroke-width="1.5"/>
+    <path d="M 660,280 L 650,270 L 655,250" stroke-width="1"/>
+    <!-- Floor veins -->
+    <path d="M 180,370 L 200,365 L 220,372" stroke-width="1"/>
+    <path d="M 400,360 L 420,355 L 435,362" stroke-width="1"/>
+  </g>
+
+  <!-- Sparkle particles floating in cave air -->
+  <g opacity="0.2">
+    <circle cx="100" cy="150" r="1.5" fill="#c4b5fd"/>
+    <circle cx="200" cy="100" r="1" fill="#a78bfa"/>
+    <circle cx="400" cy="120" r="1.5" fill="#ddd6fe"/>
+    <circle cx="550" cy="140" r="1" fill="#c4b5fd"/>
+    <circle cx="80" cy="280" r="1" fill="#a78bfa"/>
+    <circle cx="580" cy="260" r="1.5" fill="#c4b5fd"/>
+    <circle cx="330" cy="90" r="1" fill="#e9d5ff"/>
+    <circle cx="150" cy="310" r="1" fill="#8b5cf6"/>
+    <circle cx="500" cy="300" r="1" fill="#a78bfa"/>
+    <circle cx="300" cy="280" r="1.5" fill="#c4b5fd"/>
+  </g>
+
+  <!-- Vein glow spots on walls -->
+  <g opacity="0.06" filter="url(#softGlow)">
+    <circle cx="15" cy="140" r="20" fill="#7c3aed"/>
+    <circle cx="645" cy="175" r="20" fill="#7c3aed"/>
+    <circle cx="330" cy="200" r="40" fill="#7c3aed"/>
+  </g>
+
+  <!-- Directional arrow between icon positions (app → Applications) -->
+  <g transform="translate(330, 200)">
+    <!-- Dashed path -->
+    <line x1="-80" y1="0" x2="80" y2="0" stroke="url(#arrowGrad)" stroke-width="2.5" stroke-dasharray="8 6" stroke-linecap="round"/>
+    <!-- Arrow head -->
+    <polygon points="80,0 68,-8 68,8" fill="#c4b5fd" opacity="0.7"/>
+  </g>
+
+  <!-- "Drag to install" hint text -->
+  <text x="330" y="260" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" fill="#a78bfa" opacity="0.5" font-weight="300" letter-spacing="0.5">Drag to Applications to install</text>
+</svg>

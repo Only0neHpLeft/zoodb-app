@@ -14,7 +14,7 @@ Only the latest release receives security updates. Please keep your app up to da
 If you discover a security vulnerability, please report it responsibly:
 
 1. **Do not** open a public issue
-2. Email **[security@zoodb.app](mailto:security@zoodb.app)** with:
+2. Email **[security@zoodb.app](mailto:onlyhpleft@gmail.com)** with:
    - Description of the vulnerability
    - Steps to reproduce
    - Potential impact

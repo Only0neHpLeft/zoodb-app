@@ -1,6 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router"
-import { useState } from "react"
-import { authClient } from "@/lib/auth-client"
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
+import { useState, useEffect } from "react"
+import { authClient, useSession } from "@/lib/auth-client"
 import { useLanguage } from "@/contexts/language-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -24,6 +24,16 @@ export const Route = createFileRoute("/sign-up")({
 
 function SignUpPage() {
   const { t } = useLanguage()
+  const { data: session, isPending } = useSession()
+  const navigate = useNavigate()
+
+  // Redirect authenticated users to home
+  useEffect(() => {
+    if (!isPending && session?.user) {
+      navigate({ to: "/" })
+    }
+  }, [isPending, session, navigate])
+
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")

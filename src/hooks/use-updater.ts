@@ -17,6 +17,8 @@ export interface UseUpdaterReturn {
   isDownloading: boolean;
   /** Download progress percentage (0-100) */
   downloadProgress: number;
+  /** Estimated seconds remaining for download */
+  eta: number | null;
   /** Error message if update check or download failed */
   error: string | null;
   /** Current phase of the update process */
@@ -32,7 +34,9 @@ export function useUpdater(): UseUpdaterReturn {
   const [isChecking, setIsChecking] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
+  const [eta, setEta] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const downloadStartTime = useRef<number | null>(null);
   const [phase, setPhase] = useState<UseUpdaterReturn['phase']>('idle');
   const hasChecked = useRef(false);
 
@@ -79,11 +83,18 @@ export function useUpdater(): UseUpdaterReturn {
     setError(null);
     setIsDownloading(true);
     setPhase('downloading');
+    downloadStartTime.current = Date.now();
 
     try {
       await downloadAndInstallUpdate((progress) => {
         setDownloadProgress(progress);
+        if (progress > 0 && progress < 100 && downloadStartTime.current) {
+          const elapsed = (Date.now() - downloadStartTime.current) / 1000;
+          const remaining = (elapsed / progress) * (100 - progress);
+          setEta(Math.ceil(remaining));
+        }
         if (progress === 100) {
+          setEta(null);
           setPhase('installing');
         }
       });
@@ -102,6 +113,7 @@ export function useUpdater(): UseUpdaterReturn {
     isChecking,
     isDownloading,
     downloadProgress,
+    eta,
     error,
     phase,
     installUpdate,

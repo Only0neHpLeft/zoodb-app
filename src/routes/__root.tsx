@@ -158,7 +158,7 @@ function WindowTitle() {
 }
 
 function UpdateGate({ children }: { children: ReactNode }) {
-  const { updateInfo, phase, downloadProgress, error, installUpdate } = useUpdater();
+  const { updateInfo, phase, downloadProgress, eta, error, installUpdate } = useUpdater();
 
 const handleInstall = () => {
     if (updateInfo) {
@@ -177,6 +177,7 @@ const handleInstall = () => {
         updateInfo={updateInfo}
         phase={phase}
         downloadProgress={downloadProgress}
+        eta={eta}
         error={error}
         onInstall={handleInstall}
       />

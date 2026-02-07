@@ -40,11 +40,20 @@ interface UpdateScreenProps {
   updateInfo: UpdateInfo;
   phase: 'idle' | 'checking' | 'downloading' | 'installing' | 'restarting';
   downloadProgress: number;
+  eta: number | null;
   error: string | null;
   onInstall: () => void;
 }
 
-export function UpdateScreen({ updateInfo, phase, downloadProgress, error, onInstall }: UpdateScreenProps) {
+function formatEta(seconds: number): string {
+  if (seconds < 5) return '< 5s';
+  if (seconds < 60) return `~${seconds}s`;
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `~${mins}m ${secs}s`;
+}
+
+export function UpdateScreen({ updateInfo, phase, downloadProgress, eta, error, onInstall }: UpdateScreenProps) {
   const lang = getStoredLanguage();
   const texts = updateTexts[lang];
 
@@ -154,6 +163,9 @@ export function UpdateScreen({ updateInfo, phase, downloadProgress, error, onIns
               <span>
                 {statusText}
                 {phase === 'downloading' && downloadProgress > 0 && ` ${downloadProgress}%`}
+                {phase === 'downloading' && eta !== null && (
+                  <span className="text-muted-foreground/60"> — {formatEta(eta)}</span>
+                )}
               </span>
             </div>
           </div>

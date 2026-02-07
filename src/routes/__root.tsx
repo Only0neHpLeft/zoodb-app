@@ -143,7 +143,7 @@ function WindowTitle() {
     const updateTitle = async () => {
       try {
         const version = await getVersion()
-        const appName = language === 'cz' ? 'Zoo Databáze' : 'Zoo Database'
+        const appName = 'Zoo DB'
         const commitHash = typeof __COMMIT_HASH__ !== 'undefined' ? __COMMIT_HASH__ : ''
         const title = `${appName} | v${version}${commitHash ? ` (${commitHash})` : ''}`
         await getCurrentWindow().setTitle(title)

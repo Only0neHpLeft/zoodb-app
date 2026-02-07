@@ -270,7 +270,7 @@ export function ThemeSelector() {
                 </p>
                 {isLocked && (
                   <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-medium">
-                    Zoo+
+                    Zoo
                   </span>
                 )}
               </div>

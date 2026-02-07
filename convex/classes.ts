@@ -197,9 +197,59 @@ export const getClassStudents = query({
 
         const tasksCompleted = progress.filter((p) => p.completed).length;
         const totalAttempts = progress.reduce((sum, p) => sum + p.attemptCount, 0);
+        const totalSuccessfulAttempts = progress.reduce((sum, p) => sum + p.successfulAttempts, 0);
+        const totalHintsUsed = progress.reduce((sum, p) => sum + p.hintsUsed, 0);
+        const totalTimeSpentSeconds = progress.reduce((sum, p) => sum + p.timeSpentSeconds, 0);
         const lastActive = progress.length > 0
           ? Math.max(...progress.map((p) => p.lastAttemptAt))
           : undefined;
+
+        // Build per-category breakdown
+        const categoryMap = new Map<string, {
+          tasksCompleted: number;
+          tasksAttempted: number;
+          attempts: number;
+          successfulAttempts: number;
+          hintsUsed: number;
+          timeSpentSeconds: number;
+        }>();
+
+        for (const p of progress) {
+          const cat = p.categoryLetter;
+          const existing = categoryMap.get(cat) ?? {
+            tasksCompleted: 0,
+            tasksAttempted: 0,
+            attempts: 0,
+            successfulAttempts: 0,
+            hintsUsed: 0,
+            timeSpentSeconds: 0,
+          };
+          existing.tasksAttempted++;
+          if (p.completed) existing.tasksCompleted++;
+          existing.attempts += p.attemptCount;
+          existing.successfulAttempts += p.successfulAttempts;
+          existing.hintsUsed += p.hintsUsed;
+          existing.timeSpentSeconds += p.timeSpentSeconds;
+          categoryMap.set(cat, existing);
+        }
+
+        const categoryProgress = Array.from(categoryMap.entries()).map(([categoryLetter, data]) => ({
+          categoryLetter,
+          ...data,
+        }));
+
+        // Per-task raw data for drill-down
+        const taskDetails = progress.map((p) => ({
+          categoryLetter: p.categoryLetter,
+          taskIndex: p.taskIndex,
+          taskId: p.taskId,
+          completed: p.completed,
+          attemptCount: p.attemptCount,
+          successfulAttempts: p.successfulAttempts,
+          hintsUsed: p.hintsUsed,
+          timeSpentSeconds: p.timeSpentSeconds,
+          lastAttemptAt: p.lastAttemptAt,
+        }));
 
         return {
           studentId: enrollment.studentUserId,
@@ -209,7 +259,12 @@ export const getClassStudents = query({
           joinedAt: enrollment.joinedAt,
           tasksCompleted,
           totalAttempts,
+          totalSuccessfulAttempts,
+          totalHintsUsed,
+          totalTimeSpentSeconds,
           lastActive,
+          categoryProgress,
+          taskDetails,
         };
       })
     );

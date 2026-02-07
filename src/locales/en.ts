@@ -527,6 +527,11 @@ export const en = {
       alreadyMember: 'You are already a member of this class',
       teacherView: 'Teacher View',
       studentView: 'Student View',
+      hintsUsed: 'Hints Used',
+      timeSpent: 'Time Spent',
+      successRate: 'Success Rate',
+      categoryProgress: 'Category Progress',
+      attempts: 'Attempts',
     },
     membership: {
       title: 'Membership',
@@ -776,6 +781,8 @@ export const en = {
     orContinueWith: 'Or continue with',
     signingIn: 'Signing in...',
     creatingAccount: 'Creating account...',
+    userAlreadyExists: 'An account with this email already exists.',
+    trySigningIn: 'Try signing in instead',
     bento: {
       query: 'Query',
       progress: 'Progress',

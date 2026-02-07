@@ -41,11 +41,18 @@ function SignUpPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isDuplicateUser, setIsDuplicateUser] = useState(false)
   const [loading, setLoading] = useState(false)
+
+  function isDuplicateUserError(err: { message?: string; statusText?: string; status?: number; code?: string }): boolean {
+    const msg = (err.message || err.statusText || "").toLowerCase()
+    return msg.includes("already") || msg.includes("exists") || err.status === 422 || err.code === "USER_ALREADY_EXISTS"
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+    setIsDuplicateUser(false)
 
     if (password !== confirmPassword) {
       setError("Passwords do not match")
@@ -63,14 +70,25 @@ function SignUpPage() {
       const result = await authClient.signUp.email({ name, email, password })
 
       if (result.error) {
-        setError(result.error.message || result.error.statusText || JSON.stringify(result.error))
+        if (isDuplicateUserError(result.error)) {
+          setIsDuplicateUser(true)
+          setError(t.auth.userAlreadyExists)
+        } else {
+          setError(result.error.message || result.error.statusText || JSON.stringify(result.error))
+        }
         setLoading(false)
         return
       }
 
       window.location.href = "/"
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      const msg = err instanceof Error ? err.message : String(err)
+      if (msg.toLowerCase().includes("already") || msg.toLowerCase().includes("exists")) {
+        setIsDuplicateUser(true)
+        setError(t.auth.userAlreadyExists)
+      } else {
+        setError(msg)
+      }
       setLoading(false)
     }
   }
@@ -308,6 +326,14 @@ function SignUpPage() {
             {error && (
               <div className="auth-animate-fade-up rounded-lg border border-destructive/20 bg-destructive/5 px-3.5 py-2.5">
                 <p className="text-sm text-destructive">{error}</p>
+                {isDuplicateUser && (
+                  <Link
+                    to="/sign-in"
+                    className="mt-1 block text-sm font-semibold text-primary underline-offset-4 hover:underline"
+                  >
+                    {t.auth.trySigningIn}
+                  </Link>
+                )}
               </div>
             )}
 

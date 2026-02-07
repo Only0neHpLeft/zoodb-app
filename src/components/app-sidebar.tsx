@@ -111,7 +111,7 @@ export function AppSidebar() {
       title: t.nav.classes,
       icon: GraduationCap,
       url: "/classes",
-      badge: "soon",
+      badge: null,
     },
     {
       title: t.sidebar.membership,

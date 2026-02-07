@@ -1,9 +1,10 @@
+import { useState } from "react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
-import { Copy, Users, Calendar, Trash2, Eye } from "lucide-react"
+import { Copy, Check, Users, Calendar, Trash2, Eye } from "lucide-react"
 import type { Id } from "../../../convex/_generated/dataModel"
 
 interface TeacherClassCardProps {
@@ -22,9 +23,13 @@ interface TeacherClassCardProps {
 }
 
 export function TeacherClassCard({ cls, onViewStudents, onDelete, formatDate, t }: TeacherClassCardProps) {
+  const [copied, setCopied] = useState(false)
+
   function copyClassCode(code: string) {
     navigator.clipboard.writeText(code)
     toast.success(t.pages.classes.codeCopied)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
 
   return (
@@ -58,7 +63,7 @@ export function TeacherClassCard({ cls, onViewStudents, onDelete, formatDate, t 
             size="sm"
             onClick={() => copyClassCode(cls.code)}
           >
-            <Copy className="h-3 w-3 mr-1" />
+            {copied ? <Check className="h-3 w-3 mr-1 text-green-500" /> : <Copy className="h-3 w-3 mr-1" />}
             {t.pages.classes.copyCode}
           </Button>
           <Button

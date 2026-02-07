@@ -530,6 +530,11 @@ export const cz = {
       alreadyMember: 'Již jste členem této třídy',
       teacherView: 'Pohled Učitele',
       studentView: 'Pohled Žáka',
+      hintsUsed: 'Použité Nápovědy',
+      timeSpent: 'Strávený Čas',
+      successRate: 'Úspěšnost',
+      categoryProgress: 'Pokrok v Kategoriích',
+      attempts: 'Pokusy',
     },
     membership: {
       title: 'Členství',
@@ -780,6 +785,8 @@ export const cz = {
     orContinueWith: 'Nebo pokračujte s',
     signingIn: 'Přihlašování...',
     creatingAccount: 'Vytváření účtu...',
+    userAlreadyExists: 'Účet s tímto e-mailem již existuje.',
+    trySigningIn: 'Zkuste se přihlásit',
     bento: {
       query: 'Dotaz',
       progress: 'Pokrok',

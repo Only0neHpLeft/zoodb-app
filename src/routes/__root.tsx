@@ -188,6 +188,10 @@ const handleInstall = () => {
 }
 
 function RootComponent() {
+  useEffect(() => {
+    getCurrentWindow().show().catch(() => {})
+  }, [])
+
   return (
     <ThemeProvider
       attribute="class"

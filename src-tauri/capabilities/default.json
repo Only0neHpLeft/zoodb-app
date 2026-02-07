@@ -12,6 +12,7 @@
     "store:default",
     "deep-link:default",
     "os:default",
+    "window-state:default",
     "updater:default",
     {
       "identifier": "http:default",

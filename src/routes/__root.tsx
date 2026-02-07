@@ -144,7 +144,8 @@ function WindowTitle() {
       try {
         const version = await getVersion()
         const appName = language === 'cz' ? 'Zoo Databáze' : 'Zoo Database'
-        const title = `${appName} | v${version}`
+        const commitHash = typeof __COMMIT_HASH__ !== 'undefined' ? __COMMIT_HASH__ : ''
+        const title = `${appName} | v${version}${commitHash ? ` (${commitHash})` : ''}`
         await getCurrentWindow().setTitle(title)
       } catch (error) {
         console.error('Failed to set window title:', error)

@@ -3,6 +3,7 @@ import { TanStackRouterVite } from '@tanstack/router-plugin/vite'
 import viteReact from '@vitejs/plugin-react'
 import viteTsConfigPaths from 'vite-tsconfig-paths'
 import tailwindcss from '@tailwindcss/vite'
+import { execSync } from 'child_process'
 import type { Plugin } from 'vite'
 
 // Dev-only middleware: relays OAuth OTT from system browser to Tauri app.
@@ -48,6 +49,7 @@ function authCallbackPlugin(): Plugin {
 const config = defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(process.env.npm_package_version ?? '0.0.0'),
+    __COMMIT_HASH__: JSON.stringify(execSync('git rev-parse --short HEAD').toString().trim()),
   },
   plugins: [
     authCallbackPlugin(),

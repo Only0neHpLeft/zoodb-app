@@ -115,7 +115,7 @@ function StudentRow({ student, timeAgo, t }: { student: StudentData; timeAgo: (t
         </TableCell>
         <TableCell className="text-muted-foreground text-sm">{timeAgo(student.lastActive)}</TableCell>
       </TableRow>
-      {expanded && student.categoryProgress.length > 0 && (
+      {expanded && student.categoryProgress?.length > 0 && (
         <TableRow>
           <TableCell colSpan={8} className="bg-muted/30 p-4">
             <div className="mb-2 text-sm font-medium">{t.pages.classes.categoryProgress}</div>

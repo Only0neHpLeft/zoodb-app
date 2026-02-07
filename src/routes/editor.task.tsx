@@ -16,6 +16,8 @@ import { useTranslateCategory } from "@/hooks/use-translate-category"
 import { executeQuery } from "@/lib/db/pglite"
 import { toast } from "sonner"
 import { validateQuery } from "@/lib/query-validator"
+import { useSaveTaskProgress } from "@/lib/db/convex-db"
+import { useSettingsSync } from "@/hooks/use-settings-sync"
 import type { ValidationResult, QueryResultRow } from "@/data/types"
 
 type TaskSearch = {
@@ -48,6 +50,8 @@ function TaskEditorPage() {
   const [isExecuting, setIsExecuting] = useState(false)
   const [executionTime, setExecutionTime] = useState<number | null>(null)
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null)
+  const { userId } = useSettingsSync()
+  const saveTaskProgress = useSaveTaskProgress()
 
   useEffect(() => {
     const saved = localStorage.getItem('sqlLessonsProgress')
@@ -68,6 +72,17 @@ function TaskEditorPage() {
     newCompletedTasks[categoryLetter][taskIdx] = true
     setCompletedTasks(newCompletedTasks)
     localStorage.setItem('sqlLessonsProgress', JSON.stringify(newCompletedTasks))
+
+    if (userId) {
+      saveTaskProgress({
+        userId,
+        categoryLetter,
+        taskIndex: taskIdx,
+        taskId: `${categoryLetter}-${taskIdx}`,
+        completed: true,
+        hintsUsed: showHint ? 1 : 0,
+      }).catch(() => {})
+    }
   }
 
   const handleHintToggle = () => setShowHint(!showHint)
@@ -120,6 +135,17 @@ function TaskEditorPage() {
           toast.success(t.task.validationSuccess || "Query is correct!")
         } else {
           toast.error(t.task.validationFailed || "Query doesn't meet requirements")
+        }
+
+        if (userId) {
+          saveTaskProgress({
+            userId,
+            categoryLetter: category.letter,
+            taskIndex,
+            taskId: `${category.letter}-${taskIndex}`,
+            completed: validation.isValid,
+            hintsUsed: showHint ? 1 : 0,
+          }).catch(() => {})
         }
       }
     } catch (error: unknown) {

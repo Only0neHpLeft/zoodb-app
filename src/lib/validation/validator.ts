@@ -1,4 +1,29 @@
 import type { ValidationRule, ValidationResult, QueryValidationContext, TaskValidation } from './types'
+import { tableNames, columnNames } from '../db/schema-mapping'
+
+// Build bidirectional lookup maps for bilingual validation (CS ↔ EN)
+const _tableVariants = new Map<string, string[]>()
+for (const entry of Object.values(tableNames)) {
+  const pair = [entry.cs, entry.en]
+  _tableVariants.set(entry.cs.toLowerCase(), pair)
+  _tableVariants.set(entry.en.toLowerCase(), pair)
+}
+
+const _columnEquiv = new Map<string, string>()
+const _csToEn: [string, string][] = []
+const _seen = new Set<string>()
+for (const tableCol of Object.values(columnNames)) {
+  for (const col of Object.values(tableCol as Record<string, { cs: string; en: string }>)) {
+    const cs = col.cs.toLowerCase()
+    const en = col.en.toLowerCase()
+    if (cs !== en) {
+      _columnEquiv.set(cs, en)
+      _columnEquiv.set(en, cs)
+      if (!_seen.has(cs)) { _csToEn.push([cs, en]); _seen.add(cs) }
+    }
+  }
+}
+_csToEn.sort((a, b) => b[0].length - a[0].length)
 
 // Normalize SQL for comparison (remove extra whitespace, lowercase)
 function normalizeSql(sql: string): string {
@@ -18,14 +43,16 @@ function checkKeyword(sql: string, keyword: string): boolean {
   return pattern.test(normalized)
 }
 
-// Check if SQL uses a specific table
+// Check if SQL uses a specific table (accepts both CS and EN names)
 function checkTableUsed(sql: string, table: string): boolean {
   const normalized = normalizeSql(sql)
-  const tableLower = table.toLowerCase()
-  // Check after FROM or JOIN
-  const fromPattern = new RegExp(`\\bfrom\\s+${tableLower}\\b`, 'i')
-  const joinPattern = new RegExp(`\\bjoin\\s+${tableLower}\\b`, 'i')
-  return fromPattern.test(normalized) || joinPattern.test(normalized)
+  const variants = _tableVariants.get(table.toLowerCase()) || [table]
+  return variants.some(v => {
+    const vLower = v.toLowerCase()
+    const fromPattern = new RegExp(`\\bfrom\\s+${vLower}\\b`, 'i')
+    const joinPattern = new RegExp(`\\bjoin\\s+${vLower}\\b`, 'i')
+    return fromPattern.test(normalized) || joinPattern.test(normalized)
+  })
 }
 
 // Check ORDER BY clause - returns detailed status
@@ -46,8 +73,9 @@ function checkOrderBy(sql: string, config: string): OrderByStatus {
 
   const orderByClause = orderByMatch[1]
 
-  // Check column presence in ORDER BY
-  if (!orderByClause.includes(column)) return 'wrong_column'
+  // Check column presence in ORDER BY (accept both CS and EN names)
+  const orderColVariants = [column, ...(_columnEquiv.has(column) ? [_columnEquiv.get(column)!] : [])]
+  if (!orderColVariants.some(c => orderByClause.includes(c))) return 'wrong_column'
 
   // Check direction if specified
   if (direction) {
@@ -75,8 +103,9 @@ function checkWhereClause(sql: string, pattern: string): WhereStatus {
   // Pattern format: "column:operator:value" e.g., "vaha:<:50" or "jmeno:like:a%"
   const [column, operator, value] = pattern.toLowerCase().split(':')
 
-  // Check column presence
-  if (!whereClause.includes(column)) return 'wrong_column'
+  // Check column presence (accept both CS and EN names)
+  const whereColVariants = [column, ...(_columnEquiv.has(column) ? [_columnEquiv.get(column)!] : [])]
+  if (!whereColVariants.some(c => whereClause.includes(c))) return 'wrong_column'
 
   // Check operator
   if (operator) {
@@ -100,11 +129,23 @@ function checkWhereClause(sql: string, pattern: string): WhereStatus {
   return 'pass'
 }
 
-// Check if SQL pattern matches (regex)
+// Check if SQL pattern matches (regex, tries both CS and EN column names)
 function checkPattern(sql: string, pattern: string): boolean {
   try {
-    const regex = new RegExp(pattern, 'i')
-    return regex.test(sql)
+    if (new RegExp(pattern, 'i').test(sql)) return true
+    // Try with column names swapped to the other language
+    let altPattern = pattern
+    for (const [cs, en] of _csToEn) {
+      if (altPattern.toLowerCase().includes(cs)) {
+        altPattern = altPattern.replace(new RegExp(cs, 'gi'), en)
+      } else if (altPattern.toLowerCase().includes(en)) {
+        altPattern = altPattern.replace(new RegExp(en, 'gi'), cs)
+      }
+    }
+    if (altPattern !== pattern) {
+      return new RegExp(altPattern, 'i').test(sql)
+    }
+    return false
   } catch {
     return false
   }
@@ -180,11 +221,15 @@ function validateRule(rule: ValidationRule, context: QueryValidationContext): Va
       const tables = Array.isArray(value) ? value : [value as string]
       const missing = tables.filter(t => !checkTableUsed(sql, t))
       const passed = missing.length === 0
+      const displayMissing = missing.map(t => {
+        const v = _tableVariants.get(t.toLowerCase())
+        return v ? v.join(' / ') : t
+      })
       return {
         passed,
         message: passed
           ? `Required tables used`
-          : message || `Query should use table: ${missing.join(', ')}`,
+          : message || `Query should use table: ${displayMissing.join(', ')}`,
       }
     }
 

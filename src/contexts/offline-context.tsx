@@ -197,10 +197,16 @@ export function OfflineProvider({ children }: { children: React.ReactNode }) {
   return <OfflineContext.Provider value={value}>{children}</OfflineContext.Provider>;
 }
 
+const defaultOfflineContext: OfflineContextValue = {
+  isOnline: true,
+  isSyncing: false,
+  failedOperations: [],
+  queuedCount: 0,
+  syncQueue: async () => {},
+  clearFailedOps: async () => {},
+};
+
 export function useOffline() {
   const context = useContext(OfflineContext);
-  if (!context) {
-    throw new Error('useOffline must be used within OfflineProvider');
-  }
-  return context;
+  return context ?? defaultOfflineContext;
 }

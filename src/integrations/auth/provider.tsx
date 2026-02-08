@@ -5,7 +5,6 @@ import { ConvexBetterAuthProvider, AuthBoundary } from "@convex-dev/better-auth/
 import { useBetterAuthTauri } from "@daveyplate/better-auth-tauri/react";
 import { authClient } from "@/lib/auth-client";
 import { isTauri } from "@/lib/tauri";
-import { LoadingScreen } from "@/components/loading-screen";
 import { api } from "../../../convex/_generated/api";
 
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
@@ -80,7 +79,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   return (
-    <Suspense fallback={<LoadingScreen />}>
+    <Suspense fallback={null}>
       <ConvexBetterAuthProvider client={convex} authClient={authClient}>
         <TauriAuthSetup />
         <AuthBoundary

@@ -1,21 +1,21 @@
 declare const __APP_VERSION__: string
 
-import { createRootRouteWithContext, Outlet, useRouter, useLocation } from '@tanstack/react-router'
-import { useEffect, useState, Suspense, type ReactNode } from 'react'
+import { createRootRouteWithContext, Outlet, useLocation, useRouter } from '@tanstack/react-router'
+import { useEffect, useState, type ReactNode } from 'react'
 import { getCurrentWindow } from '@tauri-apps/api/window'
-import { getVersion } from '@tauri-apps/api/app'
+import { getVersion, show as showApp } from '@tauri-apps/api/app'
 import { AlertTriangle, RefreshCw, Home, Copy, Check } from 'lucide-react'
 
-import { AuthProvider } from '../integrations/auth/provider'
-import { useSession } from '../lib/auth-client'
+import { AuthProvider, convex } from '../integrations/auth/provider'
+import { ConvexProvider } from 'convex/react'
 import { ThemeProvider } from '../components/theme-provider'
 import { LanguageProvider, useLanguage } from '../contexts/language-context'
 import { MembershipProvider } from '../contexts/membership-context'
 import { OfflineProvider } from '../contexts/offline-context'
 import { SettingsSyncProvider } from '../hooks/use-settings-sync'
+import { AuthGuard } from '../components/auth-guard'
 import { AppLayout } from '../components/app-layout'
 import { DbInitProvider } from '../components/db-init-background'
-import { LoadingScreen } from '../components/loading-screen'
 import { UpdateScreen } from '../components/update-screen'
 import { UpdateToast, storeUpdateApplied } from '../components/update-checker'
 import { useUpdater } from '../hooks/use-updater'
@@ -161,6 +161,15 @@ function WindowTitle() {
 function UpdateGate({ children }: { children: ReactNode }) {
   const { updateInfo, phase, downloadProgress, eta, error, installUpdate } = useUpdater();
 
+  // When a mandatory update is detected, UpdateGate blocks AuthProvider from rendering,
+  // so AppLayout never mounts. Show the window here so the update screen is visible.
+  useEffect(() => {
+    if (updateInfo) {
+      const win = getCurrentWindow()
+      showApp().then(() => win.show()).then(() => win.setFocus()).catch(() => {})
+    }
+  }, [updateInfo])
+
 const handleInstall = () => {
     if (updateInfo) {
       storeUpdateApplied({
@@ -188,30 +197,34 @@ const handleInstall = () => {
   return <>{children}</>;
 }
 
-const AUTH_ROUTES = ['/verify-email', '/sign-up', '/sign-in']
+/**
+ * Wraps children in the full Convex / offline / membership provider stack.
+ * Auth routes skip this entirely — they don't need Convex, so they're never
+ * blocked by the Convex Suspense boundary.
+ */
+function ProtectedProviders({ children }: { children: ReactNode }) {
+  const { pathname } = useLocation()
+  const isAuthRoute = ['/sign-in', '/sign-up', '/verify-email'].some(r => pathname?.startsWith(r))
 
-function EmailVerificationGate({ children }: { children: ReactNode }) {
-  const { data: session } = useSession()
-  const location = useLocation()
+  if (isAuthRoute) return <>{children}</>
 
-  useEffect(() => {
-    if (
-      session?.user &&
-      !session.user.emailVerified &&
-      !AUTH_ROUTES.includes(location.pathname)
-    ) {
-      window.location.href = `/verify-email?email=${encodeURIComponent(session.user.email)}`
-    }
-  }, [session, location.pathname])
-
-  return <>{children}</>
+  return (
+    <DbInitProvider>
+      <AuthProvider>
+        <OfflineProvider>
+          <MembershipProvider>
+            <SettingsSyncProvider>
+              <UpdateToast />
+              {children}
+            </SettingsSyncProvider>
+          </MembershipProvider>
+        </OfflineProvider>
+      </AuthProvider>
+    </DbInitProvider>
+  )
 }
 
 function RootComponent() {
-  useEffect(() => {
-    getCurrentWindow().show().catch(() => {})
-  }, [])
-
   return (
     <ThemeProvider
       attribute="class"
@@ -223,24 +236,15 @@ function RootComponent() {
         <LanguageProvider>
           <WindowTitle />
           <UpdateGate>
-            <DbInitProvider>
-              <AuthProvider>
-                <EmailVerificationGate>
-                  <OfflineProvider>
-                    <MembershipProvider>
-                      <SettingsSyncProvider>
-                        <UpdateToast />
-                        <Suspense fallback={<LoadingScreen />}>
-                          <AppLayout>
-                            <Outlet />
-                          </AppLayout>
-                        </Suspense>
-                      </SettingsSyncProvider>
-                    </MembershipProvider>
-                  </OfflineProvider>
-                </EmailVerificationGate>
-              </AuthProvider>
-            </DbInitProvider>
+            <ConvexProvider client={convex}>
+              <AuthGuard>
+                <ProtectedProviders>
+                  <AppLayout>
+                    <Outlet />
+                  </AppLayout>
+                </ProtectedProviders>
+              </AuthGuard>
+            </ConvexProvider>
           </UpdateGate>
         </LanguageProvider>
       </SidebarProvider>

@@ -116,10 +116,14 @@ export function MembershipProvider({ children }: { children: ReactNode }) {
   )
 }
 
+const defaultMembershipContext: MembershipContextType = {
+  membership: null,
+  loading: true,
+  refreshMembership: async () => {},
+  updateMembership: async () => {},
+}
+
 export function useMembership() {
   const context = useContext(MembershipContext)
-  if (context === undefined) {
-    throw new Error("useMembership must be used within a MembershipProvider")
-  }
-  return context
+  return context ?? defaultMembershipContext
 }

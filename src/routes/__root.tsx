@@ -1,12 +1,13 @@
 declare const __APP_VERSION__: string
 
-import { createRootRouteWithContext, Outlet, useRouter } from '@tanstack/react-router'
+import { createRootRouteWithContext, Outlet, useRouter, useLocation } from '@tanstack/react-router'
 import { useEffect, useState, Suspense, type ReactNode } from 'react'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { getVersion } from '@tauri-apps/api/app'
 import { AlertTriangle, RefreshCw, Home, Copy, Check } from 'lucide-react'
 
 import { AuthProvider } from '../integrations/auth/provider'
+import { useSession } from '../lib/auth-client'
 import { ThemeProvider } from '../components/theme-provider'
 import { LanguageProvider, useLanguage } from '../contexts/language-context'
 import { MembershipProvider } from '../contexts/membership-context'
@@ -187,6 +188,25 @@ const handleInstall = () => {
   return <>{children}</>;
 }
 
+const AUTH_ROUTES = ['/verify-email', '/sign-up', '/sign-in']
+
+function EmailVerificationGate({ children }: { children: ReactNode }) {
+  const { data: session } = useSession()
+  const location = useLocation()
+
+  useEffect(() => {
+    if (
+      session?.user &&
+      !session.user.emailVerified &&
+      !AUTH_ROUTES.includes(location.pathname)
+    ) {
+      window.location.href = `/verify-email?email=${encodeURIComponent(session.user.email)}`
+    }
+  }, [session, location.pathname])
+
+  return <>{children}</>
+}
+
 function RootComponent() {
   useEffect(() => {
     getCurrentWindow().show().catch(() => {})
@@ -205,18 +225,20 @@ function RootComponent() {
           <UpdateGate>
             <DbInitProvider>
               <AuthProvider>
-                <OfflineProvider>
-                  <MembershipProvider>
-                    <SettingsSyncProvider>
-                      <UpdateToast />
-                      <Suspense fallback={<LoadingScreen />}>
-                        <AppLayout>
-                          <Outlet />
-                        </AppLayout>
-                      </Suspense>
-                    </SettingsSyncProvider>
-                  </MembershipProvider>
-                </OfflineProvider>
+                <EmailVerificationGate>
+                  <OfflineProvider>
+                    <MembershipProvider>
+                      <SettingsSyncProvider>
+                        <UpdateToast />
+                        <Suspense fallback={<LoadingScreen />}>
+                          <AppLayout>
+                            <Outlet />
+                          </AppLayout>
+                        </Suspense>
+                      </SettingsSyncProvider>
+                    </MembershipProvider>
+                  </OfflineProvider>
+                </EmailVerificationGate>
               </AuthProvider>
             </DbInitProvider>
           </UpdateGate>

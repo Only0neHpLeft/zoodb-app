@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VerifyEmailRouteImport } from './routes/verify-email'
 import { Route as StudentsRouteImport } from './routes/students'
 import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as SignInRouteImport } from './routes/sign-in'
@@ -28,6 +29,11 @@ import { Route as SchemeCaretakersRouteImport } from './routes/scheme.caretakers
 import { Route as SchemeAnimalsRouteImport } from './routes/scheme.animals'
 import { Route as EditorTaskRouteImport } from './routes/editor.task'
 
+const VerifyEmailRoute = VerifyEmailRouteImport.update({
+  id: '/verify-email',
+  path: '/verify-email',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StudentsRoute = StudentsRouteImport.update({
   id: '/students',
   path: '/students',
@@ -129,6 +135,7 @@ export interface FileRoutesByFullPath {
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/students': typeof StudentsRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/editor/task': typeof EditorTaskRoute
   '/scheme/animals': typeof SchemeAnimalsRoute
   '/scheme/caretakers': typeof SchemeCaretakersRoute
@@ -149,6 +156,7 @@ export interface FileRoutesByTo {
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/students': typeof StudentsRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/editor/task': typeof EditorTaskRoute
   '/scheme/animals': typeof SchemeAnimalsRoute
   '/scheme/caretakers': typeof SchemeCaretakersRoute
@@ -170,6 +178,7 @@ export interface FileRoutesById {
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/students': typeof StudentsRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/editor/task': typeof EditorTaskRoute
   '/scheme/animals': typeof SchemeAnimalsRoute
   '/scheme/caretakers': typeof SchemeCaretakersRoute
@@ -192,6 +201,7 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/students'
+    | '/verify-email'
     | '/editor/task'
     | '/scheme/animals'
     | '/scheme/caretakers'
@@ -212,6 +222,7 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/students'
+    | '/verify-email'
     | '/editor/task'
     | '/scheme/animals'
     | '/scheme/caretakers'
@@ -232,6 +243,7 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/students'
+    | '/verify-email'
     | '/editor/task'
     | '/scheme/animals'
     | '/scheme/caretakers'
@@ -253,10 +265,18 @@ export interface RootRouteChildren {
   SignInRoute: typeof SignInRoute
   SignUpRoute: typeof SignUpRoute
   StudentsRoute: typeof StudentsRoute
+  VerifyEmailRoute: typeof VerifyEmailRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/verify-email': {
+      id: '/verify-email'
+      path: '/verify-email'
+      fullPath: '/verify-email'
+      preLoaderRoute: typeof VerifyEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/students': {
       id: '/students'
       path: '/students'
@@ -432,6 +452,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignInRoute: SignInRoute,
   SignUpRoute: SignUpRoute,
   StudentsRoute: StudentsRoute,
+  VerifyEmailRoute: VerifyEmailRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

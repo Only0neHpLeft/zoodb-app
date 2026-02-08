@@ -2,7 +2,6 @@ import { createClient, type GenericCtx } from "@convex-dev/better-auth";
 import { convex, crossDomain } from "@convex-dev/better-auth/plugins";
 import { tauri } from "@daveyplate/better-auth-tauri/plugin";
 import { emailOTP } from "better-auth/plugins";
-import { Resend } from "resend";
 import { components } from "./_generated/api";
 import type { DataModel } from "./_generated/dataModel";
 import { query } from "./_generated/server";
@@ -15,6 +14,7 @@ export const authComponent = createClient<DataModel>(components.betterAuth);
 
 export const createAuth = (ctx: GenericCtx<DataModel>) => {
   return betterAuth({
+    baseURL: process.env.CONVEX_SITE_URL,
     trustedOrigins: [siteUrl, "https://api.zoodb.app", "tauri://localhost", "http://tauri.localhost", "https://tauri.localhost", "http://localhost:3000", "zoodb://"],
     database: authComponent.adapter(ctx),
     emailAndPassword: {
@@ -41,12 +41,17 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
         sendVerificationOnSignUp: true,
         async sendVerificationOTP({ email, otp, type }) {
           if (type === "email-verification") {
-            const resend = new Resend(process.env.RESEND_API_KEY);
-            await resend.emails.send({
-              from: "ZooDB <onboarding@resend.dev>",
-              to: email,
-              subject: "ZooDB - Verification Code",
-              html: `<!DOCTYPE html>
+            const res = await fetch("https://api.resend.com/emails", {
+              method: "POST",
+              headers: {
+                "Authorization": `Bearer ${process.env.RESEND_API_KEY}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                from: "ZooDB <onboarding@resend.dev>",
+                to: [email],
+                subject: "ZooDB - Verification Code",
+                html: `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background-color:#f9f9f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
@@ -79,7 +84,12 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
 </table>
 </body>
 </html>`,
+              }),
             });
+            if (!res.ok) {
+              const err = await res.text();
+              console.error("Resend error:", res.status, err);
+            }
           }
         },
       }),
@@ -93,3 +103,6 @@ export const getCurrentUser = query({
     return authComponent.getAuthUser(ctx);
   },
 });
+
+// Reactive query for AuthBoundary — validates session against Convex DB
+export const { getAuthUser } = authComponent.clientApi();

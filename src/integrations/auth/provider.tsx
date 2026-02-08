@@ -1,10 +1,12 @@
 import { ReactNode, Suspense, useCallback, useEffect } from "react";
 import { ConvexReactClient } from "convex/react";
-import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
+import { ConvexError } from "convex/values";
+import { ConvexBetterAuthProvider, AuthBoundary } from "@convex-dev/better-auth/react";
 import { useBetterAuthTauri } from "@daveyplate/better-auth-tauri/react";
 import { authClient } from "@/lib/auth-client";
 import { isTauri } from "@/lib/tauri";
 import { LoadingScreen } from "@/components/loading-screen";
+import { api } from "../../../convex/_generated/api";
 
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
 
@@ -57,12 +59,38 @@ function TauriAuthSetup() {
   return null;
 }
 
+function isAuthError(error: unknown): boolean {
+  if (error instanceof ConvexError) {
+    const data = error.data;
+    if (typeof data === "string") {
+      return data === "Unauthenticated" || data.includes("auth");
+    }
+  }
+  return false;
+}
+
 export function AuthProvider({ children }: AuthProviderProps) {
+  const handleUnauth = useCallback(async () => {
+    try {
+      await authClient.signOut();
+    } catch {
+      // Ignore signOut errors
+    }
+    window.location.href = "/sign-in";
+  }, []);
+
   return (
     <Suspense fallback={<LoadingScreen />}>
       <ConvexBetterAuthProvider client={convex} authClient={authClient}>
         <TauriAuthSetup />
-        {children}
+        <AuthBoundary
+          authClient={authClient}
+          getAuthUserFn={api.auth.getAuthUser}
+          isAuthError={isAuthError}
+          onUnauth={handleUnauth}
+        >
+          {children}
+        </AuthBoundary>
       </ConvexBetterAuthProvider>
     </Suspense>
   );

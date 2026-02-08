@@ -10,7 +10,7 @@ import { SidebarInset } from "@/components/ui/sidebar"
 import { LoadingScreen } from "@/components/loading-screen"
 
 // Routes that don't require authentication and shouldn't show sidebar
-const authRoutes = ["/sign-in", "/sign-up"]
+const authRoutes = ["/sign-in", "/sign-up", "/verify-email"]
 
 // Timeout for detecting stale auth state (5 seconds)
 const AUTH_TIMEOUT_MS = 5000

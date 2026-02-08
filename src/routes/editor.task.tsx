@@ -16,7 +16,7 @@ import { useTranslateCategory } from "@/hooks/use-translate-category"
 import { executeQuery } from "@/lib/db/pglite"
 import { toast } from "sonner"
 import { validateQuery } from "@/lib/query-validator"
-import { useSaveTaskProgress } from "@/lib/db/convex-db"
+import { useSaveTaskProgress, useStudentProgress } from "@/lib/db/convex-db"
 import { useSettingsSync } from "@/hooks/use-settings-sync"
 import type { ValidationResult, QueryResultRow } from "@/data/types"
 
@@ -42,7 +42,7 @@ function TaskEditorPage() {
   const { translateDifficulty, difficultyColors } = useTranslateDifficulty()
   const { translateCategory } = useTranslateCategory()
 
-  const [completedTasks, setCompletedTasks] = useState<{ [key: string]: boolean[] }>({})
+  const [localCompleted, setLocalCompleted] = useState<{ [key: string]: boolean[] }>({})
   const [sqlQuery, setSqlQuery] = useState('')
   const [showHint, setShowHint] = useState(false)
   const [queryResults, setQueryResults] = useState<QueryResultRow[] | null>(null)
@@ -52,28 +52,40 @@ function TaskEditorPage() {
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null)
   const { userId } = useSettingsSync()
   const saveTaskProgress = useSaveTaskProgress()
+  const dbProgress = useStudentProgress(userId ?? undefined)
 
+  // localStorage fallback for non-logged-in users
   useEffect(() => {
-    const saved = localStorage.getItem('sqlLessonsProgress')
-    if (saved) {
-      setCompletedTasks(JSON.parse(saved))
+    if (!userId) {
+      const saved = localStorage.getItem('sqlLessonsProgress')
+      if (saved) {
+        setLocalCompleted(JSON.parse(saved))
+      }
     }
-  }, [])
+  }, [userId])
+
+  // Derive completedTasks: Convex for logged-in, localStorage for guests
+  const completedTasks = React.useMemo<{ [key: string]: boolean[] }>(() => {
+    if (userId && dbProgress) {
+      const map: { [key: string]: boolean[] } = {}
+      for (const record of dbProgress) {
+        if (record.completed) {
+          if (!map[record.categoryLetter]) map[record.categoryLetter] = []
+          map[record.categoryLetter][record.taskIndex] = true
+        }
+      }
+      return map
+    }
+    return localCompleted
+  }, [userId, dbProgress, localCompleted])
 
   const originalCategory = getCategoryByLetter(lessonParam || '')
   const category = originalCategory ? translateCategory(originalCategory) : null
   const taskIndex = taskParam ? taskParam - 1 : -1
 
   const completeTask = (categoryLetter: string, taskIdx: number) => {
-    const newCompletedTasks = { ...completedTasks }
-    if (!newCompletedTasks[categoryLetter]) {
-      newCompletedTasks[categoryLetter] = []
-    }
-    newCompletedTasks[categoryLetter][taskIdx] = true
-    setCompletedTasks(newCompletedTasks)
-    localStorage.setItem('sqlLessonsProgress', JSON.stringify(newCompletedTasks))
-
     if (userId) {
+      // Logged in: write to Convex (completedTasks derives from dbProgress reactively)
       saveTaskProgress({
         userId,
         categoryLetter,
@@ -82,6 +94,13 @@ function TaskEditorPage() {
         completed: true,
         hintsUsed: showHint ? 1 : 0,
       }).catch(() => {})
+    } else {
+      // Guest: localStorage fallback
+      const updated = { ...localCompleted }
+      if (!updated[categoryLetter]) updated[categoryLetter] = []
+      updated[categoryLetter][taskIdx] = true
+      setLocalCompleted(updated)
+      localStorage.setItem('sqlLessonsProgress', JSON.stringify(updated))
     }
   }
 

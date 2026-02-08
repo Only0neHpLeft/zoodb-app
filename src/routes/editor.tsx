@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
-import { useState, useEffect, useCallback } from "react"
+import React, { useState, useEffect, useCallback } from "react"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Notifications } from "@/components/notifications"
 import { BookOpen, CheckCircle2, Play, Terminal, Lightbulb, ChevronLeft, ChevronRight, Code2, TableIcon, XCircle } from "lucide-react"
@@ -20,6 +20,8 @@ import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { validateTask, getTaskRules, type ValidationResult } from "@/lib/validation"
 import { tableNames, columnNames, type TableKey } from "@/lib/db/schema-mapping"
+import { useSaveTaskProgress, useStudentProgress } from "@/lib/db/convex-db"
+import { useSettingsSync } from "@/hooks/use-settings-sync"
 
 type EditorSearch = {
   lesson?: string
@@ -45,7 +47,7 @@ function EditorPage() {
   const { translateDifficulty, difficultyColors } = useTranslateDifficulty()
   const { translateCategory } = useTranslateCategory()
 
-  const [completedTasks, setCompletedTasks] = useState<{ [key: string]: boolean[] }>({})
+  const [localCompleted, setLocalCompleted] = useState<{ [key: string]: boolean[] }>({})
   const [sqlQuery, setSqlQuery] = useState('')
   const [showHint, setShowHint] = useState(false)
   const [result, setResult] = useState<QueryResult | null>(null)
@@ -55,13 +57,32 @@ function EditorPage() {
   const [validationResults, setValidationResults] = useState<ValidationResult[] | null>(null)
   const [isValidated, setIsValidated] = useState<boolean | null>(null)
   const [showValidationDialog, setShowValidationDialog] = useState(false)
+  const { userId } = useSettingsSync()
+  const saveTaskProgress = useSaveTaskProgress()
+  const dbProgress = useStudentProgress(userId ?? undefined)
 
   useEffect(() => {
-    const saved = localStorage.getItem('sqlLessonsProgress')
-    if (saved) {
-      setCompletedTasks(JSON.parse(saved))
+    if (!userId) {
+      const saved = localStorage.getItem('sqlLessonsProgress')
+      if (saved) {
+        setLocalCompleted(JSON.parse(saved))
+      }
     }
-  }, [])
+  }, [userId])
+
+  const completedTasks = React.useMemo<{ [key: string]: boolean[] }>(() => {
+    if (userId && dbProgress) {
+      const map: { [key: string]: boolean[] } = {}
+      for (const record of dbProgress) {
+        if (record.completed) {
+          if (!map[record.categoryLetter]) map[record.categoryLetter] = []
+          map[record.categoryLetter][record.taskIndex] = true
+        }
+      }
+      return map
+    }
+    return localCompleted
+  }, [userId, dbProgress, localCompleted])
 
   useEffect(() => {
     setSqlQuery('')
@@ -87,16 +108,24 @@ function EditorPage() {
   }
 
   const markTaskComplete = useCallback((categoryLetter: string, taskIndex: number) => {
-    setCompletedTasks(prev => {
-      const updated = { ...prev }
-      if (!updated[categoryLetter]) {
-        updated[categoryLetter] = []
-      }
-      updated[categoryLetter][taskIndex] = true
-      localStorage.setItem('sqlLessonsProgress', JSON.stringify(updated))
-      return updated
-    })
-  }, [])
+    if (userId) {
+      saveTaskProgress({
+        userId,
+        categoryLetter,
+        taskIndex,
+        taskId: `${categoryLetter}-${taskIndex}`,
+        completed: true,
+      }).catch(() => {})
+    } else {
+      setLocalCompleted(prev => {
+        const updated = { ...prev }
+        if (!updated[categoryLetter]) updated[categoryLetter] = []
+        updated[categoryLetter][taskIndex] = true
+        localStorage.setItem('sqlLessonsProgress', JSON.stringify(updated))
+        return updated
+      })
+    }
+  }, [userId, saveTaskProgress])
 
   const handleRunQuery = useCallback(async () => {
     if (!sqlQuery.trim()) {

@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Breadcrumbs } from "@/components/breadcrumbs"
 import { OfflineIndicator } from "@/components/offline-indicator"
@@ -12,6 +12,8 @@ import { useLanguage } from "@/contexts/language-context"
 import { useTranslateDifficulty } from "@/hooks/use-translate-difficulty"
 import { useTranslateCategory } from "@/hooks/use-translate-category"
 import { useMembership } from "@/contexts/membership-context"
+import { useStudentProgress } from "@/lib/db/convex-db"
+import { useSettingsSync } from "@/hooks/use-settings-sync"
 
 export const Route = createFileRoute("/")({
   component: Home,
@@ -23,14 +25,32 @@ function Home() {
   const { translateDifficulty, difficultyColors } = useTranslateDifficulty()
   const { translateCategory } = useTranslateCategory()
   const { membership } = useMembership()
-  const [completedTasks, setCompletedTasks] = useState<{ [key: string]: boolean[] }>({})
+  const { userId } = useSettingsSync()
+  const dbProgress = useStudentProgress(userId ?? undefined)
+  const [localCompleted, setLocalCompleted] = useState<{ [key: string]: boolean[] }>({})
 
   useEffect(() => {
-    const saved = localStorage.getItem("sqlLessonsProgress")
-    if (saved) {
-      setCompletedTasks(JSON.parse(saved))
+    if (!userId) {
+      const saved = localStorage.getItem("sqlLessonsProgress")
+      if (saved) {
+        setLocalCompleted(JSON.parse(saved))
+      }
     }
-  }, [])
+  }, [userId])
+
+  const completedTasks = React.useMemo<{ [key: string]: boolean[] }>(() => {
+    if (userId && dbProgress) {
+      const map: { [key: string]: boolean[] } = {}
+      for (const record of dbProgress) {
+        if (record.completed) {
+          if (!map[record.categoryLetter]) map[record.categoryLetter] = []
+          map[record.categoryLetter][record.taskIndex] = true
+        }
+      }
+      return map
+    }
+    return localCompleted
+  }, [userId, dbProgress, localCompleted])
 
   const totalLessons = categoriesArray.length
   const totalTasks = categoriesArray.reduce((sum, category) => sum + category.tasks.length, 0)

@@ -72,7 +72,9 @@ function VerifyEmailPage() {
           return
         }
 
-        window.location.href = "/"
+        // Session updates reactively via useSession() — the useEffect
+        // watching emailVerified will redirect to "/" automatically.
+        setLoading(false)
       } catch {
         setError(t.auth.invalidCode)
         setOtp("")

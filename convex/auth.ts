@@ -48,7 +48,7 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
-                from: "ZooDB <noreply@send.zoodb.app>",
+                from: "ZooDB <noreply@zoodb.app>",
                 to: [email],
                 subject: "ZooDB - Verification Code",
                 html: `<!DOCTYPE html>

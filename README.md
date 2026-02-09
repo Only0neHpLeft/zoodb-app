@@ -6,7 +6,8 @@
 
 [![Release](https://img.shields.io/github/v/release/Only0neHpLeft/zoodb-app?style=flat-square&color=blue)](https://github.com/Only0neHpLeft/zoodb-app/releases)
 [![macOS](https://img.shields.io/badge/macOS-arm64%20%7C%20x64-black?style=flat-square&logo=apple)](https://github.com/Only0neHpLeft/zoodb-app/releases)
-[![License](https://img.shields.io/github/license/Only0neHpLeft/zoodb-app?style=flat-square)](LICENSE)
+[![Windows](https://img.shields.io/badge/Windows-x64%20%7C%20arm64-blue?style=flat-square&logo=windows)](https://github.com/Only0neHpLeft/zoodb-app/releases)
+[![License](https://img.shields.io/badge/license-Proprietary-red?style=flat-square)](LICENSE)
 
 </div>
 
@@ -32,6 +33,8 @@ Grab the latest release for your platform:
 |:---------|:-------------|:---------|
 | macOS | Apple Silicon (M1–M5) | [`.dmg`](https://github.com/Only0neHpLeft/zoodb-app/releases/latest) |
 | macOS | Intel x64 | [`.dmg`](https://github.com/Only0neHpLeft/zoodb-app/releases/latest) |
+| Windows | x64 | [`.exe`](https://github.com/Only0neHpLeft/zoodb-app/releases/latest) |
+| Windows | ARM64 | [`.exe`](https://github.com/Only0neHpLeft/zoodb-app/releases/latest) |
 
 ## Tech Stack
 
@@ -60,4 +63,4 @@ bun run tauri build
 
 ## License
 
-[MIT](LICENSE)
+This software is **source-available** under a [proprietary license](LICENSE). You may view the code and contribute, but redistribution and derivative works are prohibited. See [LICENSE](LICENSE) for full terms.

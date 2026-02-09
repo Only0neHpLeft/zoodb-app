@@ -72,10 +72,13 @@ function VerifyEmailPage() {
           return
         }
 
-        // Full reload to pick up the updated emailVerified state cleanly.
-        // The cross-domain session store may not reactively refresh after
-        // verifyEmail, so a reload guarantees AuthGuard sees the new value.
-        window.location.href = "/"
+        // Refresh session so useSession() picks up emailVerified: true,
+        // then navigate without a full reload (preserves session in memory).
+        try {
+          await authClient.getSession()
+          ;(authClient as any).updateSession?.()
+        } catch {}
+        navigate({ to: "/" })
       } catch {
         setError(t.auth.invalidCode)
         setOtp("")

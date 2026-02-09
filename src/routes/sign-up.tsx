@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router"
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { useState } from "react"
 import { authClient } from "@/lib/auth-client"
 import { useLanguage } from "@/contexts/language-context"
@@ -24,6 +24,7 @@ export const Route = createFileRoute("/sign-up")({
 
 function SignUpPage() {
   const { t } = useLanguage()
+  const navigate = useNavigate()
 
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
@@ -71,7 +72,10 @@ function SignUpPage() {
         return
       }
 
-      window.location.href = `/verify-email?email=${encodeURIComponent(email)}`
+      navigate({
+        to: "/verify-email" as never,
+        search: { email } as never,
+      })
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       if (msg.toLowerCase().includes("already") || msg.toLowerCase().includes("exists")) {

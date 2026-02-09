@@ -17,9 +17,14 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
     baseURL: process.env.CONVEX_SITE_URL,
     trustedOrigins: [siteUrl, "https://api.zoodb.app", "tauri://localhost", "http://tauri.localhost", "https://tauri.localhost", "http://localhost:3000", "zoodb://"],
     database: authComponent.adapter(ctx),
+    account: {
+      accountLinking: {
+        enabled: true,
+        trustedProviders: ["google", "github"],
+      },
+    },
     emailAndPassword: {
       enabled: true,
-      requireEmailVerification: true,
     },
     socialProviders: {
       google: {

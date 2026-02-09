@@ -72,9 +72,10 @@ function VerifyEmailPage() {
           return
         }
 
-        // Session updates reactively via useSession() — the useEffect
-        // watching emailVerified will redirect to "/" automatically.
-        setLoading(false)
+        // Full reload to pick up the updated emailVerified state cleanly.
+        // The cross-domain session store may not reactively refresh after
+        // verifyEmail, so a reload guarantees AuthGuard sees the new value.
+        window.location.href = "/"
       } catch {
         setError(t.auth.invalidCode)
         setOtp("")

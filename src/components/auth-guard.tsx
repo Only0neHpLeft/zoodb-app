@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useNavigate, useLocation } from "@tanstack/react-router"
 import { getCurrentWindow } from "@tauri-apps/api/window"
 import { show as showApp } from "@tauri-apps/api/app"
@@ -18,6 +18,8 @@ const AUTH_TIMEOUT_MS = 5000
  *  - Protected routes render only after session check confirms access.
  *  - Window stays hidden until the destination screen is stable.
  *  - If session never resolves, safety timeout redirects to sign-in.
+ *  - Handles cross-domain OTT exchange (OAuth redirect with ?ott=xxx) before
+ *    making any redirect decisions.
  */
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { data: session, isPending } = useSession()
@@ -25,13 +27,58 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation()
   const shownRef = useRef(false)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const ottExchangedRef = useRef(false)
 
-  const isLoaded = !isPending
+  // Detect ?ott= on initial mount (cross-domain OAuth redirect)
+  const [ottPending, setOttPending] = useState(() => {
+    try {
+      return new URLSearchParams(window.location.search).has("ott")
+    } catch {
+      return false
+    }
+  })
+
+  const isLoaded = !isPending && !ottPending
   const isSignedIn = !!session?.user
   const isAuthRoute = AUTH_ROUTES.some(r => pathname?.startsWith(r))
   const isEmailVerified = session?.user?.emailVerified ?? false
 
-  // Safety: if session never resolves on a protected route, clear stale session and redirect
+  // Exchange OTT on mount — must happen before any redirect decisions.
+  // The ConvexBetterAuthProvider (deeper in the tree) also handles OTT,
+  // but AuthGuard would redirect to /sign-in before it ever mounts.
+  useEffect(() => {
+    if (ottExchangedRef.current) return
+    const params = new URLSearchParams(window.location.search)
+    const token = params.get("ott")
+    if (!token) return
+
+    ottExchangedRef.current = true
+    ;(async () => {
+      try {
+        const client = authClient as any
+        const result = await client.crossDomain.oneTimeToken.verify({ token })
+        const sess = result.data?.session
+        if (sess) {
+          await authClient.getSession({
+            fetchOptions: {
+              headers: { Authorization: `Bearer ${sess.token}` },
+            },
+          })
+          client.updateSession()
+        }
+      } catch (e) {
+        console.error("OTT exchange failed:", e)
+      }
+      // Clean OTT from URL so ConvexBetterAuthProvider doesn't re-exchange
+      const url = new URL(window.location.href)
+      url.searchParams.delete("ott")
+      window.history.replaceState({}, "", url.toString())
+      setOttPending(false)
+    })()
+  }, [])
+
+  // Safety: if session never resolves on a protected route, clear stale session and redirect.
+  // Don't start the timer while OTT is still being exchanged.
   useEffect(() => {
     if (!isLoaded && !isAuthRoute) {
       timeoutRef.current = setTimeout(async () => {

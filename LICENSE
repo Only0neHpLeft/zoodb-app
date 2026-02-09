@@ -1,32 +1,71 @@
 Copyright (c) 2026 Only0neHpLeft. All rights reserved.
 
-ZOODB APP — PROPRIETARY LICENSE
+ZOODB APP — PROPRIETARY SOURCE-AVAILABLE LICENSE
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to view
-the source code and submit contributions (e.g., pull requests and bug fixes)
-to the original repository, subject to the following conditions:
+This software and associated documentation files (the "Software") are the
+exclusive property of the copyright holder. By accessing this repository,
+you agree to the following terms:
 
-1. NO DISTRIBUTION. You may not distribute, sublicense, publish, or otherwise
-   make available copies of the Software, in whole or in part, in any form,
-   whether modified or unmodified.
+1. SOURCE-AVAILABLE, NOT OPEN SOURCE.
+   This Software is made publicly viewable for transparency and to accept
+   community contributions. It is NOT licensed under any open-source license.
+   All rights not explicitly granted below are reserved by the copyright holder.
 
-2. NO COMMERCIAL USE. You may not use the Software, in whole or in part, for
-   any commercial purpose without prior written permission from the copyright
-   holder.
+2. PERMITTED: VIEWING AND CONTRIBUTIONS.
+   You may:
+   (a) View and study the source code for personal, educational, or
+       non-commercial purposes.
+   (b) Fork this repository on GitHub SOLELY for the purpose of submitting
+       pull requests (bug fixes, improvements, features) back to the
+       original repository.
+   (c) Submit contributions (pull requests, issues, bug reports) to the
+       original repository.
 
-3. CONTRIBUTIONS. Any contributions submitted to the original repository are
-   granted back to the copyright holder under this same license. By submitting
-   a contribution, you agree that the copyright holder may use, modify, and
-   distribute your contribution as part of the Software.
+3. NO DISTRIBUTION.
+   You may NOT distribute, sublicense, publish, share, host, deploy, or
+   otherwise make available copies of the Software, in whole or in part,
+   in any form, whether modified or unmodified, to any third party.
 
-4. PERSONAL USE ONLY. You may view and study the source code for personal,
-   educational, or non-commercial purposes only.
+4. NO DERIVATIVE WORKS.
+   You may NOT create derivative works based on the Software. You may NOT
+   modify, adapt, or build upon the Software for any purpose other than
+   contributing back to the original repository as described in Section 2.
 
-5. NO WARRANTY. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
-   KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-   IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES
-   OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-   ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-   OTHER DEALINGS IN THE SOFTWARE.
+5. NO COPYING.
+   You may NOT copy, reproduce, or duplicate the Software, its code,
+   architecture, design, or any substantial portion thereof for use in
+   any other project, product, or application.
+
+6. NO COMMERCIAL USE.
+   You may NOT use the Software, in whole or in part, for any commercial
+   purpose without prior written permission from the copyright holder.
+
+7. CONTRIBUTIONS.
+   By submitting a contribution (pull request, patch, or any other form)
+   to the original repository, you:
+   (a) Grant the copyright holder a perpetual, irrevocable, worldwide,
+       royalty-free license to use, modify, distribute, and sublicense
+       your contribution as part of the Software.
+   (b) Represent that you have the right to grant such a license.
+   (c) Agree that your contribution is made under this same license.
+
+8. FORKS.
+   Forking this repository on GitHub does NOT grant you any rights beyond
+   those explicitly stated in Section 2. A fork may only be used to prepare
+   and submit contributions to the original repository. Any other use of a
+   fork, including but not limited to running, deploying, or distributing
+   the Software from a fork, is strictly prohibited.
+
+9. TERMINATION.
+   Any violation of these terms automatically terminates your rights under
+   this license. Upon termination, you must destroy all copies of the
+   Software in your possession.
+
+10. NO WARRANTY.
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+    OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+    THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+    WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
+    OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.

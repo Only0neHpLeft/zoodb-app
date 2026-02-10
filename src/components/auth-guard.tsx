@@ -112,7 +112,8 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
     // Signed in on sign-in/sign-up → home (or redirect target)
     if (isSignedIn && isAuthRoute && !pathname?.startsWith("/verify-email")) {
-      const redirectTo = (search as Record<string, string>)?.redirect || "/"
+      const raw = (search as Record<string, string>)?.redirect || "/"
+      const redirectTo = raw.startsWith("/") && !raw.startsWith("//") ? raw : "/"
       navigate({ to: redirectTo as never })
       return
     }

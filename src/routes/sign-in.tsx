@@ -18,9 +18,10 @@ import {
 } from "lucide-react"
 
 export const Route = createFileRoute("/sign-in")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    redirect: (search.redirect as string) || "/",
-  }),
+  validateSearch: (search: Record<string, unknown>) => {
+    const raw = (search.redirect as string) || "/"
+    return { redirect: raw.startsWith("/") && !raw.startsWith("//") ? raw : "/" }
+  },
   component: SignInPage,
 })
 
@@ -44,6 +45,10 @@ function SignInPage() {
       const result = await authClient.signIn.email({ email, password })
 
       if (result.error) {
+        if (result.error.status === 403) {
+          navigate({ to: "/verify-email", search: { email, redirect } } as never)
+          return
+        }
         setError(result.error.message || result.error.statusText || JSON.stringify(result.error))
         setLoading(false)
         return
@@ -331,7 +336,7 @@ function GoogleButton({ loading, onError, redirect }: { loading: boolean; onErro
           setSocialLoading(false)
         }
       } else {
-        await authClient.signIn.social({ provider: "google", callbackURL: redirect })
+        await authClient.signIn.social({ provider: "google", callbackURL: redirect, errorCallbackURL: "/sign-in" })
       }
     } catch (err) {
       onError(`Google: ${err instanceof Error ? err.message : String(err)}`)
@@ -423,7 +428,7 @@ function GitHubButton({ loading, onError, redirect }: { loading: boolean; onErro
           setSocialLoading(false)
         }
       } else {
-        await authClient.signIn.social({ provider: "github", callbackURL: redirect })
+        await authClient.signIn.social({ provider: "github", callbackURL: redirect, errorCallbackURL: "/sign-in" })
       }
     } catch (err) {
       onError(`GitHub: ${err instanceof Error ? err.message : String(err)}`)

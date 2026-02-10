@@ -19,9 +19,10 @@ import {
 } from "lucide-react"
 
 export const Route = createFileRoute("/sign-up")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    redirect: (search.redirect as string) || "/",
-  }),
+  validateSearch: (search: Record<string, unknown>) => {
+    const raw = (search.redirect as string) || "/"
+    return { redirect: raw.startsWith("/") && !raw.startsWith("//") ? raw : "/" }
+  },
   component: SignUpPage,
 })
 
@@ -442,7 +443,7 @@ function GoogleButton({ loading, onError }: { loading: boolean; onError: (msg: s
           setSocialLoading(false)
         }
       } else {
-        await authClient.signIn.social({ provider: "google", callbackURL: "/" })
+        await authClient.signIn.social({ provider: "google", callbackURL: "/", errorCallbackURL: "/sign-up" })
       }
     } catch (err) {
       onError(`Google: ${err instanceof Error ? err.message : String(err)}`)
@@ -534,7 +535,7 @@ function GitHubButton({ loading, onError }: { loading: boolean; onError: (msg: s
           setSocialLoading(false)
         }
       } else {
-        await authClient.signIn.social({ provider: "github", callbackURL: "/" })
+        await authClient.signIn.social({ provider: "github", callbackURL: "/", errorCallbackURL: "/sign-up" })
       }
     } catch (err) {
       onError(`GitHub: ${err instanceof Error ? err.message : String(err)}`)

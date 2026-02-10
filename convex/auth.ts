@@ -25,6 +25,13 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
     },
     emailAndPassword: {
       enabled: true,
+      requireEmailVerification: true,
+    },
+    session: {
+      cookieCache: {
+        enabled: true,
+        maxAge: 5 * 60,
+      },
     },
     socialProviders: {
       google: {

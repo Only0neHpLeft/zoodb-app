@@ -73,15 +73,11 @@ function VerifyEmailPage() {
           return
         }
 
-        // Refresh session so useSession() picks up emailVerified: true.
-        // Don't navigate here — the useEffect watching session?.user?.emailVerified
-        // handles navigation once React re-renders with the fresh session.
-        // Navigating directly causes a race where AuthGuard still sees stale
-        // emailVerified=false and bounces the user back to sign-in.
-        try {
-          await authClient.getSession()
-          ;(authClient as any).updateSession?.()
-        } catch {}
+        // Full page reload to the redirect target. This guarantees AuthGuard
+        // fetches a completely fresh session (bypasses the server-side cookie
+        // cache that can still show emailVerified=false for up to 5 min).
+        // A soft navigate() would race with stale useSession() state.
+        window.location.href = redirect
       } catch {
         setError(t.auth.invalidCode)
         setOtp("")

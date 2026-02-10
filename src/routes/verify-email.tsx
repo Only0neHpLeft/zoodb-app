@@ -85,14 +85,12 @@ function VerifyEmailPage() {
             await authClient.signIn.email({ email, password: pw })
             await authClient.getSession()
             ;(authClient as any).updateSession?.()
-            navigate({ to: redirect } as never)
-            return
-          } catch { /* fall through to full reload */ }
+          } catch { /* sign-in failed — user will land on sign-in via AuthGuard */ }
         }
 
-        // Fallback (no stored password or sign-in failed): full reload
-        // forces AuthGuard to fetch a fresh session from scratch.
-        window.location.href = redirect
+        // Soft navigate — no full reload flicker. If auto-sign-in worked,
+        // AuthGuard lets the user through. If not, AuthGuard redirects to sign-in.
+        navigate({ to: redirect } as never)
       } catch {
         setError(t.auth.invalidCode)
         setOtp("")

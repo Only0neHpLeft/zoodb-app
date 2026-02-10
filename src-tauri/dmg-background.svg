@@ -4,11 +4,11 @@
       <stop offset="0%" stop-color="#0c0a1a"/>
       <stop offset="100%" stop-color="#110e22"/>
     </linearGradient>
-    <radialGradient id="centerGlow" cx="0.5" cy="0.45" r="0.5">
-      <stop offset="0%" stop-color="#7c3aed" stop-opacity="0.1"/>
+    <radialGradient id="centerGlow" cx="0.5" cy="0.42" r="0.5">
+      <stop offset="0%" stop-color="#7c3aed" stop-opacity="0.12"/>
       <stop offset="100%" stop-color="#7c3aed" stop-opacity="0"/>
     </radialGradient>
-    <!-- Crystal face gradients (from icon-concept) -->
+    <!-- Crystal face gradients -->
     <linearGradient id="faceA" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#a78bfa"/>
       <stop offset="100%" stop-color="#7c3aed"/>
@@ -25,10 +25,18 @@
       <stop offset="0%" stop-color="#c4b5fd"/>
       <stop offset="100%" stop-color="#a78bfa"/>
     </linearGradient>
+    <linearGradient id="faceDark" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3b1a8e"/>
+      <stop offset="100%" stop-color="#2e1065"/>
+    </linearGradient>
     <linearGradient id="vein" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#e9d5ff"/>
       <stop offset="50%" stop-color="#c084fc"/>
       <stop offset="100%" stop-color="#a78bfa"/>
+    </linearGradient>
+    <linearGradient id="rockTop" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#1a1730"/>
+      <stop offset="100%" stop-color="#12101f"/>
     </linearGradient>
     <!-- Arrow gradient -->
     <linearGradient id="arrowGrad" x1="0" y1="0" x2="1" y2="0">
@@ -51,9 +59,8 @@
     <filter id="labelBlur" x="-80%" y="-80%" width="260%" height="260%">
       <feGaussianBlur stdDeviation="18"/>
     </filter>
-    <filter id="textGlow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="2" result="blur"/>
-      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    <filter id="bigGlow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="14"/>
     </filter>
   </defs>
 
@@ -61,164 +68,321 @@
   <rect width="800" height="500" fill="url(#bg)"/>
   <rect width="800" height="500" fill="url(#centerGlow)"/>
 
-  <!-- Rocky ground base -->
+  <!-- === CAVE CEILING (rocky top edge) === -->
+  <g fill="url(#rockTop)">
+    <polygon points="0,0 0,32 20,38 50,28 85,36 120,24 155,32 190,20 225,30 260,18 295,28 330,22 365,34 400,16 435,26 470,20 505,30 540,18 575,28 610,22 645,32 680,20 720,30 760,24 800,32 800,0"/>
+    <!-- Stalactites -->
+    <polygon points="70,28 82,52 94,30" fill="#161330" opacity="0.7"/>
+    <polygon points="190,20 200,48 210,22" fill="#161330" opacity="0.6"/>
+    <polygon points="330,22 338,44 346,24" fill="#161330" opacity="0.5"/>
+    <polygon points="470,20 478,46 486,22" fill="#161330" opacity="0.65"/>
+    <polygon points="610,22 618,42 626,24" fill="#161330" opacity="0.55"/>
+    <polygon points="760,24 766,40 772,26" fill="#161330" opacity="0.5"/>
+  </g>
+
+  <!-- === CAVE WALLS (left and right edges) === -->
+  <!-- Left wall -->
+  <g opacity="0.6">
+    <polygon points="0,32 0,420 12,400 8,350 14,300 6,250 15,200 10,150 18,100 12,60 0,32" fill="#151230"/>
+    <!-- Wall rock texture -->
+    <polygon points="0,100 10,110 8,130 0,125" fill="#1e1a35" opacity="0.5"/>
+    <polygon points="0,200 12,210 10,230 0,225" fill="#1e1a35" opacity="0.4"/>
+    <polygon points="0,300 14,310 10,330 0,325" fill="#1e1a35" opacity="0.5"/>
+  </g>
+  <!-- Right wall -->
+  <g opacity="0.6">
+    <polygon points="800,32 800,420 788,400 792,350 786,300 794,250 785,200 790,150 782,100 788,60 800,32" fill="#151230"/>
+    <polygon points="800,120 790,130 792,150 800,145" fill="#1e1a35" opacity="0.5"/>
+    <polygon points="800,220 788,230 790,250 800,245" fill="#1e1a35" opacity="0.4"/>
+    <polygon points="800,320 786,330 790,350 800,345" fill="#1e1a35" opacity="0.5"/>
+  </g>
+
+  <!-- === GLOWING VEINS ON CAVE WALLS === -->
+  <g filter="url(#veinGlow)">
+    <g stroke="url(#vein)" fill="none" stroke-linecap="round" opacity="0.18">
+      <!-- Left wall veins -->
+      <path d="M 0,90 L 14,105 L 8,130 L 18,155" stroke-width="1.5"/>
+      <path d="M 0,200 L 10,190 L 5,170" stroke-width="1"/>
+      <path d="M 0,280 L 12,295 L 6,320" stroke-width="1.2"/>
+      <!-- Right wall veins -->
+      <path d="M 800,110 L 788,125 L 794,148 L 784,165" stroke-width="1.5"/>
+      <path d="M 800,230 L 790,220 L 795,200" stroke-width="1"/>
+      <path d="M 800,300 L 790,315 L 796,335" stroke-width="1.2"/>
+    </g>
+  </g>
+
+  <!-- Vein glow spots on walls -->
+  <g opacity="0.06" filter="url(#softGlow)">
+    <circle cx="10" cy="110" r="15" fill="#7c3aed"/>
+    <circle cx="790" cy="130" r="15" fill="#7c3aed"/>
+    <circle cx="12" cy="300" r="12" fill="#7c3aed"/>
+    <circle cx="790" cy="310" r="12" fill="#7c3aed"/>
+  </g>
+
+  <!-- === CEILING CRYSTALS (hanging from top) === -->
+  <!-- Ceiling crystal left -->
+  <g transform="translate(82, 38) rotate(180)" filter="url(#oreGlow)">
+    <polygon points="-3,-15 -7,2 -1,6 3,0" fill="url(#faceC)" opacity="0.55"/>
+    <polygon points="3,0 -1,6 3,9 6,-6" fill="url(#faceA)" opacity="0.55"/>
+    <polygon points="-3,-15 2,-17 6,-6 3,0" fill="url(#faceD)" opacity="0.5"/>
+  </g>
+  <!-- Ceiling crystal mid-left -->
+  <g transform="translate(200, 30) rotate(175)" filter="url(#oreGlow)">
+    <polygon points="-4,-18 -8,2 -2,7 4,0" fill="url(#faceB)" opacity="0.5"/>
+    <polygon points="4,0 -2,7 4,10 8,-8" fill="url(#faceA)" opacity="0.5"/>
+    <polygon points="-4,-18 2,-20 8,-8 4,0" fill="url(#faceD)" opacity="0.45"/>
+    <g stroke="#c4b5fd" stroke-width="0.8" opacity="0.25" fill="none">
+      <line x1="-4" y1="-18" x2="2" y2="-20"/>
+      <line x1="2" y1="-20" x2="8" y2="-8"/>
+    </g>
+  </g>
+  <!-- Ceiling crystal center -->
+  <g transform="translate(400, 24) rotate(182)" filter="url(#oreGlow)">
+    <polygon points="-3,-12 -6,1 -1,5 3,-1" fill="url(#faceC)" opacity="0.4"/>
+    <polygon points="3,-1 -1,5 3,7 5,-5" fill="url(#faceA)" opacity="0.4"/>
+    <polygon points="-3,-12 1,-14 5,-5 3,-1" fill="url(#faceD)" opacity="0.35"/>
+  </g>
+  <!-- Ceiling crystal mid-right -->
+  <g transform="translate(550, 26) rotate(185)" filter="url(#oreGlow)">
+    <polygon points="-4,-16 -8,1 -2,6 4,-1" fill="url(#faceB)" opacity="0.45"/>
+    <polygon points="4,-1 -2,6 4,9 7,-7" fill="url(#faceA)" opacity="0.45"/>
+    <polygon points="-4,-16 2,-18 7,-7 4,-1" fill="url(#faceD)" opacity="0.4"/>
+  </g>
+  <!-- Ceiling crystal right -->
+  <g transform="translate(720, 32) rotate(178)" filter="url(#oreGlow)">
+    <polygon points="-5,-20 -10,2 -3,8 5,0" fill="url(#faceC)" opacity="0.5"/>
+    <polygon points="5,0 -3,8 5,12 10,-8" fill="url(#faceA)" opacity="0.5"/>
+    <polygon points="-5,-20 3,-22 10,-8 5,0" fill="url(#faceD)" opacity="0.45"/>
+    <g stroke="#c4b5fd" stroke-width="0.8" opacity="0.2" fill="none">
+      <line x1="-5" y1="-20" x2="3" y2="-22"/>
+      <line x1="3" y1="-22" x2="10" y2="-8"/>
+    </g>
+    <!-- Tiny vein -->
+    <path d="M 0,-12 L 2,-4" stroke="#c084fc" stroke-width="1" fill="none" stroke-linecap="round" opacity="0.3"/>
+  </g>
+
+  <!-- === ROCKY GROUND BASE (enriched) === -->
   <g>
+    <!-- Deep rock shadow -->
+    <polygon points="0,500 0,435 20,430 60,440 100,425 140,436 180,420 220,432 260,425 300,438 340,422 380,432 420,420 460,430 500,422 540,434 580,420 620,432 660,426 700,438 740,422 780,430 800,428 800,500" fill="#14112a"/>
     <!-- Main rock body -->
     <polygon points="0,500 0,420 30,415 70,425 110,410 150,422 190,408 230,418 270,412 310,425 350,410 390,420 430,408 470,418 510,412 550,422 590,408 630,420 670,414 710,425 750,410 800,418 800,500" fill="#1e1a35"/>
     <!-- Top rock surface -->
     <polygon points="0,420 30,415 70,425 110,410 150,422 190,408 230,418 270,412 310,425 350,410 390,420 430,408 470,418 510,412 550,422 590,408 630,420 670,414 710,425 750,410 800,418 800,420 0,420" fill="#2a2545"/>
     <!-- Rock crack lines -->
     <g stroke="#3d3660" stroke-width="1.5" opacity="0.4" fill="none" stroke-linecap="round">
-      <path d="M 60,430 L 100,438 L 140,432"/>
-      <path d="M 250,435 L 300,440 L 340,434"/>
-      <path d="M 460,432 L 510,438 L 550,434"/>
-      <path d="M 650,430 L 700,436 L 740,432"/>
+      <path d="M 30,428 L 60,434 L 90,428"/>
+      <path d="M 150,430 L 190,436 L 225,430"/>
+      <path d="M 280,432 L 320,438 L 355,432"/>
+      <path d="M 410,428 L 450,435 L 485,430"/>
+      <path d="M 530,432 L 570,438 L 600,432"/>
+      <path d="M 640,428 L 680,435 L 720,430"/>
+      <path d="M 750,432 L 780,436 L 800,432"/>
     </g>
     <!-- Darker crevice lines -->
     <g stroke="#14112a" stroke-width="1" opacity="0.5" fill="none" stroke-linecap="round">
-      <path d="M 120,440 L 170,445 L 210,440"/>
-      <path d="M 370,438 L 420,443 L 460,438"/>
-      <path d="M 580,440 L 630,445 L 670,440"/>
+      <path d="M 60,438 L 100,443 L 140,438"/>
+      <path d="M 200,440 L 240,444 L 270,440"/>
+      <path d="M 340,438 L 380,443 L 420,438"/>
+      <path d="M 480,440 L 520,444 L 550,440"/>
+      <path d="M 600,438 L 640,443 L 680,438"/>
     </g>
-    <!-- Rock facet texture -->
+    <!-- Rock facet texture (more detail) -->
     <g opacity="0.2">
-      <polygon points="80,430 100,426 108,435 90,438" fill="#4a4370"/>
-      <polygon points="200,432 218,428 224,436 208,440" fill="#4a4370"/>
-      <polygon points="350,428 370,424 376,434 358,436" fill="#3d3660"/>
-      <polygon points="500,430 520,426 526,436 508,438" fill="#4a4370"/>
-      <polygon points="680,428 698,424 704,434 686,436" fill="#3d3660"/>
+      <polygon points="50,430 68,426 74,434 56,437" fill="#4a4370"/>
+      <polygon points="130,432 148,428 154,436 136,439" fill="#4a4370"/>
+      <polygon points="210,430 228,426 234,435 216,438" fill="#3d3660"/>
+      <polygon points="290,432 308,428 314,436 296,439" fill="#4a4370"/>
+      <polygon points="370,428 388,424 394,434 376,436" fill="#3d3660"/>
+      <polygon points="450,432 468,428 474,436 456,439" fill="#4a4370"/>
+      <polygon points="530,430 548,426 554,435 536,438" fill="#3d3660"/>
+      <polygon points="620,432 638,428 644,436 626,439" fill="#4a4370"/>
+      <polygon points="710,428 728,424 734,434 716,436" fill="#3d3660"/>
     </g>
-    <!-- Ore specks in rock -->
-    <g opacity="0.3">
-      <polygon points="140,435 146,430 150,438 144,440" fill="#7c3aed"/>
-      <polygon points="330,432 336,428 340,435 334,438" fill="#8b5cf6"/>
-      <polygon points="540,434 546,430 550,437 544,440" fill="#6d28d9"/>
-      <polygon points="720,432 726,428 730,436 724,438" fill="#7c3aed"/>
+    <!-- Ore specks in rock (more) -->
+    <g opacity="0.35">
+      <polygon points="80,435 86,430 90,438 84,440" fill="#7c3aed"/>
+      <polygon points="170,432 176,428 180,435 174,438" fill="#8b5cf6"/>
+      <polygon points="260,436 266,432 270,438 264,440" fill="#6d28d9"/>
+      <polygon points="350,430 356,426 360,434 354,436" fill="#7c3aed"/>
+      <polygon points="430,434 436,430 440,436 434,438" fill="#8b5cf6"/>
+      <polygon points="510,432 516,428 520,435 514,438" fill="#6d28d9"/>
+      <polygon points="590,436 596,432 600,438 594,440" fill="#7c3aed"/>
+      <polygon points="680,430 686,426 690,434 684,436" fill="#8b5cf6"/>
+      <polygon points="760,434 766,430 770,436 764,438" fill="#6d28d9"/>
     </g>
     <!-- Subtle top edge highlight -->
-    <g stroke="#4a4580" stroke-width="1" opacity="0.25" fill="none" stroke-linejoin="round">
+    <g stroke="#4a4580" stroke-width="1" opacity="0.3" fill="none" stroke-linejoin="round">
       <polyline points="0,420 30,415 70,425 110,410 150,422 190,408 230,418 270,412 310,425 350,410 390,420 430,408 470,418 510,412 550,422 590,408 630,420 670,414 710,425 750,410 800,418"/>
     </g>
   </g>
 
-  <!-- === LEFT CRYSTAL CLUSTER (near app icon zone ~230,220) === -->
+  <!-- === LEFT CRYSTAL CLUSTER (enriched — near app icon zone) === -->
 
-  <!-- Left crystal - medium, leaning left -->
-  <g transform="translate(80, 380) rotate(-18)" filter="url(#oreGlow)">
-    <polygon points="-12,-100 -28,0 -8,30 8,-5" fill="url(#faceC)" opacity="0.8"/>
-    <polygon points="8,-5 -8,30 8,45 22,15" fill="url(#faceB)" opacity="0.8"/>
-    <polygon points="8,-5 22,15 30,-15 20,-80" fill="url(#faceA)" opacity="0.8"/>
-    <polygon points="-12,-100 5,-112 20,-80 8,-5" fill="url(#faceD)" opacity="0.75"/>
-    <polygon points="-12,-100 5,-112 20,-80" fill="#c4b5fd" opacity="0.7"/>
-    <g stroke="#c4b5fd" stroke-width="1" opacity="0.3" fill="none">
-      <line x1="-12" y1="-100" x2="5" y2="-112"/>
-      <line x1="5" y1="-112" x2="20" y2="-80"/>
-      <line x1="-12" y1="-100" x2="-28" y2="0"/>
-      <line x1="20" y1="-80" x2="30" y2="-15"/>
-      <line x1="8" y1="-5" x2="22" y2="15"/>
-      <line x1="8" y1="-5" x2="-8" y2="30"/>
-    </g>
-    <line x1="5" y1="-112" x2="20" y2="-80" stroke="#e9d5ff" stroke-width="1.5" opacity="0.4"/>
-    <g filter="url(#veinGlow)">
-      <path d="M 2,-65 L -4,-30 L 3,5" stroke="url(#vein)" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.4"/>
-    </g>
-    <circle cx="-4" cy="-30" r="3" fill="#e9d5ff" opacity="0.35"/>
-  </g>
-
-  <!-- Left crystal - small shard -->
-  <g transform="translate(55, 400) rotate(-30)" filter="url(#oreGlow)">
-    <polygon points="-8,-55 -18,0 -3,18 6,-5" fill="url(#faceB)" opacity="0.65"/>
-    <polygon points="6,-5 -3,18 8,12 14,-35" fill="url(#faceA)" opacity="0.65"/>
-    <polygon points="-8,-55 3,-60 14,-35 6,-5" fill="url(#faceD)" opacity="0.6"/>
-    <polygon points="-8,-55 3,-60 14,-35" fill="#c4b5fd" opacity="0.5"/>
-    <g stroke="#a78bfa" stroke-width="0.8" opacity="0.25" fill="none">
-      <line x1="-8" y1="-55" x2="3" y2="-60"/>
-      <line x1="3" y1="-60" x2="14" y2="-35"/>
-      <line x1="-8" y1="-55" x2="-18" y2="0"/>
-    </g>
-  </g>
-
-  <!-- === RIGHT CRYSTAL CLUSTER (near Applications zone ~570,220) === -->
-
-  <!-- Right crystal - medium, leaning right -->
-  <g transform="translate(720, 375) rotate(15)" filter="url(#oreGlow)">
-    <polygon points="-15,-110 -32,-5 -10,35 10,-8" fill="url(#faceC)" opacity="0.8"/>
-    <polygon points="10,-8 -10,35 12,50 28,18" fill="url(#faceB)" opacity="0.8"/>
-    <polygon points="10,-8 28,18 36,-18 25,-88" fill="url(#faceA)" opacity="0.8"/>
-    <polygon points="-15,-110 8,-124 25,-88 10,-8" fill="url(#faceD)" opacity="0.75"/>
-    <polygon points="-15,-110 8,-124 25,-88" fill="#ddd6fe" opacity="0.7"/>
-    <g stroke="#e9d5ff" stroke-width="1" opacity="0.3" fill="none">
-      <line x1="-15" y1="-110" x2="8" y2="-124"/>
-      <line x1="8" y1="-124" x2="25" y2="-88"/>
-      <line x1="-15" y1="-110" x2="-32" y2="-5"/>
-      <line x1="25" y1="-88" x2="36" y2="-18"/>
+  <!-- Left main crystal - tall -->
+  <g transform="translate(75, 378) rotate(-15)" filter="url(#oreGlow)">
+    <polygon points="-15,-130 -35,-10 -12,35 10,-8" fill="url(#faceC)" opacity="0.85"/>
+    <polygon points="10,-8 -12,35 12,55 28,18" fill="url(#faceB)" opacity="0.85"/>
+    <polygon points="10,-8 28,18 38,-20 25,-105" fill="url(#faceA)" opacity="0.85"/>
+    <polygon points="-15,-130 8,-145 25,-105 10,-8" fill="url(#faceD)" opacity="0.8"/>
+    <polygon points="-15,-130 8,-145 25,-105" fill="#ddd6fe" opacity="0.75"/>
+    <g stroke="#e9d5ff" stroke-width="1.2" opacity="0.35" fill="none">
+      <line x1="-15" y1="-130" x2="8" y2="-145"/>
+      <line x1="8" y1="-145" x2="25" y2="-105"/>
+      <line x1="-15" y1="-130" x2="-35" y2="-10"/>
+      <line x1="25" y1="-105" x2="38" y2="-20"/>
       <line x1="10" y1="-8" x2="28" y2="18"/>
-      <line x1="10" y1="-8" x2="-10" y2="35"/>
+      <line x1="10" y1="-8" x2="-12" y2="35"/>
     </g>
-    <line x1="8" y1="-124" x2="25" y2="-88" stroke="#f5f0ff" stroke-width="1.5" opacity="0.45"/>
+    <line x1="8" y1="-145" x2="25" y2="-105" stroke="#f5f0ff" stroke-width="2" opacity="0.5"/>
     <g filter="url(#veinGlow)">
-      <path d="M 3,-72 L -5,-35 L 5,5" stroke="url(#vein)" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.45"/>
-      <path d="M -5,-35 L -18,-18" stroke="url(#vein)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.3"/>
+      <path d="M 2,-85 L -6,-45 L 4,5" stroke="url(#vein)" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.5"/>
+      <path d="M -6,-45 L -20,-25" stroke="url(#vein)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.3"/>
     </g>
-    <circle cx="-5" cy="-35" r="3.5" fill="#e9d5ff" opacity="0.4"/>
-    <circle cx="-5" cy="-35" r="1.5" fill="#f5f0ff" opacity="0.6"/>
+    <circle cx="-6" cy="-45" r="4" fill="#e9d5ff" opacity="0.4"/>
+    <circle cx="-6" cy="-45" r="1.8" fill="#f5f0ff" opacity="0.65"/>
     <!-- Tip sparkle -->
-    <g transform="translate(8, -124)" opacity="0.3">
-      <line x1="0" y1="-6" x2="0" y2="6" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
-      <line x1="-6" y1="0" x2="6" y2="0" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+    <g transform="translate(8, -145)" opacity="0.35">
+      <line x1="0" y1="-7" x2="0" y2="7" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="-7" y1="0" x2="7" y2="0" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
     </g>
   </g>
 
-  <!-- Right crystal - small shard -->
-  <g transform="translate(750, 395) rotate(28)" filter="url(#oreGlow)">
-    <polygon points="-7,-50 -16,0 -2,15 5,-5" fill="url(#faceC)" opacity="0.6"/>
-    <polygon points="5,-5 -2,15 7,10 12,-32" fill="url(#faceA)" opacity="0.6"/>
-    <polygon points="-7,-50 3,-55 12,-32 5,-5" fill="url(#faceD)" opacity="0.55"/>
-    <polygon points="-7,-50 3,-55 12,-32" fill="#c4b5fd" opacity="0.45"/>
+  <!-- Left secondary crystal -->
+  <g transform="translate(48, 398) rotate(-28)" filter="url(#oreGlow)">
+    <polygon points="-10,-75 -22,0 -5,22 8,-6" fill="url(#faceB)" opacity="0.7"/>
+    <polygon points="8,-6 -5,22 10,16 18,-45" fill="url(#faceA)" opacity="0.7"/>
+    <polygon points="-10,-75 4,-82 18,-45 8,-6" fill="url(#faceD)" opacity="0.65"/>
+    <polygon points="-10,-75 4,-82 18,-45" fill="#c4b5fd" opacity="0.55"/>
     <g stroke="#a78bfa" stroke-width="0.8" opacity="0.25" fill="none">
-      <line x1="-7" y1="-50" x2="3" y2="-55"/>
-      <line x1="3" y1="-55" x2="12" y2="-32"/>
-      <line x1="-7" y1="-50" x2="-16" y2="0"/>
+      <line x1="-10" y1="-75" x2="4" y2="-82"/>
+      <line x1="4" y1="-82" x2="18" y2="-45"/>
+      <line x1="-10" y1="-75" x2="-22" y2="0"/>
+    </g>
+    <path d="M 0,-48 L 4,-20" stroke="#c084fc" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.3"/>
+  </g>
+
+  <!-- Left tiny shard (front) -->
+  <g transform="translate(110, 400) rotate(-5)" filter="url(#oreGlow)">
+    <polygon points="-5,-40 -12,0 -1,12 4,-3" fill="url(#faceA)" opacity="0.55"/>
+    <polygon points="4,-3 -1,12 7,8 10,-26" fill="url(#faceD)" opacity="0.5"/>
+    <polygon points="-5,-40 3,-44 10,-26 4,-3" fill="#c4b5fd" opacity="0.45"/>
+  </g>
+
+  <!-- Left back shard -->
+  <g transform="translate(30, 410) rotate(-35)" filter="url(#oreGlow)">
+    <polygon points="-6,-48 -14,0 -2,14 5,-4" fill="url(#faceC)" opacity="0.55"/>
+    <polygon points="5,-4 -2,14 7,10 12,-30" fill="url(#faceA)" opacity="0.55"/>
+    <polygon points="-6,-48 3,-52 12,-30 5,-4" fill="url(#faceD)" opacity="0.5"/>
+  </g>
+
+  <!-- === RIGHT CRYSTAL CLUSTER (enriched) === -->
+
+  <!-- Right main crystal - tall -->
+  <g transform="translate(725, 373) rotate(14)" filter="url(#oreGlow)">
+    <polygon points="-18,-140 -38,-10 -14,40 12,-10" fill="url(#faceC)" opacity="0.85"/>
+    <polygon points="12,-10 -14,40 14,60 32,20" fill="url(#faceB)" opacity="0.85"/>
+    <polygon points="12,-10 32,20 42,-22 28,-112" fill="url(#faceA)" opacity="0.85"/>
+    <polygon points="-18,-140 10,-155 28,-112 12,-10" fill="url(#faceD)" opacity="0.8"/>
+    <polygon points="-18,-140 10,-155 28,-112" fill="#ddd6fe" opacity="0.78"/>
+    <g stroke="#e9d5ff" stroke-width="1.2" opacity="0.35" fill="none">
+      <line x1="-18" y1="-140" x2="10" y2="-155"/>
+      <line x1="10" y1="-155" x2="28" y2="-112"/>
+      <line x1="-18" y1="-140" x2="-38" y2="-10"/>
+      <line x1="28" y1="-112" x2="42" y2="-22"/>
+      <line x1="12" y1="-10" x2="32" y2="20"/>
+      <line x1="12" y1="-10" x2="-14" y2="40"/>
+    </g>
+    <line x1="10" y1="-155" x2="28" y2="-112" stroke="#f5f0ff" stroke-width="2" opacity="0.5"/>
+    <g filter="url(#veinGlow)">
+      <path d="M 4,-92 L -6,-50 L 6,0" stroke="url(#vein)" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.5"/>
+      <path d="M -6,-50 L -22,-30" stroke="url(#vein)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.35"/>
+      <path d="M 4,-92 L 18,-70" stroke="url(#vein)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.25"/>
+    </g>
+    <circle cx="-6" cy="-50" r="4.5" fill="#e9d5ff" opacity="0.45"/>
+    <circle cx="-6" cy="-50" r="2" fill="#f5f0ff" opacity="0.7"/>
+    <!-- Tip sparkle -->
+    <g transform="translate(10, -155)" opacity="0.4">
+      <line x1="0" y1="-8" x2="0" y2="8" stroke="white" stroke-width="2" stroke-linecap="round"/>
+      <line x1="-8" y1="0" x2="8" y2="0" stroke="white" stroke-width="2" stroke-linecap="round"/>
+      <line x1="-5" y1="-5" x2="5" y2="5" stroke="white" stroke-width="1" stroke-linecap="round"/>
+      <line x1="5" y1="-5" x2="-5" y2="5" stroke="white" stroke-width="1" stroke-linecap="round"/>
     </g>
   </g>
 
-  <!-- === SMALL ACCENT CRYSTALS (scattered) === -->
-
-  <!-- Top-left tiny shard -->
-  <g transform="translate(130, 395) rotate(-10)" filter="url(#oreGlow)">
-    <polygon points="-5,-38 -12,0 -1,12 4,-3" fill="url(#faceA)" opacity="0.5"/>
-    <polygon points="4,-3 -1,12 7,8 10,-24" fill="url(#faceD)" opacity="0.45"/>
-    <polygon points="-5,-38 3,-42 10,-24 4,-3" fill="#c4b5fd" opacity="0.4"/>
+  <!-- Right secondary crystal -->
+  <g transform="translate(760, 392) rotate(26)" filter="url(#oreGlow)">
+    <polygon points="-9,-70 -20,0 -4,20 7,-5" fill="url(#faceC)" opacity="0.7"/>
+    <polygon points="7,-5 -4,20 9,14 16,-42" fill="url(#faceA)" opacity="0.7"/>
+    <polygon points="-9,-70 4,-76 16,-42 7,-5" fill="url(#faceD)" opacity="0.65"/>
+    <polygon points="-9,-70 4,-76 16,-42" fill="#c4b5fd" opacity="0.55"/>
+    <g stroke="#a78bfa" stroke-width="0.8" opacity="0.25" fill="none">
+      <line x1="-9" y1="-70" x2="4" y2="-76"/>
+      <line x1="4" y1="-76" x2="16" y2="-42"/>
+      <line x1="-9" y1="-70" x2="-20" y2="0"/>
+    </g>
+    <path d="M 0,-44 L 4,-18" stroke="#c084fc" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.3"/>
   </g>
 
-  <!-- Center-bottom tiny shard -->
-  <g transform="translate(400, 402) rotate(5)" filter="url(#oreGlow)">
-    <polygon points="-6,-42 -14,0 -2,14 5,-4" fill="url(#faceB)" opacity="0.5"/>
-    <polygon points="5,-4 -2,14 8,10 12,-28" fill="url(#faceA)" opacity="0.5"/>
-    <polygon points="-6,-42 4,-46 12,-28 5,-4" fill="url(#faceD)" opacity="0.45"/>
-    <polygon points="-6,-42 4,-46 12,-28" fill="#c4b5fd" opacity="0.35"/>
+  <!-- Right tiny shard (front) -->
+  <g transform="translate(690, 398) rotate(8)" filter="url(#oreGlow)">
+    <polygon points="-5,-38 -11,0 -1,10 4,-3" fill="url(#faceA)" opacity="0.5"/>
+    <polygon points="4,-3 -1,10 6,7 9,-24" fill="url(#faceD)" opacity="0.45"/>
+    <polygon points="-5,-38 3,-42 9,-24 4,-3" fill="#c4b5fd" opacity="0.4"/>
+  </g>
+
+  <!-- Right back shard -->
+  <g transform="translate(780, 405) rotate(32)" filter="url(#oreGlow)">
+    <polygon points="-5,-42 -12,0 -2,12 5,-4" fill="url(#faceB)" opacity="0.5"/>
+    <polygon points="5,-4 -2,12 7,8 11,-26" fill="url(#faceA)" opacity="0.5"/>
+    <polygon points="-5,-42 3,-46 11,-26 5,-4" fill="url(#faceD)" opacity="0.45"/>
+  </g>
+
+  <!-- === CENTER ACCENT CRYSTALS === -->
+
+  <!-- Center-left small crystal -->
+  <g transform="translate(170, 400) rotate(-8)" filter="url(#oreGlow)">
+    <polygon points="-5,-42 -12,0 -2,14 5,-4" fill="url(#faceB)" opacity="0.5"/>
+    <polygon points="5,-4 -2,14 7,10 11,-28" fill="url(#faceA)" opacity="0.5"/>
+    <polygon points="-5,-42 3,-46 11,-28 5,-4" fill="url(#faceD)" opacity="0.45"/>
+    <polygon points="-5,-42 3,-46 11,-28" fill="#c4b5fd" opacity="0.35"/>
+    <path d="M 0,-26 L 2,-10" stroke="#c084fc" stroke-width="1" fill="none" stroke-linecap="round" opacity="0.25"/>
+  </g>
+
+  <!-- Center tiny crystal -->
+  <g transform="translate(400, 405) rotate(5)" filter="url(#oreGlow)">
+    <polygon points="-6,-45 -14,0 -2,16 5,-4" fill="url(#faceB)" opacity="0.5"/>
+    <polygon points="5,-4 -2,16 8,12 13,-30" fill="url(#faceA)" opacity="0.5"/>
+    <polygon points="-6,-45 4,-50 13,-30 5,-4" fill="url(#faceD)" opacity="0.45"/>
+    <polygon points="-6,-45 4,-50 13,-30" fill="#c4b5fd" opacity="0.35"/>
     <g stroke="#a78bfa" stroke-width="0.8" opacity="0.2" fill="none">
-      <line x1="-6" y1="-42" x2="4" y2="-46"/>
-      <line x1="4" y1="-46" x2="12" y2="-28"/>
+      <line x1="-6" y1="-45" x2="4" y2="-50"/>
+      <line x1="4" y1="-50" x2="13" y2="-30"/>
     </g>
-    <path d="M 0,-25 L 2,-8" stroke="#c084fc" stroke-width="1.2" fill="none" stroke-linecap="round" opacity="0.3"/>
+    <path d="M 0,-28 L 2,-10" stroke="#c084fc" stroke-width="1.2" fill="none" stroke-linecap="round" opacity="0.3"/>
   </g>
 
-  <!-- Far right tiny shard -->
-  <g transform="translate(680, 400) rotate(20)" filter="url(#oreGlow)">
-    <polygon points="-4,-32 -10,0 -1,10 4,-3" fill="url(#faceC)" opacity="0.45"/>
-    <polygon points="4,-3 -1,10 6,7 8,-20" fill="url(#faceA)" opacity="0.45"/>
-    <polygon points="-4,-32 2,-35 8,-20 4,-3" fill="#c4b5fd" opacity="0.35"/>
+  <!-- Center-right small crystal -->
+  <g transform="translate(630, 402) rotate(12)" filter="url(#oreGlow)">
+    <polygon points="-4,-36 -10,0 -1,10 4,-3" fill="url(#faceC)" opacity="0.45"/>
+    <polygon points="4,-3 -1,10 6,7 8,-22" fill="url(#faceA)" opacity="0.45"/>
+    <polygon points="-4,-36 2,-40 8,-22 4,-3" fill="#c4b5fd" opacity="0.38"/>
   </g>
 
-  <!-- === GLOWING VEIN CRACKS on the rock ground === -->
+  <!-- === GLOWING VEIN CRACKS ON GROUND (more) === -->
   <g filter="url(#veinGlow)">
-    <g stroke="url(#vein)" fill="none" stroke-linecap="round" opacity="0.2">
-      <path d="M 90,425 L 120,430 L 150,425 L 170,432" stroke-width="1.5"/>
-      <path d="M 300,420 L 330,428 L 360,422" stroke-width="1"/>
-      <path d="M 480,425 L 510,430 L 540,425" stroke-width="1"/>
-      <path d="M 640,420 L 670,428 L 700,422" stroke-width="1.5"/>
+    <g stroke="url(#vein)" fill="none" stroke-linecap="round" opacity="0.22">
+      <path d="M 40,425 L 70,430 L 100,424 L 125,432" stroke-width="1.5"/>
+      <path d="M 180,420 L 210,428 L 240,422" stroke-width="1"/>
+      <path d="M 300,425 L 330,432 L 360,424" stroke-width="1.2"/>
+      <path d="M 430,422 L 460,428 L 490,422" stroke-width="1"/>
+      <path d="M 540,425 L 570,432 L 600,424" stroke-width="1.2"/>
+      <path d="M 650,420 L 680,428 L 710,422 L 740,430" stroke-width="1.5"/>
     </g>
+    <!-- Bright vein intersection spots on ground -->
+    <circle cx="100" cy="424" r="2" fill="#e9d5ff" opacity="0.25"/>
+    <circle cx="360" cy="424" r="2" fill="#ddd6fe" opacity="0.2"/>
+    <circle cx="600" cy="424" r="2" fill="#e9d5ff" opacity="0.25"/>
   </g>
 
   <!-- === LABEL BACKDROP (light zones so Finder's black labels are readable) === -->
@@ -227,50 +391,81 @@
     <ellipse cx="570" cy="300" rx="80" ry="20" fill="#c4b5fd"/>
   </g>
 
-  <!-- === AMBIENT GLOW SPOTS === -->
+  <!-- === AMBIENT GLOW SPOTS (richer) === -->
   <g opacity="0.05" filter="url(#softGlow)">
     <circle cx="230" cy="210" r="45" fill="#7c3aed"/>
     <circle cx="570" cy="210" r="45" fill="#7c3aed"/>
     <circle cx="400" cy="260" r="30" fill="#7c3aed"/>
   </g>
+  <!-- Crystal base glow -->
+  <g opacity="0.08" filter="url(#bigGlow)">
+    <circle cx="75" cy="350" r="40" fill="#7c3aed"/>
+    <circle cx="725" cy="345" r="45" fill="#7c3aed"/>
+    <circle cx="400" cy="380" r="25" fill="#7c3aed"/>
+  </g>
 
-  <!-- === SPARKLE PARTICLES === -->
-  <g opacity="0.2">
+  <!-- === SPARKLE PARTICLES (more) === -->
+  <g opacity="0.22">
     <!-- Cross sparkles -->
-    <g transform="translate(160, 120)">
-      <line x1="0" y1="-6" x2="0" y2="6" stroke="#c4b5fd" stroke-width="1.5" stroke-linecap="round"/>
-      <line x1="-6" y1="0" x2="6" y2="0" stroke="#c4b5fd" stroke-width="1.5" stroke-linecap="round"/>
+    <g transform="translate(160, 100)">
+      <line x1="0" y1="-7" x2="0" y2="7" stroke="#c4b5fd" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="-7" y1="0" x2="7" y2="0" stroke="#c4b5fd" stroke-width="1.5" stroke-linecap="round"/>
     </g>
-    <g transform="translate(640, 110)">
-      <line x1="0" y1="-5" x2="0" y2="5" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round"/>
-      <line x1="-5" y1="0" x2="5" y2="0" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round"/>
+    <g transform="translate(640, 90)">
+      <line x1="0" y1="-6" x2="0" y2="6" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="-6" y1="0" x2="6" y2="0" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round"/>
     </g>
-    <g transform="translate(50, 300)">
+    <g transform="translate(42, 280)">
       <line x1="0" y1="-4" x2="0" y2="4" stroke="#ddd6fe" stroke-width="1" stroke-linecap="round"/>
       <line x1="-4" y1="0" x2="4" y2="0" stroke="#ddd6fe" stroke-width="1" stroke-linecap="round"/>
     </g>
-    <g transform="translate(755, 280)">
+    <g transform="translate(762, 260)">
       <line x1="0" y1="-5" x2="0" y2="5" stroke="#c4b5fd" stroke-width="1.5" stroke-linecap="round"/>
       <line x1="-5" y1="0" x2="5" y2="0" stroke="#c4b5fd" stroke-width="1.5" stroke-linecap="round"/>
     </g>
-    <!-- Floating dots -->
-    <circle cx="120" cy="180" r="2" fill="#a78bfa"/>
-    <circle cx="300" cy="100" r="1.5" fill="#c4b5fd"/>
-    <circle cx="500" cy="90" r="2" fill="#8b5cf6"/>
-    <circle cx="690" cy="170" r="1.5" fill="#a78bfa"/>
-    <circle cx="350" cy="370" r="1.5" fill="#c4b5fd"/>
-    <circle cx="450" cy="150" r="1" fill="#ddd6fe"/>
-    <circle cx="40" cy="200" r="1.5" fill="#8b5cf6"/>
-    <circle cx="770" cy="380" r="1" fill="#a78bfa"/>
-    <circle cx="230" cy="350" r="1" fill="#c4b5fd"/>
-    <circle cx="580" cy="360" r="1" fill="#8b5cf6"/>
+    <g transform="translate(330, 70)">
+      <line x1="0" y1="-4" x2="0" y2="4" stroke="#a78bfa" stroke-width="1" stroke-linecap="round"/>
+      <line x1="-4" y1="0" x2="4" y2="0" stroke="#a78bfa" stroke-width="1" stroke-linecap="round"/>
+    </g>
+    <g transform="translate(490, 80)">
+      <line x1="0" y1="-5" x2="0" y2="5" stroke="#ddd6fe" stroke-width="1.2" stroke-linecap="round"/>
+      <line x1="-5" y1="0" x2="5" y2="0" stroke="#ddd6fe" stroke-width="1.2" stroke-linecap="round"/>
+    </g>
+    <g transform="translate(25, 160)">
+      <line x1="0" y1="-3" x2="0" y2="3" stroke="#8b5cf6" stroke-width="1" stroke-linecap="round"/>
+      <line x1="-3" y1="0" x2="3" y2="0" stroke="#8b5cf6" stroke-width="1" stroke-linecap="round"/>
+    </g>
+    <g transform="translate(775, 150)">
+      <line x1="0" y1="-3" x2="0" y2="3" stroke="#8b5cf6" stroke-width="1" stroke-linecap="round"/>
+      <line x1="-3" y1="0" x2="3" y2="0" stroke="#8b5cf6" stroke-width="1" stroke-linecap="round"/>
+    </g>
+    <!-- Floating dots (many more) -->
+    <circle cx="100" cy="160" r="2" fill="#a78bfa"/>
+    <circle cx="200" cy="80" r="1.5" fill="#c4b5fd"/>
+    <circle cx="300" cy="130" r="1.5" fill="#8b5cf6"/>
+    <circle cx="380" cy="55" r="1" fill="#ddd6fe"/>
+    <circle cx="440" cy="120" r="1.5" fill="#c4b5fd"/>
+    <circle cx="520" cy="65" r="1" fill="#a78bfa"/>
+    <circle cx="600" cy="140" r="1.5" fill="#8b5cf6"/>
+    <circle cx="700" cy="95" r="1.5" fill="#c4b5fd"/>
+    <circle cx="55" cy="220" r="1" fill="#ddd6fe"/>
+    <circle cx="135" cy="300" r="1.5" fill="#8b5cf6"/>
+    <circle cx="250" cy="140" r="1" fill="#a78bfa"/>
+    <circle cx="350" cy="360" r="1.5" fill="#c4b5fd"/>
+    <circle cx="450" cy="370" r="1" fill="#8b5cf6"/>
+    <circle cx="550" cy="355" r="1" fill="#a78bfa"/>
+    <circle cx="665" cy="300" r="1.5" fill="#c4b5fd"/>
+    <circle cx="740" cy="180" r="1" fill="#ddd6fe"/>
+    <circle cx="780" cy="370" r="1" fill="#8b5cf6"/>
+    <circle cx="20" cy="350" r="1" fill="#a78bfa"/>
+    <circle cx="400" cy="160" r="1" fill="#ddd6fe"/>
+    <circle cx="230" cy="55" r="1" fill="#c4b5fd"/>
+    <circle cx="570" cy="50" r="1" fill="#a78bfa"/>
   </g>
 
-  <!-- === DIRECTIONAL ARROW (app → Applications) === -->
+  <!-- === DIRECTIONAL ARROW (app -> Applications) === -->
   <g transform="translate(400, 230)">
-    <!-- Dashed line -->
     <line x1="-100" y1="0" x2="100" y2="0" stroke="url(#arrowGrad)" stroke-width="2.5" stroke-dasharray="10 7" stroke-linecap="round"/>
-    <!-- Arrow head -->
     <polygon points="100,0 86,-9 86,9" fill="#c4b5fd" opacity="0.7"/>
   </g>
 

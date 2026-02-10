@@ -221,10 +221,10 @@
     </g>
   </g>
 
-  <!-- === LABEL BACKDROP (subtle dark zones behind Finder icon labels for readability) === -->
-  <g opacity="0.35" filter="url(#labelBlur)">
-    <ellipse cx="230" cy="300" rx="70" ry="18" fill="#050410"/>
-    <ellipse cx="570" cy="300" rx="70" ry="18" fill="#050410"/>
+  <!-- === LABEL BACKDROP (light pads behind Finder black icon labels for readability) === -->
+  <g opacity="0.18" filter="url(#labelBlur)">
+    <ellipse cx="230" cy="300" rx="75" ry="20" fill="#c4b5fd"/>
+    <ellipse cx="570" cy="300" rx="75" ry="20" fill="#c4b5fd"/>
   </g>
 
   <!-- === AMBIENT GLOW SPOTS === -->

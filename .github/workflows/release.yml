@@ -120,11 +120,11 @@ jobs:
             args: '--target aarch64-apple-darwin --verbose'
             target: aarch64-apple-darwin
             os_type: macos
-          # Windows x64
-          - platform: windows-latest
-            args: '--verbose'
-            target: x86_64-pc-windows-msvc
-            os_type: windows
+          # Windows x64 (disabled during testing — mac-only builds)
+          # - platform: windows-latest
+          #   args: '--verbose'
+          #   target: x86_64-pc-windows-msvc
+          #   os_type: windows
 
     runs-on: ${{ matrix.platform }}
 

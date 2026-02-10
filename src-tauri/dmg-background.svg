@@ -221,17 +221,11 @@
     </g>
   </g>
 
-  <!-- === LABEL BACKDROP (force Finder to use white text by making label zone very dark) === -->
-  <g filter="url(#labelBlur)">
-    <rect x="140" y="285" width="180" height="30" rx="15" fill="#030208" opacity="0.9"/>
-    <rect x="480" y="285" width="180" height="30" rx="15" fill="#030208" opacity="0.9"/>
-  </g>
-
-  <!-- === AMBIENT GLOW SPOTS (kept away from label zone) === -->
+  <!-- === AMBIENT GLOW SPOTS === -->
   <g opacity="0.05" filter="url(#softGlow)">
-    <circle cx="230" cy="200" r="45" fill="#7c3aed"/>
-    <circle cx="570" cy="200" r="45" fill="#7c3aed"/>
-    <circle cx="400" cy="250" r="30" fill="#7c3aed"/>
+    <circle cx="230" cy="230" r="50" fill="#7c3aed"/>
+    <circle cx="570" cy="230" r="50" fill="#7c3aed"/>
+    <circle cx="400" cy="280" r="35" fill="#7c3aed"/>
   </g>
 
   <!-- === SPARKLE PARTICLES === -->
@@ -274,6 +268,10 @@
     <polygon points="100,0 86,-9 86,9" fill="#c4b5fd" opacity="0.7"/>
   </g>
 
-  <!-- Hint text (above arrow, Finder renders icon labels automatically) -->
+  <!-- Icon labels -->
+  <text x="230" y="310" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" fill="white" font-weight="400" letter-spacing="0.3">ZooDB</text>
+  <text x="570" y="310" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" fill="white" font-weight="400" letter-spacing="0.3">Applications</text>
+
+  <!-- Hint text -->
   <text x="400" y="270" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" fill="#a78bfa" opacity="0.35" font-weight="300" letter-spacing="0.5">Drag to install</text>
 </svg>

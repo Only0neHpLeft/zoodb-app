@@ -77,6 +77,11 @@ function SignUpPage() {
         return
       }
 
+      // Hold password in sessionStorage so verify-email can auto-sign-in
+      // after OTP (requireEmailVerification prevents session on signup).
+      // sessionStorage is tab-scoped, in-memory only, and cleared after use.
+      try { sessionStorage.setItem("zoodb:signup-pw", password) } catch {}
+
       navigate({
         to: "/verify-email" as never,
         search: { email, redirect } as never,

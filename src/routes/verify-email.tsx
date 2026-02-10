@@ -73,10 +73,18 @@ function VerifyEmailPage() {
           return
         }
 
-        // Full page reload to the redirect target. This guarantees AuthGuard
-        // fetches a completely fresh session (bypasses the server-side cookie
-        // cache that can still show emailVerified=false for up to 5 min).
-        // A soft navigate() would race with stale useSession() state.
+        // Auto-sign-in: requireEmailVerification prevents a usable session
+        // on signup, so after OTP we sign in with the held password.
+        const pw = (() => { try { return sessionStorage.getItem("zoodb:signup-pw") } catch { return null } })()
+        try { sessionStorage.removeItem("zoodb:signup-pw") } catch {}
+
+        if (pw) {
+          try {
+            await authClient.signIn.email({ email, password: pw })
+          } catch { /* fall through to redirect — user can sign in manually */ }
+        }
+
+        // Full reload so AuthGuard gets a completely fresh session.
         window.location.href = redirect
       } catch {
         setError(t.auth.invalidCode)

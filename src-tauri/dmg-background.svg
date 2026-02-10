@@ -48,6 +48,9 @@
     <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
       <feGaussianBlur stdDeviation="8"/>
     </filter>
+    <filter id="labelBlur" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
     <filter id="textGlow" x="-20%" y="-20%" width="140%" height="140%">
       <feGaussianBlur stdDeviation="2" result="blur"/>
       <feComposite in="SourceGraphic" in2="blur" operator="over"/>
@@ -218,11 +221,17 @@
     </g>
   </g>
 
+  <!-- === LABEL BACKDROP (subtle dark zones behind Finder icon labels for readability) === -->
+  <g opacity="0.35" filter="url(#labelBlur)">
+    <ellipse cx="230" cy="300" rx="70" ry="18" fill="#050410"/>
+    <ellipse cx="570" cy="300" rx="70" ry="18" fill="#050410"/>
+  </g>
+
   <!-- === AMBIENT GLOW SPOTS === -->
-  <g opacity="0.06" filter="url(#softGlow)">
-    <circle cx="230" cy="250" r="60" fill="#7c3aed"/>
-    <circle cx="570" cy="250" r="60" fill="#7c3aed"/>
-    <circle cx="400" cy="300" r="40" fill="#7c3aed"/>
+  <g opacity="0.05" filter="url(#softGlow)">
+    <circle cx="230" cy="230" r="50" fill="#7c3aed"/>
+    <circle cx="570" cy="230" r="50" fill="#7c3aed"/>
+    <circle cx="400" cy="280" r="35" fill="#7c3aed"/>
   </g>
 
   <!-- === SPARKLE PARTICLES === -->
@@ -265,12 +274,6 @@
     <polygon points="100,0 86,-9 86,9" fill="#c4b5fd" opacity="0.7"/>
   </g>
 
-  <!-- === LABELS === -->
-  <!-- App name label -->
-  <text x="230" y="310" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" fill="#c4b5fd" opacity="0.6" font-weight="400" letter-spacing="0.3">ZooDB</text>
-  <!-- Applications label -->
-  <text x="570" y="310" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" fill="#c4b5fd" opacity="0.6" font-weight="400" letter-spacing="0.3">Applications</text>
-
-  <!-- Hint text -->
-  <text x="400" y="280" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" fill="#a78bfa" opacity="0.4" font-weight="300" letter-spacing="0.5">Drag to install</text>
+  <!-- Hint text (above arrow, Finder renders icon labels automatically) -->
+  <text x="400" y="270" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" fill="#a78bfa" opacity="0.35" font-weight="300" letter-spacing="0.5">Drag to install</text>
 </svg>

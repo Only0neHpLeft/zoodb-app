@@ -1,4 +1,5 @@
 import { useEffect, useRef, useMemo } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { useSession } from "@/lib/auth-client";
 import { authClient } from "@/lib/auth-client";
 import { useProfile, useUpsertProfile } from "@/lib/db/convex-db";
@@ -15,6 +16,7 @@ export interface UserProfile {
 
 export function useAuth() {
   const { data: session, isPending } = useSession();
+  const navigate = useNavigate();
 
   const user = session?.user ?? null;
   const isSignedIn = !!user;
@@ -78,8 +80,10 @@ export function useAuth() {
       console.error("Sign-out failed:", error);
     }
 
-    // Full reload to /sign-in so session starts fresh
-    window.location.href = "/sign-in";
+    // Soft navigate — AuthGuard renders auth routes immediately and
+    // ProtectedProviders unmounts the Convex/offline stack, so all
+    // subscriptions clean up without a full-page-reload flicker.
+    navigate({ to: "/sign-in" });
   };
 
   return {

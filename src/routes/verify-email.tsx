@@ -80,11 +80,18 @@ function VerifyEmailPage() {
 
         if (pw) {
           try {
+            // signIn creates a fresh session with emailVerified: true —
+            // no stale cookie cache, so soft navigate works cleanly.
             await authClient.signIn.email({ email, password: pw })
-          } catch { /* fall through to redirect — user can sign in manually */ }
+            await authClient.getSession()
+            ;(authClient as any).updateSession?.()
+            navigate({ to: redirect } as never)
+            return
+          } catch { /* fall through to full reload */ }
         }
 
-        // Full reload so AuthGuard gets a completely fresh session.
+        // Fallback (no stored password or sign-in failed): full reload
+        // forces AuthGuard to fetch a fresh session from scratch.
         window.location.href = redirect
       } catch {
         setError(t.auth.invalidCode)

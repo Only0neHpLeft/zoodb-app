@@ -27,7 +27,9 @@ function authCallbackPlugin(): Plugin {
   h1 { font-size: 1.25rem; margin-bottom: 0.5rem; }
   p { color: #888; font-size: 0.875rem; }
 </style></head>
-<body><div class="card"><h1>Sign-in successful</h1><p>You can close this tab and return to Zoo Database.</p></div></body></html>`)
+<body><div class="card"><h1>Sign-in successful</h1><p id="msg">Closing this tab\u2026</p></div>
+<script>setTimeout(function(){try{window.close()}catch(e){}document.getElementById("msg").textContent="You can close this tab and return to Zoo Database."},1500)</script>
+</body></html>`)
           return
         }
 

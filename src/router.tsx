@@ -23,8 +23,10 @@ export const queryClient = new QueryClient({
       // Retry failed queries 3 times with exponential backoff
       retry: 3,
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-      // Refetch on window focus for real-time data
-      refetchOnWindowFocus: true,
+      // Disabled — Tauri desktop window focus changes are frequent and the
+      // staleTime already keeps data fresh for 5 minutes. This avoids the
+      // visual flicker caused by mass query refetches on every focus event.
+      refetchOnWindowFocus: false,
       // Don't refetch on reconnect (data is likely still valid)
       refetchOnReconnect: false,
       // Refetch background data that's stale

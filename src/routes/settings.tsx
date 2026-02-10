@@ -6,6 +6,8 @@ import { ThemeSelector } from "@/components/theme-selector"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { LanguageToggle } from "@/components/language-toggle"
 import { BackupRestore } from "@/components/backup-restore"
+import { CertificateDownload } from "@/components/certificate-download"
+import { isAdmin } from "@/lib/permissions"
 import { useLanguage } from "@/contexts/language-context"
 import { useAuth } from "@/hooks/use-auth"
 import { useMembership } from "@/contexts/membership-context"
@@ -130,6 +132,9 @@ function SettingsPage() {
               </Field>
             </div>
           </div>
+
+          {/* Certificate Section (Admin only) */}
+          {isAdmin(profile) && <CertificateDownload />}
 
           {/* Backup & Restore Section */}
           <BackupRestore />

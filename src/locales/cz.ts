@@ -901,6 +901,38 @@ export const cz = {
     },
   },
 
+  // Certificate
+  certificate: {
+    title: 'Certifikát',
+    description: 'Zobrazte si certifikát s interaktivním odhalením vaší SQL hodnosti.',
+    viewCertificate: 'Zobrazit Certifikát',
+    tasksCompleted: 'úkolů dokončeno',
+    dialogDescription: 'Setřete kartu pro odhalení vaší SQL hodnosti, poté stáhněte jako PNG.',
+    close: 'Zavřít',
+    downloadPng: 'Stáhnout jako PNG',
+    exporting: 'Exportování...',
+    headerLabel: 'Certifikát',
+    mainTitle: 'o Dosažení',
+    presentedTo: 'Tento certifikát je hrdě udělen',
+    completionText: 'text dokončení',
+    rankLabel: 'SQL Hodnost',
+    scratchHere: 'SETŘETE ZDE',
+    signature: 'Platforma ZooDB',
+    footer: 'Tento certifikát byl vygenerován platformou ZooDB — Platforma pro Výuku SQL',
+    ranks: {
+      sqlApprentice: 'SQL Učeň',
+      queryBuilder: 'Tvůrce Dotazů',
+      dataExplorer: 'Průzkumník Dat',
+      sqlMaster: 'SQL Mistr',
+      sqlLegend: 'SQL Legenda',
+    },
+    fileName: 'ZooDB-Certifikat',
+    saveDialogTitle: 'Uložit Certifikát',
+    saved: 'Certifikát byl úspěšně uložen!',
+    cancelled: 'Uložení zrušeno.',
+    error: 'Nepodařilo se exportovat certifikát.',
+  },
+
   // Backup & Restore
   backup: {
     title: 'Záloha Databáze',

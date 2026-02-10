@@ -106,6 +106,9 @@ const config = defineConfig({
           if (id.includes('node_modules')) {
             // Don't chunk PGlite - let it handle its own assets
             if (id.includes('@electric-sql/pglite')) return undefined
+
+            // html2canvas is dynamically imported — let Rollup split it into a lazy chunk
+            if (id.includes('html2canvas')) return undefined
             
             // Group by major library to avoid circular deps
             // Better Auth

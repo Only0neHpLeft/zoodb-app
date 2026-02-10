@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router"
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { useState } from "react"
 import { authClient } from "@/lib/auth-client"
 import { useLanguage } from "@/contexts/language-context"
@@ -18,11 +18,16 @@ import {
 } from "lucide-react"
 
 export const Route = createFileRoute("/sign-in")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    redirect: (search.redirect as string) || "/",
+  }),
   component: SignInPage,
 })
 
 function SignInPage() {
   const { t } = useLanguage()
+  const { redirect } = Route.useSearch()
+  const navigate = useNavigate()
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -44,7 +49,9 @@ function SignInPage() {
         return
       }
 
-      window.location.href = "/"
+      await authClient.getSession()
+      ;(authClient as any).updateSession?.()
+      navigate({ to: redirect } as never)
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
       setLoading(false)
@@ -250,8 +257,8 @@ function SignInPage() {
 
           {/* Social login */}
           <div className="auth-animate-fade-up auth-stagger-6 space-y-3">
-            <GoogleButton loading={loading} onError={setError} />
-            <GitHubButton loading={loading} onError={setError} />
+            <GoogleButton loading={loading} onError={setError} redirect={redirect} />
+            <GitHubButton loading={loading} onError={setError} redirect={redirect} />
           </div>
 
           {/* Footer */}
@@ -260,6 +267,7 @@ function SignInPage() {
               {t.auth.noAccount}{" "}
               <Link
                 to="/sign-up"
+                search={{ redirect }}
                 className="font-semibold text-primary underline-offset-4 hover:underline"
               >
                 {t.auth.register}
@@ -274,7 +282,7 @@ function SignInPage() {
 
 /* ── Shared bento tile ── */
 
-function GoogleButton({ loading, onError }: { loading: boolean; onError: (msg: string) => void }) {
+function GoogleButton({ loading, onError, redirect }: { loading: boolean; onError: (msg: string) => void; redirect: string }) {
   const [socialLoading, setSocialLoading] = useState(false)
 
   const handleGoogleSignIn = async () => {
@@ -323,7 +331,7 @@ function GoogleButton({ loading, onError }: { loading: boolean; onError: (msg: s
           setSocialLoading(false)
         }
       } else {
-        await authClient.signIn.social({ provider: "google", callbackURL: "/" })
+        await authClient.signIn.social({ provider: "google", callbackURL: redirect })
       }
     } catch (err) {
       onError(`Google: ${err instanceof Error ? err.message : String(err)}`)
@@ -366,7 +374,7 @@ function GoogleButton({ loading, onError }: { loading: boolean; onError: (msg: s
   )
 }
 
-function GitHubButton({ loading, onError }: { loading: boolean; onError: (msg: string) => void }) {
+function GitHubButton({ loading, onError, redirect }: { loading: boolean; onError: (msg: string) => void; redirect: string }) {
   const [socialLoading, setSocialLoading] = useState(false)
 
   const handleGitHubSignIn = async () => {
@@ -415,7 +423,7 @@ function GitHubButton({ loading, onError }: { loading: boolean; onError: (msg: s
           setSocialLoading(false)
         }
       } else {
-        await authClient.signIn.social({ provider: "github", callbackURL: "/" })
+        await authClient.signIn.social({ provider: "github", callbackURL: redirect })
       }
     } catch (err) {
       onError(`GitHub: ${err instanceof Error ? err.message : String(err)}`)

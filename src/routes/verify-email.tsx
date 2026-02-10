@@ -19,6 +19,7 @@ function VerifyEmailPage() {
   const { data: session } = useSession()
   const navigate = useNavigate()
   const email = new URLSearchParams(window.location.search).get("email") ?? ""
+  const redirect = new URLSearchParams(window.location.search).get("redirect") || "/"
 
   const [otp, setOtp] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -29,7 +30,7 @@ function VerifyEmailPage() {
   // Redirect if already verified
   useEffect(() => {
     if (session?.user?.emailVerified) {
-      navigate({ to: "/" })
+      navigate({ to: redirect } as never)
     }
   }, [session, navigate])
 
@@ -78,7 +79,7 @@ function VerifyEmailPage() {
           await authClient.getSession()
           ;(authClient as any).updateSession?.()
         } catch {}
-        navigate({ to: "/" })
+        navigate({ to: redirect } as never)
       } catch {
         setError(t.auth.invalidCode)
         setOtp("")

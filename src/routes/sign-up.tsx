@@ -19,12 +19,16 @@ import {
 } from "lucide-react"
 
 export const Route = createFileRoute("/sign-up")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    redirect: (search.redirect as string) || "/",
+  }),
   component: SignUpPage,
 })
 
 function SignUpPage() {
   const { t } = useLanguage()
   const navigate = useNavigate()
+  const { redirect } = Route.useSearch()
 
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
@@ -74,7 +78,7 @@ function SignUpPage() {
 
       navigate({
         to: "/verify-email" as never,
-        search: { email } as never,
+        search: { email, redirect } as never,
       })
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
@@ -324,6 +328,7 @@ function SignUpPage() {
                 {isDuplicateUser && (
                   <Link
                     to="/sign-in"
+                    search={{ redirect }}
                     className="mt-1 block text-sm font-semibold text-primary underline-offset-4 hover:underline"
                   >
                     {t.auth.trySigningIn}
@@ -370,6 +375,7 @@ function SignUpPage() {
               {t.auth.haveAccount}{" "}
               <Link
                 to="/sign-in"
+                search={{ redirect }}
                 className="font-semibold text-primary underline-offset-4 hover:underline"
               >
                 {t.auth.signIn}

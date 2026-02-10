@@ -24,7 +24,7 @@ const AUTH_TIMEOUT_MS = 5000
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { data: session, isPending } = useSession()
   const navigate = useNavigate()
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
   const shownRef = useRef(false)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const ottExchangedRef = useRef(false)
@@ -84,7 +84,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       timeoutRef.current = setTimeout(async () => {
         console.warn("Auth timeout — redirecting to sign-in")
         try { await authClient.signOut() } catch {}
-        navigate({ to: "/sign-in" as never })
+        navigate({ to: "/sign-in", search: { redirect: pathname } } as never)
       }, AUTH_TIMEOUT_MS)
     }
     return () => {
@@ -106,13 +106,14 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
     // Not signed in on protected route → sign-in
     if (!isSignedIn && !isAuthRoute) {
-      navigate({ to: "/sign-in" as never })
+      navigate({ to: "/sign-in", search: { redirect: pathname } } as never)
       return
     }
 
-    // Signed in on sign-in/sign-up → home
+    // Signed in on sign-in/sign-up → home (or redirect target)
     if (isSignedIn && isAuthRoute && !pathname?.startsWith("/verify-email")) {
-      navigate({ to: "/" as never })
+      const redirectTo = (search as Record<string, string>)?.redirect || "/"
+      navigate({ to: redirectTo as never })
       return
     }
 

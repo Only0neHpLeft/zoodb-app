@@ -169,7 +169,7 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VITE_CONVEX_URL: https://intent-robin-412.convex.cloud
+          VITE_CONVEX_URL: https://necessary-dog-518.convex.cloud
           VITE_CONVEX_SITE_URL: https://api.zoodb.app
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}

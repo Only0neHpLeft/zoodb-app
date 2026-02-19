@@ -43,8 +43,8 @@ const SCHEMA_CZ: TableSchema[] = [
   { name: 'Zvirata', columns: ['id', 'druh', 'jmeno', 'vaha', 'narozen', 'spotreba'] },
   { name: 'Druhy', columns: ['id', 'nazev', 'vaha_min', 'vaha_max'] },
   { name: 'Osetrovatele', columns: ['id', 'jmeno', 'narozen'] },
-  { name: 'Ma_rad', columns: ['id', 'osetrujici', 'druh'] },
-  { name: 'Osetruje', columns: ['id', 'osetrujici', 'zvire'] },
+  { name: 'Ma_rad', columns: ['id', 'osetrovatel', 'druh'] },
+  { name: 'Osetruje', columns: ['id', 'osetrovatel', 'zvire'] },
 ]
 
 // Suggestion types

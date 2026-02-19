@@ -29,22 +29,23 @@ export const Route = createFileRoute("/classes")({
   component: ClassesPage,
 })
 
-function formatDate(timestamp: number | undefined) {
-  if (!timestamp) return '-'
-  return new Date(timestamp).toLocaleDateString()
-}
-
-function timeAgo(timestamp: number | undefined) {
-  if (!timestamp) return '-'
-  const seconds = Math.floor((Date.now() - timestamp) / 1000)
-  if (seconds < 60) return 'just now'
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`
-  return `${Math.floor(seconds / 86400)}d ago`
-}
-
 function ClassesPage() {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
+
+  const formatDate = (timestamp: number | undefined) => {
+    if (!timestamp) return '-'
+    return new Date(timestamp).toLocaleDateString(language === 'cz' ? 'cs' : 'en')
+  }
+
+  const timeAgo = (timestamp: number | undefined) => {
+    if (!timestamp) return '-'
+    const seconds = Math.floor((Date.now() - timestamp) / 1000)
+    const cls = t.pages.classes
+    if (seconds < 60) return cls.justNow || 'just now'
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}${cls.minutesAgo || 'm ago'}`
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}${cls.hoursAgo || 'h ago'}`
+    return `${Math.floor(seconds / 86400)}${cls.daysAgo || 'd ago'}`
+  }
   const { user, isLoaded, isSignedIn } = useAuth()
   const userId = isSignedIn && user ? user.id : undefined
 

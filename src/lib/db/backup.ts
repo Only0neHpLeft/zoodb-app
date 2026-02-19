@@ -137,7 +137,7 @@ export async function restoreFromBackup(
       const dataResult = await backup.query(`SELECT * FROM ${table}`);
 
       if (dataResult.rows.length > 0) {
-        const columnNames = Object.keys(dataResult.rows[0] as Record<string, unknown>).filter(col => col !== 'id');
+        const columnNames = Object.keys(dataResult.rows[0] as Record<string, unknown>);
         const placeholders = columnNames.map((_, i) => `$${i + 1}`).join(', ');
         const insertSql = `INSERT INTO ${table} (${columnNames.join(', ')}) VALUES (${placeholders})`;
 

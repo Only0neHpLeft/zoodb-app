@@ -5,6 +5,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { getVersion, show as showApp } from '@tauri-apps/api/app'
 import { AlertTriangle, RefreshCw, Home, Copy, Check } from 'lucide-react'
+import { isTauri } from '../lib/tauri'
 
 import { AuthProvider, convex } from '../integrations/auth/provider'
 import { ConvexProvider } from 'convex/react'
@@ -141,6 +142,7 @@ function WindowTitle() {
   const { language } = useLanguage()
 
   useEffect(() => {
+    if (!isTauri()) return
     const updateTitle = async () => {
       try {
         const version = await getVersion()
@@ -164,7 +166,7 @@ function UpdateGate({ children }: { children: ReactNode }) {
   // When a mandatory update is detected, UpdateGate blocks AuthProvider from rendering,
   // so AppLayout never mounts. Show the window here so the update screen is visible.
   useEffect(() => {
-    if (updateInfo) {
+    if (updateInfo && isTauri()) {
       const win = getCurrentWindow()
       showApp().then(() => win.show()).then(() => win.setFocus()).catch(() => {})
     }

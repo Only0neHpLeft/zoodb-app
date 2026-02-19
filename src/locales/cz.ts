@@ -107,6 +107,14 @@ export const cz = {
     pressCtrlEnter: 'Ctrl+Enter pro spuštění',
     editor: 'Editor',
     output: 'Výstup',
+    destructiveQuery: {
+      title: 'Detekován Destruktivní Dotaz',
+      description: 'Tento dotaz upraví nebo smaže data ve vaší lokální databázi. Bez obnovy ze zálohy to nelze vrátit.',
+      confirmLabel: 'Napište DELETE pro potvrzení',
+      confirmPlaceholder: 'Pište zde...',
+      confirmButton: 'Spustit Dotaz',
+      cancelButton: 'Zrušit',
+    },
   },
 
   // Settings
@@ -535,6 +543,10 @@ export const cz = {
       successRate: 'Úspěšnost',
       categoryProgress: 'Pokrok v Kategoriích',
       attempts: 'Pokusy',
+      justNow: 'právě teď',
+      minutesAgo: 'm zpět',
+      hoursAgo: 'h zpět',
+      daysAgo: 'd zpět',
     },
     membership: {
       title: 'Členství',

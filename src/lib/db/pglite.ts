@@ -603,6 +603,9 @@ export async function resetDatabase(): Promise<void> {
   for (const table of allTables) {
     await database.exec(`DROP TABLE IF EXISTS ${table} CASCADE`);
   }
+
+  // Clear initialization lock so the DB can be re-initialized
+  initializationLock = null;
 }
 
 /**

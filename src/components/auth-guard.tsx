@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "@tanstack/react-router"
 import { getCurrentWindow } from "@tauri-apps/api/window"
 import { show as showApp } from "@tauri-apps/api/app"
 import { authClient, useSession } from "@/lib/auth-client"
+import { isTauri } from "@/lib/tauri"
 
 const AUTH_ROUTES = ["/sign-in", "/sign-up", "/verify-email"]
 const AUTH_TIMEOUT_MS = 5000
@@ -80,7 +81,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   // Safety: if session never resolves on a protected route, clear stale session and redirect.
   // Don't start the timer while OTT is still being exchanged.
   useEffect(() => {
-    if (!isLoaded && !isAuthRoute) {
+    if (!isLoaded && !isAuthRoute && !ottPending) {
       timeoutRef.current = setTimeout(async () => {
         console.warn("Auth timeout — redirecting to sign-in")
         try { await authClient.signOut() } catch {}
@@ -93,7 +94,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
         timeoutRef.current = null
       }
     }
-  }, [isLoaded, isAuthRoute, navigate])
+  }, [isLoaded, isAuthRoute, ottPending, navigate])
 
   // All auth redirects (single source of truth)
   useEffect(() => {
@@ -141,8 +142,10 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
     if (isAuthRoute || isLoaded) {
       shownRef.current = true
-      const win = getCurrentWindow()
-      showApp().then(() => win.show()).then(() => win.setFocus()).catch(() => {})
+      if (isTauri()) {
+        const win = getCurrentWindow()
+        showApp().then(() => win.show()).then(() => win.setFocus()).catch(() => {})
+      }
     }
   }, [isAuthRoute, isLoaded, isSignedIn, isEmailVerified, pathname])
 

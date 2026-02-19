@@ -7,7 +7,9 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { AlertTriangle } from "lucide-react"
 import { getCategoryByLetter } from "@/data/categories"
 import { useLanguage } from "@/contexts/language-context"
 import { useTranslateDifficulty } from "@/hooks/use-translate-difficulty"
@@ -22,6 +24,7 @@ import { validateTask, getTaskRules, type ValidationResult } from "@/lib/validat
 import { tableNames, columnNames, type TableKey } from "@/lib/db/schema-mapping"
 import { useSaveTaskProgress, useStudentProgress } from "@/lib/db/convex-db"
 import { useSettingsSync } from "@/hooks/use-settings-sync"
+import { useLessonAccess } from "@/hooks/use-lesson-access"
 
 type EditorSearch = {
   lesson?: string
@@ -57,6 +60,8 @@ function EditorPage() {
   const [validationResults, setValidationResults] = useState<ValidationResult[] | null>(null)
   const [isValidated, setIsValidated] = useState<boolean | null>(null)
   const [showValidationDialog, setShowValidationDialog] = useState(false)
+  const [showDestructiveDialog, setShowDestructiveDialog] = useState(false)
+  const [destructiveConfirmText, setDestructiveConfirmText] = useState('')
   const { userId } = useSettingsSync()
   const saveTaskProgress = useSaveTaskProgress()
   const dbProgress = useStudentProgress(userId ?? undefined)
@@ -65,7 +70,7 @@ function EditorPage() {
     if (!userId) {
       const saved = localStorage.getItem('sqlLessonsProgress')
       if (saved) {
-        setLocalCompleted(JSON.parse(saved))
+        try { setLocalCompleted(JSON.parse(saved)) } catch {}
       }
     }
   }, [userId])
@@ -83,6 +88,17 @@ function EditorPage() {
     }
     return localCompleted
   }, [userId, dbProgress, localCompleted])
+
+  const { isUnlocked, loading: accessLoading } = useLessonAccess(lessonParam, completedTasks)
+
+  useEffect(() => {
+    if (!accessLoading && lessonParam && !isUnlocked) {
+      toast.error(t.category?.locked || "Category Locked", {
+        description: t.category?.lockedMessage || "Complete the previous category to unlock this one",
+      })
+      navigate({ to: "/" })
+    }
+  }, [accessLoading, isUnlocked, lessonParam, navigate, t])
 
   useEffect(() => {
     setSqlQuery('')
@@ -127,12 +143,19 @@ function EditorPage() {
     }
   }, [userId, saveTaskProgress])
 
-  const handleRunQuery = useCallback(async () => {
-    if (!sqlQuery.trim()) {
-      toast.error(t.task?.emptyQuery || "Please enter a SQL query")
-      return
-    }
+  // Check if a SQL query is destructive (DROP, DELETE, TRUNCATE, ALTER)
+  const isDestructiveQuery = useCallback((sql: string) => {
+    const trimmed = sql.trim().toUpperCase()
+    return (
+      trimmed.startsWith('DROP') ||
+      trimmed.startsWith('DELETE') ||
+      trimmed.startsWith('TRUNCATE') ||
+      trimmed.startsWith('ALTER')
+    )
+  }, [])
 
+  // Core execution logic — separated so the destructive confirmation dialog can also call it
+  const executeCurrentQuery = useCallback(async () => {
     setIsExecuting(true)
     setError(null)
     setResult(null)
@@ -204,12 +227,36 @@ function EditorPage() {
     }
   }, [sqlQuery, t, category, taskParam, selectedTaskIndex, markTaskComplete])
 
+  const handleRunQuery = useCallback(async () => {
+    if (!sqlQuery.trim()) {
+      toast.error(t.task?.emptyQuery || "Please enter a SQL query")
+      return
+    }
+
+    // Intercept destructive queries with confirmation dialog
+    if (isDestructiveQuery(sqlQuery)) {
+      setDestructiveConfirmText('')
+      setShowDestructiveDialog(true)
+      return
+    }
+
+    executeCurrentQuery()
+  }, [sqlQuery, t, isDestructiveQuery, executeCurrentQuery])
+
+  const handleDestructiveConfirm = useCallback(() => {
+    setShowDestructiveDialog(false)
+    setDestructiveConfirmText('')
+    executeCurrentQuery()
+  }, [executeCurrentQuery])
+
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
       e.preventDefault()
       handleRunQuery()
     }
   }, [handleRunQuery])
+
+  if (accessLoading && lessonParam) return null
 
   if (!category) {
     return (
@@ -544,6 +591,55 @@ function EditorPage() {
               </div>
             ))}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Destructive Query Confirmation Dialog */}
+      <Dialog open={showDestructiveDialog} onOpenChange={(open) => {
+        setShowDestructiveDialog(open)
+        if (!open) setDestructiveConfirmText('')
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              {(t.task as any)?.destructiveQuery?.title || "Destructive Query Detected"}
+            </DialogTitle>
+            <DialogDescription>
+              {(t.task as any)?.destructiveQuery?.description || "This query will modify or delete data in your local database. This cannot be undone without restoring from backup."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 mt-2">
+            <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3">
+              <pre className="font-mono text-xs text-destructive whitespace-pre-wrap break-all">{sqlQuery}</pre>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                {(t.task as any)?.destructiveQuery?.confirmLabel || "Type DELETE to confirm"}
+              </label>
+              <Input
+                value={destructiveConfirmText}
+                onChange={(e) => setDestructiveConfirmText(e.target.value)}
+                placeholder={(t.task as any)?.destructiveQuery?.confirmPlaceholder || "Type here..."}
+                className="font-mono"
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => {
+              setShowDestructiveDialog(false)
+              setDestructiveConfirmText('')
+            }}>
+              {(t.task as any)?.destructiveQuery?.cancelButton || "Cancel"}
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={destructiveConfirmText !== 'DELETE'}
+              onClick={handleDestructiveConfirm}
+            >
+              {(t.task as any)?.destructiveQuery?.confirmButton || "Execute Query"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

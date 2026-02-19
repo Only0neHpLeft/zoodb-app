@@ -4,21 +4,24 @@ import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Breadcrumbs } from "@/components/breadcrumbs"
 import { Notifications } from "@/components/notifications"
 import { Card, CardContent } from "@/components/ui/card"
-import { ArrowLeft, CheckCircle2, Code2, PlayCircle, Terminal, Lightbulb, AlertCircle } from "lucide-react"
+import { ArrowLeft, CheckCircle2, Code2, PlayCircle, Terminal, Lightbulb, AlertCircle, AlertTriangle } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
 import { getCategoryByLetter } from "@/data/categories"
 import { useLanguage } from "@/contexts/language-context"
 import { tableNames, columnNames, type TableKey } from "@/lib/db/schema-mapping"
 import { useTranslateDifficulty } from "@/hooks/use-translate-difficulty"
 import { useTranslateCategory } from "@/hooks/use-translate-category"
-import { executeQuery } from "@/lib/db/pglite"
+import { executeQuery, type QueryResult } from "@/lib/db/pglite"
+import { notifyDataChange } from "@/lib/db/events"
 import { toast } from "sonner"
-import { validateQuery } from "@/lib/query-validator"
+import { validateTask, getTaskRules, type ValidationResult } from "@/lib/validation"
 import { useSaveTaskProgress, useStudentProgress } from "@/lib/db/convex-db"
 import { useSettingsSync } from "@/hooks/use-settings-sync"
-import type { ValidationResult, QueryResultRow } from "@/data/types"
+import { useLessonAccess } from "@/hooks/use-lesson-access"
 
 type TaskSearch = {
   lesson?: string
@@ -45,11 +48,13 @@ function TaskEditorPage() {
   const [localCompleted, setLocalCompleted] = useState<{ [key: string]: boolean[] }>({})
   const [sqlQuery, setSqlQuery] = useState('')
   const [showHint, setShowHint] = useState(false)
-  const [queryResults, setQueryResults] = useState<QueryResultRow[] | null>(null)
+  const [result, setResult] = useState<QueryResult | null>(null)
   const [queryError, setQueryError] = useState<string | null>(null)
   const [isExecuting, setIsExecuting] = useState(false)
-  const [executionTime, setExecutionTime] = useState<number | null>(null)
-  const [validationResult, setValidationResult] = useState<ValidationResult | null>(null)
+  const [validationResults, setValidationResults] = useState<ValidationResult[] | null>(null)
+  const [isValidated, setIsValidated] = useState<boolean | null>(null)
+  const [showDestructiveDialog, setShowDestructiveDialog] = useState(false)
+  const [destructiveConfirmText, setDestructiveConfirmText] = useState('')
   const { userId } = useSettingsSync()
   const saveTaskProgress = useSaveTaskProgress()
   const dbProgress = useStudentProgress(userId ?? undefined)
@@ -59,7 +64,7 @@ function TaskEditorPage() {
     if (!userId) {
       const saved = localStorage.getItem('sqlLessonsProgress')
       if (saved) {
-        setLocalCompleted(JSON.parse(saved))
+        try { setLocalCompleted(JSON.parse(saved)) } catch {}
       }
     }
   }, [userId])
@@ -78,6 +83,19 @@ function TaskEditorPage() {
     }
     return localCompleted
   }, [userId, dbProgress, localCompleted])
+
+  const { isUnlocked, loading: accessLoading } = useLessonAccess(lessonParam, completedTasks)
+
+  useEffect(() => {
+    if (!accessLoading && lessonParam && !isUnlocked) {
+      toast.error(t.category?.locked || "Category Locked", {
+        description: t.category?.lockedMessage || "Complete the previous category to unlock this one",
+      })
+      navigate({ to: "/" })
+    }
+  }, [accessLoading, isUnlocked, lessonParam, navigate, t])
+
+  if (accessLoading && lessonParam) return null
 
   const originalCategory = getCategoryByLetter(lessonParam || '')
   const category = originalCategory ? translateCategory(originalCategory) : null
@@ -106,65 +124,71 @@ function TaskEditorPage() {
 
   const handleHintToggle = () => setShowHint(!showHint)
 
-  const handleRunQuery = async () => {
-    if (!sqlQuery.trim()) {
-      toast.error(t.task.emptyQuery || "Please enter a SQL query")
-      return
-    }
+  // Check if a SQL query is destructive (DROP, DELETE, TRUNCATE, ALTER)
+  const isDestructiveQuery = (sql: string) => {
+    const trimmed = sql.trim().toUpperCase()
+    return (
+      trimmed.startsWith('DROP') ||
+      trimmed.startsWith('DELETE') ||
+      trimmed.startsWith('TRUNCATE') ||
+      trimmed.startsWith('ALTER')
+    )
+  }
 
+  // Core execution logic — separated so the destructive confirmation dialog can also call it
+  const executeCurrentQuery = async () => {
     setIsExecuting(true)
     setQueryError(null)
-    setQueryResults(null)
-    setExecutionTime(null)
-    setValidationResult(null)
-
-    const startTime = performance.now()
+    setResult(null)
+    setValidationResults(null)
+    setIsValidated(null)
 
     try {
-      const { data, error } = await executeSQL(sqlQuery.trim())
-      const endTime = performance.now()
-      setExecutionTime(endTime - startTime)
+      const queryResult = await executeQuery(sqlQuery.trim())
+      setResult(queryResult)
 
-      if (error) {
-        setQueryError(error.message || "An error occurred while executing the query")
-        toast.error(t.task.queryError || "Query execution failed")
-        return
+      // Notify sidebar if query modifies data
+      const trimmedQuery = sqlQuery.trim().toUpperCase()
+      const isModifyingQuery =
+        trimmedQuery.startsWith('INSERT') ||
+        trimmedQuery.startsWith('UPDATE') ||
+        trimmedQuery.startsWith('DELETE') ||
+        trimmedQuery.startsWith('TRUNCATE') ||
+        trimmedQuery.startsWith('DROP') ||
+        trimmedQuery.startsWith('ALTER') ||
+        trimmedQuery.startsWith('CREATE')
+
+      if (isModifyingQuery) {
+        notifyDataChange()
       }
 
-      let results: QueryResultRow[] = []
-      if (data === null) {
-        results = []
-        setQueryResults([])
-        toast.success(t.task.querySuccess || "Query executed successfully")
-      } else if (Array.isArray(data)) {
-        results = data
-        setQueryResults(data)
-        toast.success(`${t.task.querySuccess || "Query executed successfully"} (${data.length} rows)`)
-      } else {
-        results = [data]
-        setQueryResults([data])
-        toast.success(t.task.querySuccess || "Query executed successfully")
-      }
+      // Validate if we have a task selected
+      if (category && taskParam) {
+        const taskId = `${category.letter}${taskParam}`
+        const taskRules = getTaskRules(taskId)
 
-      if (currentTask?.validation) {
-        const validation = await validateQuery(sqlQuery.trim(), currentTask.validation, results)
-        setValidationResult(validation)
+        if (taskRules) {
+          const validation = validateTask(taskRules, {
+            sql: sqlQuery,
+            rowCount: queryResult.rowCount,
+            columns: queryResult.columns,
+            rows: queryResult.rows,
+            executionTime: queryResult.executionTime,
+          })
 
-        if (validation.isValid) {
-          toast.success(t.task.validationSuccess || "Query is correct!")
+          setValidationResults(validation.results)
+          setIsValidated(validation.passed)
+
+          if (validation.passed) {
+            completeTask(category.letter, taskIndex)
+            toast.success(t.task.validationSuccess || "Query Validation: Passed")
+          } else {
+            toast.error(t.task.validationFailed || "Query Validation: Failed")
+          }
         } else {
-          toast.error(t.task.validationFailed || "Query doesn't meet requirements")
-        }
-
-        if (userId) {
-          saveTaskProgress({
-            userId,
-            categoryLetter: category.letter,
-            taskIndex,
-            taskId: `${category.letter}-${taskIndex}`,
-            completed: validation.isValid,
-            hintsUsed: showHint ? 1 : 0,
-          }).catch(() => {})
+          toast.success(t.task.querySuccess || "Query executed successfully", {
+            description: `${queryResult.rowCount} ${queryResult.rowCount === 1 ? (t.task.row || 'row') : (t.task.rows || 'rows')} · ${queryResult.executionTime.toFixed(1)}ms`
+          })
         }
       }
     } catch (error: unknown) {
@@ -174,6 +198,28 @@ function TaskEditorPage() {
     } finally {
       setIsExecuting(false)
     }
+  }
+
+  const handleRunQuery = async () => {
+    if (!sqlQuery.trim()) {
+      toast.error(t.task.emptyQuery || "Please enter a SQL query")
+      return
+    }
+
+    // Intercept destructive queries with confirmation dialog
+    if (isDestructiveQuery(sqlQuery)) {
+      setDestructiveConfirmText('')
+      setShowDestructiveDialog(true)
+      return
+    }
+
+    executeCurrentQuery()
+  }
+
+  const handleDestructiveConfirm = () => {
+    setShowDestructiveDialog(false)
+    setDestructiveConfirmText('')
+    executeCurrentQuery()
   }
 
   if (!category || !taskParam) {
@@ -351,16 +397,6 @@ function TaskEditorPage() {
                   <PlayCircle className="mr-2 h-4 w-4" />
                   {isExecuting ? (t.task.executing || "Executing...") : t.task.runQuery}
                 </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => completeTask(category.letter, taskIndex)}
-                  disabled={isCompleted}
-                  className={isCompleted ? 'text-green-600 dark:text-green-500 border-green-300 dark:border-green-700' : ''}
-                >
-                  <CheckCircle2 className={`mr-2 h-4 w-4 ${isCompleted ? 'text-green-600 dark:text-green-500' : ''}`} />
-                  {isCompleted ? t.task.completed : t.task.markComplete}
-                </Button>
                 <Button size="sm" variant="ghost" onClick={() => setSqlQuery('')}>
                   {t.task.clear}
                 </Button>
@@ -379,31 +415,32 @@ SELECT * FROM animals;"
           </div>
 
           {/* Validation Feedback */}
-          {validationResult && (
-            <div className={`border rounded-lg overflow-hidden ${validationResult.isValid ? 'border-green-500' : 'border-red-500'}`}>
-              <div className={`px-4 py-3 border-b flex items-center gap-2 ${validationResult.isValid ? 'bg-green-50 dark:bg-green-950/20' : 'bg-red-50 dark:bg-red-950/20'}`}>
-                {validationResult.isValid ? (
+          {validationResults && isValidated !== null && (
+            <div className={`border rounded-lg overflow-hidden ${isValidated ? 'border-green-500' : 'border-red-500'}`}>
+              <div className={`px-4 py-3 border-b flex items-center gap-2 ${isValidated ? 'bg-green-50 dark:bg-green-950/20' : 'bg-red-50 dark:bg-red-950/20'}`}>
+                {isValidated ? (
                   <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
                 ) : (
                   <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
                 )}
-                <h3 className={`font-semibold ${validationResult.isValid ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}`}>
-                  {validationResult.isValid ? (t.task.validationSuccess || "Query Validation: Passed") : (t.task.validationFailed || "Query Validation: Failed")}
+                <h3 className={`font-semibold ${isValidated ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}`}>
+                  {isValidated ? (t.task.validationSuccess || "Query Validation: Passed") : (t.task.validationFailed || "Query Validation: Failed")}
                 </h3>
               </div>
-              <div className="p-4">
-                {validationResult.errors.length > 0 && (
-                  <ul className="list-disc list-inside space-y-1 mb-3">
-                    {validationResult.errors.map((error, index) => (
-                      <li key={index} className="text-sm text-red-600 dark:text-red-400">{error}</li>
-                    ))}
-                  </ul>
-                )}
-                {validationResult.isValid && (
-                  <div className="text-sm text-green-600 dark:text-green-400">
-                    {t.task.validationSuccessMessage || "Great job! Your query meets all requirements."}
+              <div className="p-4 space-y-1">
+                {validationResults.map((vr, index) => (
+                  <div
+                    key={index}
+                    className={`flex items-start gap-2 text-sm ${vr.passed ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}
+                  >
+                    {vr.passed ? (
+                      <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0" />
+                    ) : (
+                      <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+                    )}
+                    <span>{vr.message}</span>
                   </div>
-                )}
+                ))}
               </div>
             </div>
           )}
@@ -415,9 +452,9 @@ SELECT * FROM animals;"
                 <Terminal className="h-4 w-4 text-muted-foreground" />
                 <h3 className="font-semibold">{t.task.queryResults}</h3>
               </div>
-              {executionTime !== null && (
+              {result && (
                 <div className="text-xs text-muted-foreground">
-                  {t.task.executionTime || "Execution time"}: {executionTime.toFixed(2)}ms
+                  {t.task.executionTime || "Execution time"}: {result.executionTime.toFixed(2)}ms
                 </div>
               )}
             </div>
@@ -439,8 +476,8 @@ SELECT * FROM animals;"
                     </div>
                   </div>
                 </div>
-              ) : queryResults !== null ? (
-                queryResults.length === 0 ? (
+              ) : result !== null ? (
+                result.rowCount === 0 ? (
                   <div className="rounded-lg p-6 min-h-[250px] flex items-center justify-center" style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)' }}>
                     <div className="text-center">
                       <CheckCircle2 className="h-12 w-12 mx-auto mb-3 text-green-500" />
@@ -454,17 +491,17 @@ SELECT * FROM animals;"
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b border-border">
-                          {Object.keys(queryResults[0]).map((column) => (
+                          {result.columns.map((column) => (
                             <th key={column} className="text-left p-3 font-semibold text-muted-foreground bg-muted/30">{column}</th>
                           ))}
                         </tr>
                       </thead>
                       <tbody>
-                        {queryResults.map((row, rowIndex) => (
+                        {result.rows.map((row, rowIndex) => (
                           <tr key={rowIndex} className="border-b border-border hover:bg-muted/20">
-                            {Object.values(row).map((value, colIndex) => (
-                              <td key={colIndex} className="p-3 font-mono text-xs">
-                                {value === null ? <span className="text-muted-foreground italic">NULL</span> : String(value)}
+                            {result.columns.map((col) => (
+                              <td key={col} className="p-3 font-mono text-xs">
+                                {row[col] === null ? <span className="text-muted-foreground italic">NULL</span> : String(row[col])}
                               </td>
                             ))}
                           </tr>
@@ -472,7 +509,7 @@ SELECT * FROM animals;"
                       </tbody>
                     </table>
                     <div className="p-3 border-t border-border bg-muted/30 text-xs text-muted-foreground">
-                      {queryResults.length} {queryResults.length === 1 ? (t.task.row || "row") : (t.task.rows || "rows")}
+                      {result.rowCount} {result.rowCount === 1 ? (t.task.row || "row") : (t.task.rows || "rows")}
                     </div>
                   </div>
                 )
@@ -507,6 +544,55 @@ SELECT * FROM animals;"
           </div>
         </div>
       </main>
+
+      {/* Destructive Query Confirmation Dialog */}
+      <Dialog open={showDestructiveDialog} onOpenChange={(open) => {
+        setShowDestructiveDialog(open)
+        if (!open) setDestructiveConfirmText('')
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              {(t.task as any)?.destructiveQuery?.title || "Destructive Query Detected"}
+            </DialogTitle>
+            <DialogDescription>
+              {(t.task as any)?.destructiveQuery?.description || "This query will modify or delete data in your local database. This cannot be undone without restoring from backup."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 mt-2">
+            <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3">
+              <pre className="font-mono text-xs text-destructive whitespace-pre-wrap break-all">{sqlQuery}</pre>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                {(t.task as any)?.destructiveQuery?.confirmLabel || "Type DELETE to confirm"}
+              </label>
+              <Input
+                value={destructiveConfirmText}
+                onChange={(e) => setDestructiveConfirmText(e.target.value)}
+                placeholder={(t.task as any)?.destructiveQuery?.confirmPlaceholder || "Type here..."}
+                className="font-mono"
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => {
+              setShowDestructiveDialog(false)
+              setDestructiveConfirmText('')
+            }}>
+              {(t.task as any)?.destructiveQuery?.cancelButton || "Cancel"}
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={destructiveConfirmText !== 'DELETE'}
+              onClick={handleDestructiveConfirm}
+            >
+              {(t.task as any)?.destructiveQuery?.confirmButton || "Execute Query"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

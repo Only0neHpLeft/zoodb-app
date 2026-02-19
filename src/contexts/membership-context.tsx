@@ -48,7 +48,7 @@ export function MembershipProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (userId && convexMembership === null && isUserLoaded) {
       // Create membership if it doesn't exist
-      getOrCreateMembership({ userId })
+      getOrCreateMembership({ userId }).catch(console.error)
     }
   }, [userId, convexMembership, isUserLoaded, getOrCreateMembership])
 

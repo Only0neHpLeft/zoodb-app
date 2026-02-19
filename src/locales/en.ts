@@ -106,6 +106,14 @@ export const en = {
     pressCtrlEnter: 'Ctrl+Enter to execute',
     editor: 'Editor',
     output: 'Output',
+    destructiveQuery: {
+      title: 'Destructive Query Detected',
+      description: 'This query will modify or delete data in your local database. This cannot be undone without restoring from backup.',
+      confirmLabel: 'Type DELETE to confirm',
+      confirmPlaceholder: 'Type here...',
+      confirmButton: 'Execute Query',
+      cancelButton: 'Cancel',
+    },
   },
 
   // Settings
@@ -532,6 +540,10 @@ export const en = {
       successRate: 'Success Rate',
       categoryProgress: 'Category Progress',
       attempts: 'Attempts',
+      justNow: 'just now',
+      minutesAgo: 'm ago',
+      hoursAgo: 'h ago',
+      daysAgo: 'd ago',
     },
     membership: {
       title: 'Membership',

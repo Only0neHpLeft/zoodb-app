@@ -14,6 +14,7 @@ import { useTranslateCategory } from "@/hooks/use-translate-category"
 import { useMembership } from "@/contexts/membership-context"
 import { useStudentProgress } from "@/lib/db/convex-db"
 import { useSettingsSync } from "@/hooks/use-settings-sync"
+import { checkLessonAccess } from "@/hooks/use-lesson-access"
 
 export const Route = createFileRoute("/")({
   component: Home,
@@ -33,7 +34,7 @@ function Home() {
     if (!userId) {
       const saved = localStorage.getItem("sqlLessonsProgress")
       if (saved) {
-        setLocalCompleted(JSON.parse(saved))
+        try { setLocalCompleted(JSON.parse(saved)) } catch {}
       }
     }
   }, [userId])
@@ -126,19 +127,12 @@ function Home() {
               const categoryCompletedCount = categoryTasks.filter(Boolean).length
               const isFullyCompleted = categoryCompletedCount === category.tasks.length
 
-              const isFreePlan = !membership || membership.plan_type === "free"
-              const isPaidCategory = index >= 3
-
-              let isUnlocked = index === 0
-
-              if (isFreePlan && isPaidCategory) {
-                isUnlocked = false
-              } else if (index > 0) {
-                const previousCategory = categoriesArray[index - 1]
-                const previousTasks = completedTasks[previousCategory.letter] || []
-                const previousCompletedCount = previousTasks.filter(Boolean).length
-                isUnlocked = previousCompletedCount === previousCategory.tasks.length
-              }
+              const { isUnlocked, isFreePlan, isPaidCategory } = checkLessonAccess(
+                category.letter,
+                index,
+                membership,
+                completedTasks
+              )
 
               const difficulties = category.tasks.map((t) => t.difficulty)
               const hasHard = difficulties.includes("Hard")

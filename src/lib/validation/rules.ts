@@ -32,7 +32,6 @@ const TASK_REFERENCES: TaskReference[] = [
     hints: [
       { type: 'sqlKeyword', value: ['SELECT', 'FROM', 'WHERE', 'LIKE'] },
       { type: 'tableUsed', value: 'Zvirata' },
-      { type: 'sqlPattern', value: 'jmeno.*like.*[\'"]?[aA]%[\'"]?' },
     ],
   },
   {
@@ -55,7 +54,7 @@ const TASK_REFERENCES: TaskReference[] = [
       { type: 'sqlKeyword', value: ['SELECT', 'FROM', 'WHERE'] },
       { type: 'tableUsed', value: 'Zvirata' },
       { type: 'tableUsed', value: 'Druhy' },
-      { type: 'sqlPattern', value: 'slimak|slug' },
+      { type: 'sqlPattern', value: 'slimak|slug', message: 'Filter by the type name for slug/slimak' },
     ],
   },
   {
@@ -66,7 +65,7 @@ const TASK_REFERENCES: TaskReference[] = [
       { type: 'sqlKeyword', value: ['SELECT', 'FROM', 'WHERE'] },
       { type: 'tableUsed', value: 'Zvirata' },
       { type: 'tableUsed', value: 'Druhy' },
-      { type: 'sqlPattern', value: 'julie' },
+      { type: 'sqlPattern', value: 'julie', message: 'Filter by the animal name julie' },
     ],
   },
   {
@@ -77,8 +76,8 @@ const TASK_REFERENCES: TaskReference[] = [
       { type: 'sqlKeyword', value: ['SELECT', 'FROM', 'WHERE'] },
       { type: 'tableUsed', value: 'Zvirata' },
       { type: 'tableUsed', value: 'Druhy' },
-      { type: 'sqlPattern', value: 'sisi' },
-      { type: 'sqlPattern', value: 'netopyr|bat' },
+      { type: 'sqlPattern', value: 'sisi', message: 'Filter by the animal name sisi' },
+      { type: 'sqlPattern', value: 'netopyr|bat', message: 'Filter by the type name netopyr/bat' },
     ],
   },
 ]

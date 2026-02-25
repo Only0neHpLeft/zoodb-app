@@ -1,4 +1,4 @@
-import type { ValidationRule, ValidationResult, QueryValidationContext, TaskValidation } from './types'
+import type { ValidationRule, ValidationResult, QueryValidationContext, ComparisonResult } from './types'
 import { tableNames, columnNames } from '../db/schema-mapping'
 
 // Build bidirectional lookup maps for bilingual validation (CS ↔ EN)
@@ -296,17 +296,117 @@ function validateRule(rule: ValidationRule, context: QueryValidationContext): Va
   }
 }
 
-// Validate all rules for a task
-export function validateTask(
-  validation: TaskValidation,
-  context: QueryValidationContext
-): { passed: boolean; results: ValidationResult[] } {
-  const results = validation.rules.map(rule => validateRule(rule, context))
-  const passed = results.every(r => r.passed)
-  return { passed, results }
+
+// Normalize a cell value to a comparable string
+function normalizeValue(value: unknown): string {
+  if (value === null || value === undefined) return ''
+  if (value instanceof Date) return value.toISOString().split('T')[0]
+  return String(value).toLowerCase().trim()
 }
 
-// Get validation for a specific task
-export function getTaskValidation(taskId: string, validations: TaskValidation[]): TaskValidation | null {
-  return validations.find(v => v.taskId === taskId) || null
+// Extract row values as sorted string arrays (ignoring column names)
+function rowToValues(row: Record<string, unknown>): string[] {
+  return Object.values(row).map(normalizeValue)
+}
+
+// Serialize a row's values for sorting/comparison
+function serializeRow(values: string[]): string {
+  return values.join('\x00')
+}
+
+// Compare two result sets — core of the universal validation engine
+export function compareResults(
+  studentResult: { rows: Record<string, unknown>[]; rowCount: number; columns: string[] },
+  referenceResult: { rows: Record<string, unknown>[]; rowCount: number; columns: string[] },
+  compareMode: 'unordered' | 'ordered',
+  strictColumns?: string[],
+  hints?: ValidationRule[],
+  sql?: string,
+): ComparisonResult {
+  const warnings: string[] = []
+
+  // Step 1: Row count check (fast exit)
+  if (studentResult.rowCount !== referenceResult.rowCount) {
+    let hintResults: ValidationResult[] | undefined
+    if (hints && sql) {
+      const context: QueryValidationContext = {
+        sql,
+        rowCount: studentResult.rowCount,
+        columns: studentResult.columns,
+        rows: studentResult.rows,
+        executionTime: 0,
+      }
+      hintResults = hints.map(rule => validateRule(rule, context))
+    }
+
+    return {
+      passed: false,
+      message: `Expected ${referenceResult.rowCount} rows, got ${studentResult.rowCount}`,
+      hintResults,
+    }
+  }
+
+  // Step 2: Value comparison
+  const studentValues = studentResult.rows.map(rowToValues)
+  const referenceValues = referenceResult.rows.map(rowToValues)
+
+  let mismatch = false
+
+  if (compareMode === 'ordered') {
+    for (let i = 0; i < referenceValues.length; i++) {
+      const refSerialized = serializeRow(referenceValues[i])
+      const stuSerialized = serializeRow(studentValues[i])
+      if (refSerialized !== stuSerialized) {
+        mismatch = true
+        break
+      }
+    }
+  } else {
+    const refSorted = referenceValues.map(serializeRow).sort()
+    const stuSorted = studentValues.map(serializeRow).sort()
+    for (let i = 0; i < refSorted.length; i++) {
+      if (refSorted[i] !== stuSorted[i]) {
+        mismatch = true
+        break
+      }
+    }
+  }
+
+  if (mismatch) {
+    let hintResults: ValidationResult[] | undefined
+    if (hints && sql) {
+      const context: QueryValidationContext = {
+        sql,
+        rowCount: studentResult.rowCount,
+        columns: studentResult.columns,
+        rows: studentResult.rows,
+        executionTime: 0,
+      }
+      hintResults = hints.map(rule => validateRule(rule, context))
+    }
+
+    return {
+      passed: false,
+      message: compareMode === 'ordered'
+        ? 'Row order doesn\'t match expected output'
+        : 'Result data doesn\'t match expected output',
+      hintResults,
+    }
+  }
+
+  // Step 3: Column warning (non-blocking)
+  if (strictColumns && strictColumns.length > 0) {
+    const studentCols = studentResult.columns.map(c => c.toLowerCase())
+    const expectedCols = strictColumns.map(c => c.toLowerCase())
+    const extraCols = studentCols.filter(c => !expectedCols.includes(c))
+    if (extraCols.length > 0) {
+      warnings.push('Correct! Tip: try selecting only the columns you need')
+    }
+  }
+
+  return {
+    passed: true,
+    message: 'Correct!',
+    warnings: warnings.length > 0 ? warnings : undefined,
+  }
 }

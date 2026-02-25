@@ -18,7 +18,7 @@ import { useTranslateCategory } from "@/hooks/use-translate-category"
 import { executeQuery, type QueryResult } from "@/lib/db/pglite"
 import { notifyDataChange } from "@/lib/db/events"
 import { toast } from "sonner"
-import { validateTask, getTaskRules, type ValidationResult } from "@/lib/validation"
+import { compareResults, getTaskReference, type ValidationResult } from "@/lib/validation"
 import { useSaveTaskProgress, useStudentProgress } from "@/lib/db/convex-db"
 import { useSettingsSync } from "@/hooks/use-settings-sync"
 import { useLessonAccess } from "@/hooks/use-lesson-access"
@@ -165,25 +165,36 @@ function TaskEditorPage() {
       // Validate if we have a task selected
       if (category && taskParam) {
         const taskId = `${category.letter}${taskParam}`
-        const taskRules = getTaskRules(taskId)
+        const taskRef = getTaskReference(taskId)
 
-        if (taskRules) {
-          const validation = validateTask(taskRules, {
-            sql: sqlQuery,
-            rowCount: queryResult.rowCount,
-            columns: queryResult.columns,
-            rows: queryResult.rows,
-            executionTime: queryResult.executionTime,
-          })
+        if (taskRef) {
+          const refResult = await executeQuery(taskRef.referenceQuery, { isReference: true })
+          const comparison = compareResults(
+            queryResult,
+            refResult,
+            taskRef.compareMode,
+            taskRef.strictColumns,
+            taskRef.hints,
+            sqlQuery,
+          )
 
-          setValidationResults(validation.results)
-          setIsValidated(validation.passed)
+          const results: ValidationResult[] = comparison.hintResults || [
+            { passed: comparison.passed, message: comparison.message }
+          ]
+          setValidationResults(results)
+          setIsValidated(comparison.passed)
 
-          if (validation.passed) {
+          if (comparison.passed) {
             completeTask(category.letter, taskIndex)
             toast.success(t.task.validationSuccess || "Query Validation: Passed")
+            if (comparison.warnings?.length) {
+              toast.info(comparison.warnings[0])
+            }
           } else {
-            toast.error(t.task.validationFailed || "Query Validation: Failed")
+            const failedHints = results.filter(r => !r.passed)
+            toast.error(t.task.validationFailed || "Query Validation: Failed", {
+              description: failedHints[0]?.message || comparison.message
+            })
           }
         } else {
           toast.success(t.task.querySuccess || "Query executed successfully", {

@@ -138,6 +138,14 @@ async function initializeDb(): Promise<PGlite> {
     relaxedDurability: true,
   });
   dbReady = true;
+
+  // Safety: abort queries exceeding 5 seconds
+  try {
+    await db.exec('SET statement_timeout = 5000');
+  } catch {
+    // statement_timeout may not be supported in all PGlite versions — non-fatal
+  }
+
   // PGlite initialized with IndexedDB persistence
 
   // Initialize offline tables (non-blocking, deferred)
@@ -514,11 +522,25 @@ function processRows(rows: Record<string, unknown>[]): Record<string, unknown>[]
   });
 }
 
-export async function executeQuery(sql: string): Promise<QueryResult> {
+const MAX_STUDENT_ROWS = 5000
+
+export async function executeQuery(sql: string, options?: { isReference?: boolean }): Promise<QueryResult> {
   const database = await getDb();
   const startTime = performance.now();
 
-  const result = await database.query(sql);
+  let result;
+  if (options?.isReference) {
+    // Reference queries run without the row cap
+    result = await database.query(sql);
+  } else {
+    // Student queries get a row cap to prevent cross-join memory bombs
+    result = await database.query(`SELECT * FROM (${sql}) AS _q LIMIT ${MAX_STUDENT_ROWS + 1}`);
+    if (result.rows.length > MAX_STUDENT_ROWS) {
+      throw new Error(
+        `Query returned more than ${MAX_STUDENT_ROWS} rows. Check for missing WHERE clause or accidental cross joins.`
+      );
+    }
+  }
 
   const executionTime = performance.now() - startTime;
 

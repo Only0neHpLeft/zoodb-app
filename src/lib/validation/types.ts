@@ -15,11 +15,6 @@ export interface ValidationRule {
   message?: string // Custom error message
 }
 
-export interface TaskValidation {
-  taskId: string // e.g., "A1", "A2", "B1"
-  rules: ValidationRule[]
-}
-
 export interface ValidationResult {
   passed: boolean
   message: string
@@ -32,4 +27,19 @@ export interface QueryValidationContext {
   columns: string[]
   rows: Record<string, unknown>[]
   executionTime: number
+}
+
+export interface TaskReference {
+  taskId: string
+  referenceQuery: string
+  compareMode: 'unordered' | 'ordered'
+  strictColumns?: string[]
+  hints?: ValidationRule[]
+}
+
+export interface ComparisonResult {
+  passed: boolean
+  message: string
+  warnings?: string[]
+  hintResults?: ValidationResult[]
 }

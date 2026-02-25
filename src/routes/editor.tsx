@@ -20,7 +20,7 @@ import { executeQuery, type QueryResult } from "@/lib/db/pglite"
 import { notifyDataChange } from "@/lib/db/events"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
-import { validateTask, getTaskRules, type ValidationResult } from "@/lib/validation"
+import { compareResults, getTaskReference, type ValidationResult } from "@/lib/validation"
 import { tableNames, columnNames, type TableKey } from "@/lib/db/schema-mapping"
 import { useSaveTaskProgress, useStudentProgress } from "@/lib/db/convex-db"
 import { useSettingsSync } from "@/hooks/use-settings-sync"
@@ -185,33 +185,43 @@ function EditorPage() {
       // Validate the result if we have a task selected
       if (category && taskParam) {
         const taskId = `${category.letter}${taskParam}`
-        const taskRules = getTaskRules(taskId)
+        const taskRef = getTaskReference(taskId)
 
-        if (taskRules) {
-          const validation = validateTask(taskRules, {
-            sql: sqlQuery,
-            rowCount: queryResult.rowCount,
-            columns: queryResult.columns,
-            rows: queryResult.rows,
-            executionTime: queryResult.executionTime,
-          })
+        if (taskRef) {
+          const refResult = await executeQuery(taskRef.referenceQuery, { isReference: true })
+          const comparison = compareResults(
+            queryResult,
+            refResult,
+            taskRef.compareMode,
+            taskRef.strictColumns,
+            taskRef.hints,
+            sqlQuery,
+          )
 
-          setValidationResults(validation.results)
-          setIsValidated(validation.passed)
+          // Map comparison to existing UI state
+          const results: ValidationResult[] = comparison.hintResults || [
+            { passed: comparison.passed, message: comparison.message }
+          ]
+          setValidationResults(results)
+          setIsValidated(comparison.passed)
 
-          if (validation.passed) {
+          if (comparison.passed) {
             markTaskComplete(category.letter, selectedTaskIndex)
             toast.success(t.task?.taskCompleted || "Task completed!", {
               description: t.task?.correctSolution || "Your solution is correct"
             })
+            // Show column warning if any
+            if (comparison.warnings?.length) {
+              toast.info(comparison.warnings[0])
+            }
           } else {
-            const failedRules = validation.results.filter(r => !r.passed)
+            const failedHints = results.filter(r => !r.passed)
             toast.error(t.task?.incorrectSolution || "Not quite right", {
-              description: failedRules[0]?.message || "Check your query"
+              description: failedHints[0]?.message || comparison.message
             })
           }
         } else {
-          // No validation rules for this task, just show success
+          // No reference for this task, just show execution success
           toast.success(t.task?.querySuccess || "Query executed", {
             description: `${queryResult.rowCount} ${queryResult.rowCount === 1 ? 'row' : 'rows'} in ${queryResult.executionTime.toFixed(2)}ms`
           })

@@ -314,6 +314,26 @@ function serializeRow(values: string[]): string {
   return values.join('\x00')
 }
 
+// Find the matching reference column for a student column (handles bilingual names)
+function findMatchingRefColumn(studentCol: string, refColumns: string[]): string | null {
+  const stuLower = studentCol.toLowerCase()
+  // Direct match
+  const direct = refColumns.find(r => r.toLowerCase() === stuLower)
+  if (direct) return direct
+  // Bilingual equivalent (e.g., "type" ↔ "druh")
+  const equiv = _columnEquiv.get(stuLower)
+  if (equiv) {
+    const match = refColumns.find(r => r.toLowerCase() === equiv)
+    if (match) return match
+  }
+  return null
+}
+
+// Extract values from a row for specific columns only
+function projectRow(row: Record<string, unknown>, columns: string[]): string[] {
+  return columns.map(col => normalizeValue(row[col]))
+}
+
 // Compare two result sets — core of the universal validation engine
 export function compareResults(
   studentResult: { rows: Record<string, unknown>[]; rowCount: number; columns: string[] },
@@ -325,80 +345,116 @@ export function compareResults(
 ): ComparisonResult {
   const warnings: string[] = []
 
+  // Build hint context helper
+  function getHintResults(): ValidationResult[] | undefined {
+    if (!hints || !sql) return undefined
+    const context: QueryValidationContext = {
+      sql,
+      rowCount: studentResult.rowCount,
+      columns: studentResult.columns,
+      rows: studentResult.rows,
+      executionTime: 0,
+    }
+    return hints.map(rule => validateRule(rule, context))
+  }
+
   // Step 1: Row count check (fast exit)
   if (studentResult.rowCount !== referenceResult.rowCount) {
-    let hintResults: ValidationResult[] | undefined
-    if (hints && sql) {
-      const context: QueryValidationContext = {
-        sql,
-        rowCount: studentResult.rowCount,
-        columns: studentResult.columns,
-        rows: studentResult.rows,
-        executionTime: 0,
-      }
-      hintResults = hints.map(rule => validateRule(rule, context))
-    }
-
     return {
       passed: false,
       message: `Expected ${referenceResult.rowCount} rows, got ${studentResult.rowCount}`,
-      hintResults,
+      hintResults: getHintResults(),
     }
   }
 
-  // Step 2: Value comparison
-  const studentValues = studentResult.rows.map(rowToValues)
-  const referenceValues = referenceResult.rows.map(rowToValues)
+  // Step 2: Map student columns to reference columns (bilingual-aware)
+  const stuCols = studentResult.columns
+  const refCols = referenceResult.columns
+  const isSubsetQuery = stuCols.length < refCols.length
 
+  // For each student column, find the matching reference column
+  const stuToRefMap: Array<{ stu: string; ref: string }> = []
+  for (const sc of stuCols) {
+    const matched = findMatchingRefColumn(sc, refCols)
+    if (matched) {
+      stuToRefMap.push({ stu: sc, ref: matched })
+    }
+    // Unmatched student columns (e.g., computed expressions) — skip, can't validate
+  }
+
+  // If no columns could be matched, fall back to full value comparison
+  const useProjection = stuToRefMap.length > 0 && isSubsetQuery
+
+  // Step 3: Value comparison
   let mismatch = false
 
-  if (compareMode === 'ordered') {
-    for (let i = 0; i < referenceValues.length; i++) {
-      const refSerialized = serializeRow(referenceValues[i])
-      const stuSerialized = serializeRow(studentValues[i])
-      if (refSerialized !== stuSerialized) {
-        mismatch = true
-        break
+  if (useProjection) {
+    // Project both results to only the matched columns
+    const stuColNames = stuToRefMap.map(m => m.stu)
+    const refColNames = stuToRefMap.map(m => m.ref)
+
+    const studentValues = studentResult.rows.map(row => projectRow(row, stuColNames))
+    const referenceValues = referenceResult.rows.map(row => projectRow(row, refColNames))
+
+    if (compareMode === 'ordered') {
+      for (let i = 0; i < referenceValues.length; i++) {
+        if (serializeRow(studentValues[i]) !== serializeRow(referenceValues[i])) {
+          mismatch = true
+          break
+        }
+      }
+    } else {
+      const stuSorted = studentValues.map(serializeRow).sort()
+      const refSorted = referenceValues.map(serializeRow).sort()
+      for (let i = 0; i < refSorted.length; i++) {
+        if (stuSorted[i] !== refSorted[i]) {
+          mismatch = true
+          break
+        }
       }
     }
   } else {
-    const refSorted = referenceValues.map(serializeRow).sort()
-    const stuSorted = studentValues.map(serializeRow).sort()
-    for (let i = 0; i < refSorted.length; i++) {
-      if (refSorted[i] !== stuSorted[i]) {
-        mismatch = true
-        break
+    // Full value comparison (same column count or no mapping possible)
+    const studentValues = studentResult.rows.map(rowToValues)
+    const referenceValues = referenceResult.rows.map(rowToValues)
+
+    if (compareMode === 'ordered') {
+      for (let i = 0; i < referenceValues.length; i++) {
+        if (serializeRow(studentValues[i]) !== serializeRow(referenceValues[i])) {
+          mismatch = true
+          break
+        }
+      }
+    } else {
+      const stuSorted = studentValues.map(serializeRow).sort()
+      const refSorted = referenceValues.map(serializeRow).sort()
+      for (let i = 0; i < refSorted.length; i++) {
+        if (stuSorted[i] !== refSorted[i]) {
+          mismatch = true
+          break
+        }
       }
     }
   }
 
   if (mismatch) {
-    let hintResults: ValidationResult[] | undefined
-    if (hints && sql) {
-      const context: QueryValidationContext = {
-        sql,
-        rowCount: studentResult.rowCount,
-        columns: studentResult.columns,
-        rows: studentResult.rows,
-        executionTime: 0,
-      }
-      hintResults = hints.map(rule => validateRule(rule, context))
-    }
-
     return {
       passed: false,
       message: compareMode === 'ordered'
         ? 'Row order doesn\'t match expected output'
         : 'Result data doesn\'t match expected output',
-      hintResults,
+      hintResults: getHintResults(),
     }
   }
 
-  // Step 3: Column warning (non-blocking)
+  // Step 4: Column warnings (non-blocking)
+  if (isSubsetQuery) {
+    warnings.push('Correct! Tip: try selecting all columns with SELECT *')
+  }
   if (strictColumns && strictColumns.length > 0) {
-    const studentCols = studentResult.columns.map(c => c.toLowerCase())
+    const studentColsLower = stuCols.map(c => c.toLowerCase())
     const expectedCols = strictColumns.map(c => c.toLowerCase())
-    const extraCols = studentCols.filter(c => !expectedCols.includes(c))
+    const extraCols = studentColsLower.filter(c => !expectedCols.includes(c))
     if (extraCols.length > 0) {
       warnings.push('Correct! Tip: try selecting only the columns you need')
     }

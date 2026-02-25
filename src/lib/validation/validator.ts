@@ -25,6 +25,38 @@ for (const tableCol of Object.values(columnNames)) {
 }
 _csToEn.sort((a, b) => b[0].length - a[0].length)
 
+// Build table name maps: cs→en and en→cs
+const _tableCsToEn = new Map<string, string>()
+const _tableEnToCs = new Map<string, string>()
+for (const entry of Object.values(tableNames)) {
+  _tableCsToEn.set(entry.cs.toLowerCase(), entry.en.toLowerCase())
+  _tableEnToCs.set(entry.en.toLowerCase(), entry.cs.toLowerCase())
+}
+
+// Detect if student SQL uses English table names
+function studentUsesEnglish(sql: string): boolean {
+  const lower = sql.toLowerCase()
+  for (const enName of _tableEnToCs.keys()) {
+    if (new RegExp(`\\b${enName}\\b`, 'i').test(lower)) return true
+  }
+  return false
+}
+
+// Translate a reference query (Czech) to English table/column names
+export function translateQueryToEnglish(sql: string): string {
+  let result = sql
+  // Replace table names (longest first to avoid partial matches)
+  const tableEntries = [..._tableCsToEn.entries()].sort((a, b) => b[0].length - a[0].length)
+  for (const [cs, en] of tableEntries) {
+    result = result.replace(new RegExp(`\\b${cs}\\b`, 'gi'), en)
+  }
+  // Replace column names (longest first)
+  for (const [cs, en] of _csToEn) {
+    result = result.replace(new RegExp(`\\b${cs}\\b`, 'gi'), en)
+  }
+  return result
+}
+
 // Normalize SQL for comparison (remove extra whitespace, lowercase)
 function normalizeSql(sql: string): string {
   return sql

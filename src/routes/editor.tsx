@@ -20,7 +20,7 @@ import { executeQuery, type QueryResult } from "@/lib/db/pglite"
 import { notifyDataChange } from "@/lib/db/events"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
-import { compareResults, getTaskReference, type ValidationResult } from "@/lib/validation"
+import { compareResults, getTaskReference, translateQueryToEnglish, type ValidationResult } from "@/lib/validation"
 import { tableNames, columnNames, type TableKey } from "@/lib/db/schema-mapping"
 import { useSaveTaskProgress, useStudentProgress } from "@/lib/db/convex-db"
 import { useSettingsSync } from "@/hooks/use-settings-sync"
@@ -188,7 +188,14 @@ function EditorPage() {
         const taskRef = getTaskReference(taskId)
 
         if (taskRef) {
-          const refResult = await executeQuery(taskRef.referenceQuery, { isReference: true })
+          // Try Czech reference query first; if empty, try English translation
+          let refResult = await executeQuery(taskRef.referenceQuery, { isReference: true })
+          if (refResult.rowCount === 0) {
+            const englishQuery = translateQueryToEnglish(taskRef.referenceQuery)
+            if (englishQuery !== taskRef.referenceQuery) {
+              refResult = await executeQuery(englishQuery, { isReference: true })
+            }
+          }
           const comparison = compareResults(
             queryResult,
             refResult,

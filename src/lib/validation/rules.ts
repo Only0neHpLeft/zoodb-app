@@ -27,12 +27,12 @@ const TASK_REFERENCES: TaskReference[] = [
   },
   {
     taskId: 'A3',
-    referenceQuery: "SELECT * FROM Zvirata WHERE jmeno LIKE 'a%'",
+    referenceQuery: "SELECT * FROM Zvirata WHERE jmeno LIKE 'A%'",
     compareMode: 'unordered',
     hints: [
       { type: 'sqlKeyword', value: ['SELECT', 'FROM', 'WHERE', 'LIKE'] },
       { type: 'tableUsed', value: 'Zvirata' },
-      { type: 'sqlPattern', value: 'jmeno.*like.*[\'"]?a%[\'"]?' },
+      { type: 'sqlPattern', value: 'jmeno.*like.*[\'"]?[aA]%[\'"]?' },
     ],
   },
   {

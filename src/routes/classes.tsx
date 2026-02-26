@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router"
-import { useState } from "react"
 import { useAuth } from "@/hooks/use-auth"
 import { toast } from "sonner"
 import { SidebarTrigger } from "@/components/ui/sidebar"
@@ -15,7 +14,6 @@ import {
   useProfile,
   useTeacherClasses,
   useStudentClasses,
-  useClassStudents,
   useDeleteClass,
 } from "@/lib/db/convex-db"
 import type { Id } from "../../convex/_generated/dataModel"
@@ -23,7 +21,6 @@ import { CreateClassDialog } from "@/components/classes/create-class-dialog"
 import { JoinClassDialog } from "@/components/classes/join-class-dialog"
 import { TeacherClassCard } from "@/components/classes/teacher-class-card"
 import { StudentClassCard } from "@/components/classes/student-class-card"
-import { ClassStudentsTable } from "@/components/classes/class-students-table"
 
 export const Route = createFileRoute("/classes")({
   component: ClassesPage,
@@ -37,15 +34,6 @@ function ClassesPage() {
     return new Date(timestamp).toLocaleDateString(language === 'cz' ? 'cs' : 'en')
   }
 
-  const timeAgo = (timestamp: number | undefined) => {
-    if (!timestamp) return '-'
-    const seconds = Math.floor((Date.now() - timestamp) / 1000)
-    const cls = t.pages.classes
-    if (seconds < 60) return cls.justNow || 'just now'
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}${cls.minutesAgo || 'm ago'}`
-    if (seconds < 86400) return `${Math.floor(seconds / 3600)}${cls.hoursAgo || 'h ago'}`
-    return `${Math.floor(seconds / 86400)}${cls.daysAgo || 'd ago'}`
-  }
   const { user, isLoaded, isSignedIn } = useAuth()
   const userId = isSignedIn && user ? user.id : undefined
 
@@ -57,8 +45,6 @@ function ClassesPage() {
   )
   const studentClasses = useStudentClasses(userId)
 
-  const [selectedClassId, setSelectedClassId] = useState<Id<"classes"> | null>(null)
-  const classStudents = useClassStudents(selectedClassId ?? undefined)
   const deleteClass = useDeleteClass()
 
   const userRole = convexProfile?.role || 'student'
@@ -67,7 +53,6 @@ function ClassesPage() {
     if (!user) return
     try {
       await deleteClass({ teacherUserId: user.id, classId })
-      if (selectedClassId === classId) setSelectedClassId(null)
       toast.success(t.pages.classes.classDeleted)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to delete class')
@@ -132,10 +117,6 @@ function ClassesPage() {
   const sClasses = (studentClasses ?? []).filter((c): c is NonNullable<typeof c> => c !== null)
   const hasNoClasses = tClasses.length === 0 && sClasses.length === 0
 
-  const selectedClassData = selectedClassId
-    ? tClasses.find(c => c._id === selectedClassId) ?? null
-    : null
-
   return (
     <div className="flex flex-col h-full w-full">
       <header className="flex items-center justify-between border-b px-4 py-3">
@@ -193,23 +174,13 @@ function ClassesPage() {
                         <TeacherClassCard
                           key={cls._id}
                           cls={cls}
-                          onViewStudents={setSelectedClassId}
+                          userId={user!.id}
                           onDelete={handleDeleteClass}
                           formatDate={formatDate}
                           t={t}
                         />
                       ))}
                     </div>
-                  )}
-
-                  {selectedClassData && (
-                    <ClassStudentsTable
-                      classData={selectedClassData}
-                      students={classStudents}
-                      onClose={() => setSelectedClassId(null)}
-                      timeAgo={timeAgo}
-                      t={t}
-                    />
                   )}
                 </TabsContent>
               )}

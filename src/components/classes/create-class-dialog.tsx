@@ -65,6 +65,15 @@ export function CreateClassDialog({ userId, t }: CreateClassDialogProps) {
               placeholder={t.pages.classes.classNamePlaceholder}
             />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="class-description">{t.pages.classes.classDescription || 'Description'}</Label>
+            <Input
+              id="class-description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder={t.pages.classes.classDescriptionPlaceholder || 'Optional description...'}
+            />
+          </div>
         </div>
         <DialogFooter>
           <Button onClick={handleCreate} disabled={isCreating || !name.trim()}>

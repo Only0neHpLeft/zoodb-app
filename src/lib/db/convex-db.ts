@@ -226,3 +226,74 @@ export function useDeleteClass() {
 export function useUpdateClass() {
   return useMutation(api.classes.updateClass);
 }
+
+// ============================================================================
+// Assignments Hooks
+// ============================================================================
+
+export function useClassAssignments(classId: Id<"classes"> | undefined) {
+  return useQuery(
+    api.assignments.getClassAssignments,
+    classId ? { classId } : "skip"
+  );
+}
+
+export function useStudentAssignments(studentUserId: string | undefined) {
+  return useQuery(
+    api.assignments.getStudentAssignments,
+    studentUserId ? { studentUserId } : "skip"
+  );
+}
+
+export function useCreateAssignment() {
+  return useMutation(api.assignments.createAssignment);
+}
+
+export function useCreateBulkAssignments() {
+  return useMutation(api.assignments.createBulkAssignments);
+}
+
+export function useDeleteAssignment() {
+  return useMutation(api.assignments.deleteAssignment);
+}
+
+// ============================================================================
+// Teacher Notes Hooks
+// ============================================================================
+
+export function useStudentNotes(
+  classId: Id<"classes"> | undefined,
+  studentUserId: string | undefined
+) {
+  return useQuery(
+    api.teacherNotes.getStudentNotes,
+    classId && studentUserId ? { classId, studentUserId } : "skip"
+  );
+}
+
+export function useMyNotes(studentUserId: string | undefined) {
+  return useQuery(
+    api.teacherNotes.getMyNotes,
+    studentUserId ? { studentUserId } : "skip"
+  );
+}
+
+export function useCreateNote() {
+  return useMutation(api.teacherNotes.createNote);
+}
+
+export function useDeleteNote() {
+  return useMutation(api.teacherNotes.deleteNote);
+}
+
+// ============================================================================
+// Teacher Action Hooks
+// ============================================================================
+
+export function useResetCategoryProgress() {
+  return useMutation(api.taskProgress.resetCategoryProgress);
+}
+
+export function useRemoveStudent() {
+  return useMutation(api.classes.removeStudent);
+}

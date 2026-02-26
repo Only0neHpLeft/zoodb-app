@@ -5,14 +5,16 @@ import { Breadcrumbs } from "@/components/breadcrumbs"
 import { OfflineIndicator } from "@/components/offline-indicator"
 import { Notifications } from "@/components/notifications"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Lock, Coins } from "lucide-react"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { Button } from "@/components/ui/button"
+import { Lock, Coins, ClipboardList, ChevronsUpDown, CheckCircle2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { categoriesArray, bonusLetters } from "@/data/categories"
+import { categoriesArray, bonusLetters, getCategoryByLetter } from "@/data/categories"
 import { useLanguage } from "@/contexts/language-context"
 import { useTranslateDifficulty } from "@/hooks/use-translate-difficulty"
 import { useTranslateCategory } from "@/hooks/use-translate-category"
 import { useMembership } from "@/contexts/membership-context"
-import { useStudentProgress } from "@/lib/db/convex-db"
+import { useStudentProgress, useStudentAssignments } from "@/lib/db/convex-db"
 import { useSettingsSync } from "@/hooks/use-settings-sync"
 import { checkLessonAccess } from "@/hooks/use-lesson-access"
 
@@ -28,6 +30,7 @@ function Home() {
   const { membership } = useMembership()
   const { userId } = useSettingsSync()
   const dbProgress = useStudentProgress(userId ?? undefined)
+  const studentAssignments = useStudentAssignments(userId ?? undefined)
   const [localCompleted, setLocalCompleted] = useState<{ [key: string]: boolean[] }>({})
 
   useEffect(() => {
@@ -120,6 +123,117 @@ function Home() {
       </header>
       <main className="flex-1 p-6 overflow-auto">
         <div className="flex flex-col gap-6">
+          {studentAssignments && studentAssignments.length > 0 && (
+            <Collapsible defaultOpen>
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold flex items-center gap-2">
+                  <ClipboardList className="h-5 w-5" />
+                  {t.pages?.students?.myAssignments || "My Assignments"}
+                </h2>
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" size="sm">
+                    <ChevronsUpDown className="h-4 w-4" />
+                  </Button>
+                </CollapsibleTrigger>
+              </div>
+              <CollapsibleContent>
+                <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3 mt-3">
+                  {studentAssignments.map((assignment: { _id: string; classId: string; teacherUserId: string; categoryLetter: string; taskIndex?: number; dueDate?: number; note?: string; createdAt: number; className: string }) => {
+                    const originalCategory = getCategoryByLetter(assignment.categoryLetter)
+                    if (!originalCategory) return null
+                    const category = translateCategory(originalCategory)
+
+                    // Determine task title
+                    const taskTitle = assignment.taskIndex != null
+                      ? category.tasks[assignment.taskIndex]?.title
+                      : undefined
+
+                    // Check completion
+                    const isCompleted = assignment.taskIndex != null
+                      ? !!completedTasks[assignment.categoryLetter]?.[assignment.taskIndex]
+                      : category.tasks.every((_, i) => !!completedTasks[assignment.categoryLetter]?.[i])
+
+                    // Due date badge color
+                    const getDueBadge = () => {
+                      if (!assignment.dueDate) return null
+                      const now = Date.now()
+                      const diff = assignment.dueDate - now
+                      const daysLeft = diff / (1000 * 60 * 60 * 24)
+
+                      if (daysLeft < 0) {
+                        return <Badge className="bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300 text-xs">{t.pages?.students?.overdue || "Overdue"}</Badge>
+                      } else if (daysLeft <= 3) {
+                        return <Badge className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300 text-xs">{t.pages?.students?.dueBy || "Due"} {new Date(assignment.dueDate).toLocaleDateString()}</Badge>
+                      } else {
+                        return <Badge className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 text-xs">{t.pages?.students?.dueBy || "Due"} {new Date(assignment.dueDate).toLocaleDateString()}</Badge>
+                      }
+                    }
+
+                    const isBonus = (bonusLetters as readonly string[]).includes(assignment.categoryLetter)
+
+                    return (
+                      <Card
+                        key={assignment._id}
+                        className={`cursor-pointer transition-all hover:shadow-md border-l-4 ${
+                          isBonus
+                            ? "border-l-purple-500"
+                            : "border-l-primary"
+                        } ${isCompleted ? "opacity-75" : ""}`}
+                        onClick={() =>
+                          navigate({
+                            to: "/editor",
+                            search: {
+                              lesson: assignment.categoryLetter,
+                              task: (assignment.taskIndex ?? 0) + 1,
+                            },
+                          })
+                        }
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-start gap-3">
+                            <div
+                              className={`w-10 h-10 min-w-10 min-h-10 shrink-0 rounded-lg flex items-center justify-center text-lg font-bold ${
+                                isBonus
+                                  ? "bg-gradient-to-br from-purple-500 to-purple-700 text-white"
+                                  : "bg-primary text-primary-foreground"
+                              }`}
+                            >
+                              {assignment.categoryLetter}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-sm leading-tight">
+                                {category.title}
+                                {taskTitle && (
+                                  <span className="text-muted-foreground"> &mdash; {taskTitle}</span>
+                                )}
+                              </div>
+                              <div className="text-xs text-muted-foreground mt-1">
+                                {t.pages?.students?.fromClass || "from"} {assignment.className}
+                              </div>
+                              {assignment.note && (
+                                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                                  {assignment.note}
+                                </p>
+                              )}
+                              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                {getDueBadge()}
+                                {isCompleted && (
+                                  <Badge className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 text-xs">
+                                    <CheckCircle2 className="h-3 w-3 mr-1" />
+                                    {t.home.completed}
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )
+                  })}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          )}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {categoriesArray.map((originalCategory, index) => {
               const category = translateCategory(originalCategory)

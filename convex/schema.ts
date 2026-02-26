@@ -75,4 +75,30 @@ export default defineSchema({
     .index("by_class", ["classId"])
     .index("by_student", ["studentUserId"])
     .index("by_class_and_student", ["classId", "studentUserId"]),
+
+  // Assignments (teacher assigns categories/tasks to a class)
+  assignments: defineTable({
+    classId: v.id("classes"),
+    teacherUserId: v.string(),
+    categoryLetter: v.string(),
+    taskIndex: v.optional(v.number()), // null = entire category
+    dueDate: v.optional(v.number()),
+    note: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_class", ["classId"])
+    .index("by_class_and_category", ["classId", "categoryLetter"]),
+
+  // Teacher notes/feedback for students
+  teacherNotes: defineTable({
+    classId: v.id("classes"),
+    teacherUserId: v.string(),
+    studentUserId: v.string(),
+    content: v.string(),
+    categoryLetter: v.optional(v.string()),
+    taskIndex: v.optional(v.number()),
+    createdAt: v.number(),
+  })
+    .index("by_class_and_student", ["classId", "studentUserId"])
+    .index("by_student", ["studentUserId"]),
 });

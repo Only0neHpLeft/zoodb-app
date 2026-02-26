@@ -205,9 +205,7 @@ export function AppSidebar() {
                     tooltip={item.title}
                     className={cn(
                       "relative group/item transition-all duration-200",
-                      "hover:bg-accent/50 hover:shadow-sm",
-                      "data-[active=true]:bg-primary data-[active=true]:text-primary-foreground",
-                      "data-[active=true]:shadow-md data-[active=true]:shadow-primary/20"
+                      "hover:bg-accent/50 hover:shadow-sm"
                     )}
                   >
                     <Link to={item.url} className="flex items-center gap-3 group-data-[collapsible=icon]:justify-center">

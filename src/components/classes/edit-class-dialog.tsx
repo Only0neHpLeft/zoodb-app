@@ -53,7 +53,15 @@ export function EditClassDialog({ classId, userId, initialData, t }: EditClassDi
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (open) {
+        setName(initialData.name)
+        setDescription(initialData.description ?? "")
+        setAllowJoin(initialData.allowJoin)
+        setMaxStudents(initialData.maxStudents)
+      }
+      setIsOpen(open)
+    }}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <Settings className="h-3 w-3 mr-1" />

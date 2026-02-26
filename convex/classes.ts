@@ -337,6 +337,24 @@ export const deleteClass = mutation({
       await ctx.db.delete(enrollment._id);
     }
 
+    // Delete all assignments for this class
+    const assignments = await ctx.db
+      .query("assignments")
+      .withIndex("by_class", (q) => q.eq("classId", args.classId))
+      .collect();
+    for (const assignment of assignments) {
+      await ctx.db.delete(assignment._id);
+    }
+
+    // Delete all teacher notes for this class
+    const notes = await ctx.db
+      .query("teacherNotes")
+      .withIndex("by_class_and_student", (q) => q.eq("classId", args.classId))
+      .collect();
+    for (const note of notes) {
+      await ctx.db.delete(note._id);
+    }
+
     // Delete the class
     await ctx.db.delete(args.classId);
 

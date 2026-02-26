@@ -1,7 +1,8 @@
 import { Link } from "@tanstack/react-router"
 import { useState, useEffect, useMemo, useCallback } from "react"
-import { Home, Database, Settings, User, ChevronRight, Bug, Lightbulb, Ambulance, Heart, Bandage, ChevronDown, PawPrint, Utensils, Carrot, Ham, LogOut, GraduationCap, LogIn, Shield, Coins } from "lucide-react"
+import { Home, Database, Settings, User, ChevronRight, Bug, Lightbulb, Ambulance, Heart, Bandage, ChevronDown, PawPrint, Utensils, Carrot, Ham, LogOut, GraduationCap, LogIn, Shield, Coins, Users } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
+import { canAccessStudents } from "@/lib/permissions"
 import { useStableCallback } from "@/hooks/use-latest"
 import {
   Sidebar,
@@ -100,32 +101,23 @@ export function AppSidebar() {
   })
 
   // Memoize menu items to prevent unnecessary recalculations (rerender-memo rule)
-  const menuItems = useMemo(() => [
-    {
-      title: t.nav.home,
-      icon: Home,
-      url: "/",
-      badge: null,
-    },
-    {
-      title: t.nav.classes,
-      icon: GraduationCap,
-      url: "/classes",
-      badge: null,
-    },
-    {
-      title: t.sidebar.membership,
-      icon: Coins,
-      url: "/membership",
-      badge: null,
-    },
-    {
-      title: t.nav.settings,
-      icon: Settings,
-      url: "/settings",
-      badge: null,
-    },
-  ], [t])
+  const menuItems = useMemo(() => {
+    const items: Array<{ title: string; icon: typeof Home; url: string; badge: string | null }> = [
+      { title: t.nav.home, icon: Home, url: "/", badge: null },
+      { title: t.nav.classes, icon: GraduationCap, url: "/classes", badge: null },
+    ]
+
+    if (canAccessStudents(profile ?? null)) {
+      items.push({ title: t.nav.students, icon: Users, url: "/students", badge: null })
+    }
+
+    items.push(
+      { title: t.sidebar.membership, icon: Coins, url: "/membership", badge: null },
+      { title: t.nav.settings, icon: Settings, url: "/settings", badge: null },
+    )
+
+    return items
+  }, [t, profile])
 
   const schemeItems = useMemo(() => [
     {

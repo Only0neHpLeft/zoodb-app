@@ -166,3 +166,48 @@ export const resetStudentProgress = mutation({
     return { deleted: progress.length };
   },
 });
+
+// Reset progress for a specific category (teacher-initiated)
+export const resetCategoryProgress = mutation({
+  args: {
+    teacherUserId: v.string(),
+    studentUserId: v.string(),
+    classId: v.id("classes"),
+    categoryLetter: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity || identity.subject !== args.teacherUserId) {
+      throw new Error("Unauthorized");
+    }
+
+    const classDoc = await ctx.db.get(args.classId);
+    if (!classDoc || classDoc.teacherUserId !== args.teacherUserId) {
+      throw new Error("Not authorized for this class");
+    }
+
+    const enrollment = await ctx.db
+      .query("classEnrollments")
+      .withIndex("by_class_and_student", (q) =>
+        q.eq("classId", args.classId).eq("studentUserId", args.studentUserId)
+      )
+      .first();
+
+    if (!enrollment || enrollment.status !== "active") {
+      throw new Error("Student not enrolled in this class");
+    }
+
+    const progress = await ctx.db
+      .query("taskProgress")
+      .withIndex("by_user_id", (q) => q.eq("userId", args.studentUserId))
+      .collect();
+
+    const toDelete = progress.filter((p) => p.categoryLetter === args.categoryLetter);
+
+    for (const record of toDelete) {
+      await ctx.db.delete(record._id);
+    }
+
+    return { deleted: toDelete.length };
+  },
+});

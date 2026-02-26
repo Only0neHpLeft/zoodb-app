@@ -386,6 +386,45 @@ export const updateClass = mutation({
   },
 });
 
+// Remove a student from a class (teacher-initiated)
+export const removeStudent = mutation({
+  args: {
+    teacherUserId: v.string(),
+    classId: v.id("classes"),
+    studentUserId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity || identity.subject !== args.teacherUserId) {
+      throw new Error("Unauthorized");
+    }
+
+    const classDoc = await ctx.db.get(args.classId);
+    if (!classDoc || classDoc.teacherUserId !== args.teacherUserId) {
+      throw new Error("Not authorized for this class");
+    }
+
+    const enrollment = await ctx.db
+      .query("classEnrollments")
+      .withIndex("by_class_and_student", (q) =>
+        q.eq("classId", args.classId).eq("studentUserId", args.studentUserId)
+      )
+      .first();
+
+    if (!enrollment) {
+      throw new Error("Student not found in this class");
+    }
+
+    await ctx.db.patch(enrollment._id, {
+      status: "removed",
+      removedAt: Date.now(),
+      removedBy: args.teacherUserId,
+    });
+
+    return { success: true };
+  },
+});
+
 // Get a single class by ID
 export const getClass = query({
   args: { classId: v.id("classes") },

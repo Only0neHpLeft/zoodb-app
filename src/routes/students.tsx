@@ -48,7 +48,7 @@ import {
   EmptyTitle,
   EmptyDescription,
 } from "@/components/ui/empty"
-import { Users, Search, MoreHorizontal, Eye, UserMinus, ClipboardList } from "lucide-react"
+import { Users, Search, MoreHorizontal, Eye, UserMinus } from "lucide-react"
 import {
   useProfile,
   useTeacherClasses,
@@ -57,6 +57,7 @@ import {
 } from "@/lib/db/convex-db"
 import { canAccessStudents } from "@/lib/permissions"
 import { categoriesArray } from "@/data/categories"
+import { AssignWorkDialog } from "@/components/students/assign-work-dialog"
 import type { Id } from "../../convex/_generated/dataModel"
 
 export const Route = createFileRoute("/students")({
@@ -329,10 +330,13 @@ function StudentsPage() {
               />
             </div>
 
-            <Button disabled>
-              <ClipboardList className="h-4 w-4 mr-2" />
-              {t.pages?.students?.assignWork || "Assign Work"}
-            </Button>
+            {selectedClassId && (
+              <AssignWorkDialog
+                classId={selectedClassId}
+                userId={user!.id}
+                t={t}
+              />
+            )}
           </div>
 
           {/* Summary line */}

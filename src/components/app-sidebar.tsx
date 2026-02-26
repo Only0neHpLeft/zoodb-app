@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router"
+import { Link, useLocation } from "@tanstack/react-router"
 import { useState, useEffect, useMemo, useCallback } from "react"
 import { Home, Database, Settings, User, ChevronRight, Bug, Lightbulb, Ambulance, Heart, Bandage, ChevronDown, PawPrint, Utensils, Carrot, Ham, LogOut, GraduationCap, LogIn, Shield, Coins, Users } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
@@ -40,6 +40,8 @@ export function AppSidebar() {
   const { t, language } = useLanguage()
   const { user, profile, logout, loading } = useAuth()
   const [tableCounts, setTableCounts] = useState<Record<string, number>>({})
+  const location = useLocation()
+  const currentPath = location.pathname
 
   /**
    * Fetch table counts from database
@@ -199,6 +201,7 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild
+                    isActive={item.url === "/" ? currentPath === "/" : currentPath.startsWith(item.url)}
                     tooltip={item.title}
                     className={cn(
                       "relative group/item transition-all duration-200",
@@ -269,7 +272,7 @@ export function AppSidebar() {
                     <SidebarMenuSub>
                       {schemeItems.map((item) => (
                         <SidebarMenuSubItem key={item.title}>
-                          <SidebarMenuSubButton asChild>
+                          <SidebarMenuSubButton asChild isActive={currentPath === item.url}>
                             <Link to={item.url} className="flex items-center gap-2">
                               <item.icon className="size-4 shrink-0" />
                               <span className="flex-1 truncate">{item.title}</span>

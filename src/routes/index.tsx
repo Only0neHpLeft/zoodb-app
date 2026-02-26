@@ -6,6 +6,7 @@ import { OfflineIndicator } from "@/components/offline-indicator"
 import { Notifications } from "@/components/notifications"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Lock, Coins, ClipboardList, ChevronsUpDown, CheckCircle2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
@@ -32,6 +33,7 @@ function Home() {
   const dbProgress = useStudentProgress(userId ?? undefined)
   const studentAssignments = useStudentAssignments(userId ?? undefined)
   const [localCompleted, setLocalCompleted] = useState<{ [key: string]: boolean[] }>({})
+  const [selectedAssignment, setSelectedAssignment] = useState<{ _id: string; classId: string; teacherUserId: string; categoryLetter: string; taskIndex?: number; dueDate?: number; note?: string; createdAt: number; className: string } | null>(null)
 
   useEffect(() => {
     if (!userId) {
@@ -137,100 +139,139 @@ function Home() {
                 </CollapsibleTrigger>
               </div>
               <CollapsibleContent>
-                <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3 mt-3">
+                <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3 mt-3">
                   {studentAssignments.map((assignment: { _id: string; classId: string; teacherUserId: string; categoryLetter: string; taskIndex?: number; dueDate?: number; note?: string; createdAt: number; className: string }) => {
                     const originalCategory = getCategoryByLetter(assignment.categoryLetter)
                     if (!originalCategory) return null
                     const category = translateCategory(originalCategory)
 
-                    // Determine task title
                     const taskTitle = assignment.taskIndex != null
                       ? category.tasks[assignment.taskIndex]?.title
                       : undefined
 
-                    // Check completion
                     const isCompleted = assignment.taskIndex != null
                       ? !!completedTasks[assignment.categoryLetter]?.[assignment.taskIndex]
                       : category.tasks.every((_, i) => !!completedTasks[assignment.categoryLetter]?.[i])
 
-                    // Due date badge color
-                    const getDueBadge = () => {
-                      if (!assignment.dueDate) return null
-                      const now = Date.now()
-                      const diff = assignment.dueDate - now
-                      const daysLeft = diff / (1000 * 60 * 60 * 24)
-
-                      if (daysLeft < 0) {
-                        return <Badge className="bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300 text-xs">{t.pages?.students?.overdue || "Overdue"}</Badge>
-                      } else if (daysLeft <= 3) {
-                        return <Badge className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300 text-xs">{t.pages?.students?.dueBy || "Due"} {new Date(assignment.dueDate).toLocaleDateString()}</Badge>
-                      } else {
-                        return <Badge className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 text-xs">{t.pages?.students?.dueBy || "Due"} {new Date(assignment.dueDate).toLocaleDateString()}</Badge>
-                      }
-                    }
-
                     const isBonus = (bonusLetters as readonly string[]).includes(assignment.categoryLetter)
 
+                    const getDueBadgeColor = (dueDate: number) => {
+                      const daysLeft = (dueDate - Date.now()) / (1000 * 60 * 60 * 24)
+                      if (daysLeft < 0) return "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300"
+                      if (daysLeft <= 3) return "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300"
+                      return "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
+                    }
+
+                    const getDueDateLabel = (dueDate: number) => {
+                      const daysLeft = (dueDate - Date.now()) / (1000 * 60 * 60 * 24)
+                      if (daysLeft < 0) return t.pages?.students?.overdue || "Overdue"
+                      return `${t.pages?.students?.dueBy || "Due"} ${new Date(dueDate).toLocaleDateString()}`
+                    }
+
                     return (
-                      <Card
+                      <div
                         key={assignment._id}
-                        className={`cursor-pointer transition-all hover:shadow-md border-l-4 ${
-                          isBonus
-                            ? "border-l-purple-500"
-                            : "border-l-primary"
-                        } ${isCompleted ? "opacity-75" : ""}`}
-                        onClick={() =>
-                          navigate({
-                            to: "/editor",
-                            search: {
-                              lesson: assignment.categoryLetter,
-                              task: (assignment.taskIndex ?? 0) + 1,
-                            },
-                          })
-                        }
+                        className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer hover:bg-accent/50 transition-colors ${isCompleted ? "opacity-60" : ""}`}
+                        onClick={() => setSelectedAssignment(assignment)}
                       >
-                        <CardContent className="p-4">
-                          <div className="flex items-start gap-3">
-                            <div
-                              className={`w-10 h-10 min-w-10 min-h-10 shrink-0 rounded-lg flex items-center justify-center text-lg font-bold ${
-                                isBonus
-                                  ? "bg-gradient-to-br from-purple-500 to-purple-700 text-white"
-                                  : "bg-primary text-primary-foreground"
-                              }`}
-                            >
-                              {assignment.categoryLetter}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="font-medium text-sm leading-tight">
-                                {category.title}
-                                {taskTitle && (
-                                  <span className="text-muted-foreground"> &mdash; {taskTitle}</span>
-                                )}
-                              </div>
-                              <div className="text-xs text-muted-foreground mt-1">
-                                {t.pages?.students?.fromClass || "from"} {assignment.className}
-                              </div>
-                              {assignment.note && (
-                                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                                  {assignment.note}
-                                </p>
-                              )}
-                              <div className="flex items-center gap-2 mt-2 flex-wrap">
-                                {getDueBadge()}
-                                {isCompleted && (
-                                  <Badge className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 text-xs">
-                                    <CheckCircle2 className="h-3 w-3 mr-1" />
-                                    {t.home.completed}
-                                  </Badge>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
+                        <div className={`w-7 h-7 min-w-7 rounded flex items-center justify-center text-xs font-bold ${
+                          isBonus ? "bg-gradient-to-br from-purple-500 to-purple-700 text-white" : "bg-primary text-primary-foreground"
+                        }`}>
+                          {assignment.categoryLetter}
+                        </div>
+                        <span className="text-sm font-medium truncate">{category.title}</span>
+                        {taskTitle && <span className="text-xs text-muted-foreground truncate">&mdash; {taskTitle}</span>}
+                        {isCompleted && <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" />}
+                        {assignment.dueDate && !isCompleted && (
+                          <Badge variant="secondary" className={`text-[10px] shrink-0 ${getDueBadgeColor(assignment.dueDate)}`}>
+                            {getDueDateLabel(assignment.dueDate)}
+                          </Badge>
+                        )}
+                      </div>
                     )
                   })}
                 </div>
+                {/* Assignment detail dialog */}
+                <Dialog open={!!selectedAssignment} onOpenChange={(open) => !open && setSelectedAssignment(null)}>
+                  <DialogContent>
+                    {selectedAssignment && (() => {
+                      const origCat = getCategoryByLetter(selectedAssignment.categoryLetter)
+                      if (!origCat) return null
+                      const cat = translateCategory(origCat)
+                      const selTaskTitle = selectedAssignment.taskIndex != null
+                        ? cat.tasks[selectedAssignment.taskIndex]?.title
+                        : undefined
+                      const selIsCompleted = selectedAssignment.taskIndex != null
+                        ? !!completedTasks[selectedAssignment.categoryLetter]?.[selectedAssignment.taskIndex]
+                        : cat.tasks.every((_, i) => !!completedTasks[selectedAssignment.categoryLetter]?.[i])
+                      const selIsBonus = (bonusLetters as readonly string[]).includes(selectedAssignment.categoryLetter)
+
+                      return (
+                        <>
+                          <DialogHeader>
+                            <DialogTitle className="flex items-center gap-2">
+                              <div className={`w-8 h-8 min-w-8 rounded-lg flex items-center justify-center text-sm font-bold ${
+                                selIsBonus ? "bg-gradient-to-br from-purple-500 to-purple-700 text-white" : "bg-primary text-primary-foreground"
+                              }`}>
+                                {selectedAssignment.categoryLetter}
+                              </div>
+                              {cat.title}
+                            </DialogTitle>
+                            <DialogDescription>
+                              {selTaskTitle && <span>{selTaskTitle} &mdash; </span>}
+                              {t.pages?.students?.fromClass || "from"} {selectedAssignment.className}
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="space-y-3">
+                            {selectedAssignment.dueDate && (
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium">{t.pages?.students?.dueBy || "Due"}:</span>
+                                <Badge variant="secondary" className={(() => {
+                                  const daysLeft = (selectedAssignment.dueDate! - Date.now()) / (1000 * 60 * 60 * 24)
+                                  if (daysLeft < 0) return "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300"
+                                  if (daysLeft <= 3) return "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300"
+                                  return "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
+                                })()}>
+                                  {(() => {
+                                    const daysLeft = (selectedAssignment.dueDate! - Date.now()) / (1000 * 60 * 60 * 24)
+                                    if (daysLeft < 0) return t.pages?.students?.overdue || "Overdue"
+                                    return new Date(selectedAssignment.dueDate!).toLocaleDateString()
+                                  })()}
+                                </Badge>
+                              </div>
+                            )}
+                            {selectedAssignment.note && (
+                              <div>
+                                <span className="text-sm font-medium">{"Note"}:</span>
+                                <p className="text-sm text-muted-foreground mt-1">{selectedAssignment.note}</p>
+                              </div>
+                            )}
+                            {selIsCompleted && (
+                              <Badge className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 text-xs">
+                                <CheckCircle2 className="h-3 w-3 mr-1" />
+                                {t.home.completed}
+                              </Badge>
+                            )}
+                          </div>
+                          <DialogFooter>
+                            <Button onClick={() => {
+                              setSelectedAssignment(null)
+                              navigate({
+                                to: "/editor",
+                                search: {
+                                  lesson: selectedAssignment.categoryLetter,
+                                  task: (selectedAssignment.taskIndex ?? 0) + 1,
+                                },
+                              })
+                            }}>
+                              {t.pages?.students?.goToTask || "Go to Task"}
+                            </Button>
+                          </DialogFooter>
+                        </>
+                      )
+                    })()}
+                  </DialogContent>
+                </Dialog>
               </CollapsibleContent>
             </Collapsible>
           )}

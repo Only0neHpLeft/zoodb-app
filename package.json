@@ -16,7 +16,16 @@
     "check": "prettier --write . && eslint --fix",
     "version:sync": "bun run scripts/version-sync.ts",
     "preflight": "./scripts/preflight-release.sh",
-    "preflight:tag": "./scripts/preflight-release.sh --tag"
+    "preflight:tag": "./scripts/preflight-release.sh --tag",
+    "security": "bun run security/runner.ts",
+    "security:auth": "bun run security/runner.ts --category auth-bypass",
+    "security:leaks": "bun run security/runner.ts --category data-leakage",
+    "security:input": "bun run security/runner.ts --category input-validation",
+    "security:secrets": "bun run security/runner.ts --category secrets-scan",
+    "security:deps": "bun run security/runner.ts --category dependency-audit",
+    "security:csp": "bun run security/runner.ts --category csp-analysis",
+    "security:tauri": "bun run security/runner.ts --category tauri-permissions",
+    "security:brute": "bun run security/runner.ts --category brute-force"
   },
   "dependencies": {
     "@convex-dev/better-auth": "^0.10.10",

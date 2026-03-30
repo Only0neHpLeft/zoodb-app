@@ -66,3 +66,7 @@ CLAUDE.md
 # Samael agent artifacts
 docs/reports/
 docs/skills/
+
+# Security pentest
+security/reports/
+security/.env.test

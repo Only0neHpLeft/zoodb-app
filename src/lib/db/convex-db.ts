@@ -1,7 +1,7 @@
 /**
  * Convex Database API
  *
- * This module provides a Convex-based replacement for the NeonDB functions.
+ * This module provides hooks for reactive data and mutation functions for writes.
  * It exports hooks for reactive data and mutation functions for writes.
  */
 

@@ -1,7 +1,6 @@
 import { defineConfig } from 'vite'
 import { TanStackRouterVite } from '@tanstack/router-plugin/vite'
 import viteReact from '@vitejs/plugin-react'
-import viteTsConfigPaths from 'vite-tsconfig-paths'
 import tailwindcss from '@tailwindcss/vite'
 import { execSync } from 'child_process'
 import type { Plugin } from 'vite'
@@ -51,7 +50,9 @@ function authCallbackPlugin(): Plugin {
 const config = defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(process.env.npm_package_version ?? '0.0.0'),
-    __COMMIT_HASH__: JSON.stringify(execSync('git rev-parse --short HEAD').toString().trim()),
+    __COMMIT_HASH__: JSON.stringify(
+      execSync('git rev-parse --short HEAD').toString().trim(),
+    ),
   },
   plugins: [
     authCallbackPlugin(),
@@ -60,12 +61,12 @@ const config = defineConfig({
       // Route configs stay in main bundle, components load on navigation
       autoCodeSplitting: true,
     }),
-    viteTsConfigPaths({
-      projects: ['./tsconfig.json'],
-    }),
     tailwindcss(),
     viteReact(),
   ],
+  resolve: {
+    tsconfigPaths: true,
+  },
   optimizeDeps: {
     exclude: ['@electric-sql/pglite'],
   },
@@ -94,7 +95,10 @@ const config = defineConfig({
       // Suppress warnings from pglite's node polyfills (browser doesn't need them)
       onwarn(warning, warn) {
         // Ignore pglite's node external warnings
-        if (warning.code === 'MISSING_EXPORT' && warning.message.includes('__vite-browser-external')) {
+        if (
+          warning.code === 'MISSING_EXPORT' &&
+          warning.message.includes('__vite-browser-external')
+        ) {
           return
         }
         // Ignore eval warnings from pglite (it's from the WASM loader)
@@ -111,29 +115,37 @@ const config = defineConfig({
 
             // html2canvas is dynamically imported — let Rollup split it into a lazy chunk
             if (id.includes('html2canvas')) return undefined
-            
+
             // Group by major library to avoid circular deps
             // Better Auth
-            if (id.includes('better-auth') || id.includes('@convex-dev/better-auth') || id.includes('@daveyplate')) return 'vendor-better-auth'
-            
+            if (
+              id.includes('better-auth') ||
+              id.includes('@convex-dev/better-auth') ||
+              id.includes('@daveyplate')
+            )
+              return 'vendor-better-auth'
+
             // TanStack packages together
             if (id.includes('@tanstack')) return 'vendor-tanstack'
-            
+
             // Radix UI - many small packages, group them
             if (id.includes('@radix-ui')) return 'vendor-radix'
-            
+
             // Convex - API client
             if (id.includes('convex')) return 'vendor-convex'
-            
+
             // Utility libraries
-            if (id.includes('date-fns') || id.includes('lodash') || id.includes('zod')) {
+            if (
+              id.includes('date-fns') ||
+              id.includes('lodash') ||
+              id.includes('zod')
+            ) {
               return 'vendor-utils'
             }
-            
+
             // All other deps (react, react-dom, etc) in one vendor chunk
             return 'vendor'
           }
-          
         },
       },
     },

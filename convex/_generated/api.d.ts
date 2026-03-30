@@ -8,11 +8,13 @@
  * @module
  */
 
+import type * as assignments from "../assignments.js";
 import type * as auth from "../auth.js";
 import type * as classes from "../classes.js";
 import type * as http from "../http.js";
 import type * as memberships from "../memberships.js";
 import type * as taskProgress from "../taskProgress.js";
+import type * as teacherNotes from "../teacherNotes.js";
 import type * as users from "../users.js";
 
 import type {
@@ -22,11 +24,13 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  assignments: typeof assignments;
   auth: typeof auth;
   classes: typeof classes;
   http: typeof http;
   memberships: typeof memberships;
   taskProgress: typeof taskProgress;
+  teacherNotes: typeof teacherNotes;
   users: typeof users;
 }>;
 

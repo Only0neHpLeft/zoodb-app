@@ -1,30 +1,67 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
-import React, { useState, useEffect, useCallback } from "react"
-import { SidebarTrigger } from "@/components/ui/sidebar"
-import { Notifications } from "@/components/notifications"
-import { BookOpen, CheckCircle2, Play, Terminal, Lightbulb, ChevronLeft, ChevronRight, Code2, TableIcon, XCircle } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { AlertTriangle } from "lucide-react"
-import { getCategoryByLetter } from "@/data/categories"
-import { useLanguage } from "@/contexts/language-context"
-import { useTranslateDifficulty } from "@/hooks/use-translate-difficulty"
-import { useTranslateCategory } from "@/hooks/use-translate-category"
-import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from "@/components/ui/empty"
-import { SqlEditor } from "@/components/sql-editor"
-import { executeQuery, type QueryResult } from "@/lib/db/pglite"
-import { notifyDataChange } from "@/lib/db/events"
-import { toast } from "sonner"
-import { cn } from "@/lib/utils"
-import { compareResults, getTaskReference, translateQueryToEnglish, type ValidationResult } from "@/lib/validation"
-import { tableNames, columnNames, type TableKey } from "@/lib/db/schema-mapping"
-import { useSaveTaskProgress, useStudentProgress } from "@/lib/db/convex-db"
-import { useSettingsSync } from "@/hooks/use-settings-sync"
-import { useLessonAccess } from "@/hooks/use-lesson-access"
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import React, { useState, useEffect, useCallback } from 'react'
+import { SidebarTrigger } from '@/components/ui/sidebar'
+import { Notifications } from '@/components/notifications'
+import {
+  BookOpen,
+  CheckCircle2,
+  Play,
+  Terminal,
+  Lightbulb,
+  ChevronLeft,
+  ChevronRight,
+  Code2,
+  TableIcon,
+  XCircle,
+} from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { AlertTriangle } from 'lucide-react'
+import { getCategoryByLetter } from '@/data/categories'
+import { useLanguage } from '@/contexts/language-context'
+import { useTranslateDifficulty } from '@/hooks/use-translate-difficulty'
+import { useTranslateCategory } from '@/hooks/use-translate-category'
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyContent,
+} from '@/components/ui/empty'
+import { SqlEditor } from '@/components/sql-editor'
+import { executeQuery, type QueryResult } from '@/lib/db/pglite'
+import { notifyDataChange } from '@/lib/db/events'
+import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
+import {
+  compareResults,
+  getTaskReference,
+  translateQueryToEnglish,
+  type ValidationResult,
+} from '@/lib/validation'
+import { tableNames, columnNames, type TableKey } from '@/lib/db/schema-mapping'
+import { useSaveTaskProgress, useStudentProgress } from '@/lib/db/convex-db'
+import { useSettingsSync } from '@/hooks/use-settings-sync'
+import { useLessonAccess } from '@/hooks/use-lesson-access'
 
 type EditorSearch = {
   lesson?: string
@@ -33,7 +70,7 @@ type EditorSearch = {
 
 type ViewMode = 'editor' | 'output'
 
-export const Route = createFileRoute("/editor")({
+export const Route = createFileRoute('/editor')({
   validateSearch: (search: Record<string, unknown>): EditorSearch => {
     return {
       lesson: search.lesson as string | undefined,
@@ -50,14 +87,18 @@ function EditorPage() {
   const { translateDifficulty, difficultyColors } = useTranslateDifficulty()
   const { translateCategory } = useTranslateCategory()
 
-  const [localCompleted, setLocalCompleted] = useState<{ [key: string]: boolean[] }>({})
+  const [localCompleted, setLocalCompleted] = useState<{
+    [key: string]: boolean[]
+  }>({})
   const [sqlQuery, setSqlQuery] = useState('')
   const [showHint, setShowHint] = useState(false)
   const [result, setResult] = useState<QueryResult | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isExecuting, setIsExecuting] = useState(false)
   const [viewMode, setViewMode] = useState<ViewMode>('editor')
-  const [validationResults, setValidationResults] = useState<ValidationResult[] | null>(null)
+  const [validationResults, setValidationResults] = useState<
+    ValidationResult[] | null
+  >(null)
   const [isValidated, setIsValidated] = useState<boolean | null>(null)
   const [showValidationDialog, setShowValidationDialog] = useState(false)
   const [showDestructiveDialog, setShowDestructiveDialog] = useState(false)
@@ -70,7 +111,9 @@ function EditorPage() {
     if (!userId) {
       const saved = localStorage.getItem('sqlLessonsProgress')
       if (saved) {
-        try { setLocalCompleted(JSON.parse(saved)) } catch {}
+        try {
+          setLocalCompleted(JSON.parse(saved))
+        } catch {}
       }
     }
   }, [userId])
@@ -89,14 +132,19 @@ function EditorPage() {
     return localCompleted
   }, [userId, dbProgress, localCompleted])
 
-  const { isUnlocked, loading: accessLoading } = useLessonAccess(lessonParam, completedTasks)
+  const { isUnlocked, loading: accessLoading } = useLessonAccess(
+    lessonParam,
+    completedTasks,
+  )
 
   useEffect(() => {
     if (!accessLoading && lessonParam && !isUnlocked) {
-      toast.error(t.category?.locked || "Category Locked", {
-        description: t.category?.lockedMessage || "Complete the previous category to unlock this one",
+      toast.error(t.category?.locked || 'Category Locked', {
+        description:
+          t.category?.lockedMessage ||
+          'Complete the previous category to unlock this one',
       })
-      navigate({ to: "/" })
+      navigate({ to: '/' })
     }
   }, [accessLoading, isUnlocked, lessonParam, navigate, t])
 
@@ -117,31 +165,37 @@ function EditorPage() {
   const currentTask = category?.tasks[selectedTaskIndex]
   const isTaskSelected = category !== null && currentTask !== undefined
 
-  const categoryTasks = category ? (completedTasks[category.letter] || []) : []
+  const categoryTasks = category ? completedTasks[category.letter] || [] : []
 
   const selectTask = (taskIndex: number) => {
-    navigate({ to: '/editor', search: { lesson: lessonParam, task: taskIndex + 1 } })
+    navigate({
+      to: '/editor',
+      search: { lesson: lessonParam, task: taskIndex + 1 },
+    })
   }
 
-  const markTaskComplete = useCallback((categoryLetter: string, taskIndex: number) => {
-    if (userId) {
-      saveTaskProgress({
-        userId,
-        categoryLetter,
-        taskIndex,
-        taskId: `${categoryLetter}-${taskIndex}`,
-        completed: true,
-      }).catch(() => {})
-    } else {
-      setLocalCompleted(prev => {
-        const updated = { ...prev }
-        if (!updated[categoryLetter]) updated[categoryLetter] = []
-        updated[categoryLetter][taskIndex] = true
-        localStorage.setItem('sqlLessonsProgress', JSON.stringify(updated))
-        return updated
-      })
-    }
-  }, [userId, saveTaskProgress])
+  const markTaskComplete = useCallback(
+    (categoryLetter: string, taskIndex: number) => {
+      if (userId) {
+        saveTaskProgress({
+          userId,
+          categoryLetter,
+          taskIndex,
+          taskId: `${categoryLetter}-${taskIndex}`,
+          completed: true,
+        }).catch(() => {})
+      } else {
+        setLocalCompleted((prev) => {
+          const updated = { ...prev }
+          if (!updated[categoryLetter]) updated[categoryLetter] = []
+          updated[categoryLetter][taskIndex] = true
+          localStorage.setItem('sqlLessonsProgress', JSON.stringify(updated))
+          return updated
+        })
+      }
+    },
+    [userId, saveTaskProgress],
+  )
 
   // Check if a SQL query is destructive (DROP, DELETE, TRUNCATE, ALTER)
   const isDestructiveQuery = useCallback((sql: string) => {
@@ -189,11 +243,15 @@ function EditorPage() {
 
         if (taskRef) {
           // Try Czech reference query first; if empty, try English translation
-          let refResult = await executeQuery(taskRef.referenceQuery, { isReference: true })
+          let refResult = await executeQuery(taskRef.referenceQuery, {
+            isReference: true,
+          })
           if (refResult.rowCount === 0) {
             const englishQuery = translateQueryToEnglish(taskRef.referenceQuery)
             if (englishQuery !== taskRef.referenceQuery) {
-              refResult = await executeQuery(englishQuery, { isReference: true })
+              refResult = await executeQuery(englishQuery, {
+                isReference: true,
+              })
             }
           }
           const comparison = compareResults(
@@ -207,38 +265,40 @@ function EditorPage() {
 
           // Map comparison to existing UI state
           const results: ValidationResult[] = comparison.hintResults || [
-            { passed: comparison.passed, message: comparison.message }
+            { passed: comparison.passed, message: comparison.message },
           ]
           setValidationResults(results)
           setIsValidated(comparison.passed)
 
           if (comparison.passed) {
             markTaskComplete(category.letter, selectedTaskIndex)
-            toast.success(t.task?.taskCompleted || "Task completed!", {
-              description: t.task?.correctSolution || "Your solution is correct"
+            toast.success(t.task?.taskCompleted || 'Task completed!', {
+              description:
+                t.task?.correctSolution || 'Your solution is correct',
             })
             // Show column warning if any
             if (comparison.warnings?.length) {
               toast.info(comparison.warnings[0])
             }
           } else {
-            const failedHints = results.filter(r => !r.passed)
-            toast.error(t.task?.incorrectSolution || "Not quite right", {
-              description: failedHints[0]?.message || comparison.message
+            const failedHints = results.filter((r) => !r.passed)
+            toast.error(t.task?.incorrectSolution || 'Not quite right', {
+              description: failedHints[0]?.message || comparison.message,
             })
           }
         } else {
           // No reference for this task, just show execution success
-          toast.success(t.task?.querySuccess || "Query executed", {
-            description: `${queryResult.rowCount} ${queryResult.rowCount === 1 ? 'row' : 'rows'} in ${queryResult.executionTime.toFixed(2)}ms`
+          toast.success(t.task?.querySuccess || 'Query executed', {
+            description: `${queryResult.rowCount} ${queryResult.rowCount === 1 ? 'row' : 'rows'} in ${queryResult.executionTime.toFixed(2)}ms`,
           })
         }
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Query execution failed"
+      const errorMessage =
+        err instanceof Error ? err.message : 'Query execution failed'
       setError(errorMessage)
       setViewMode('output')
-      toast.error(t.task?.queryError || "Query failed")
+      toast.error(t.task?.queryError || 'Query failed')
     } finally {
       setIsExecuting(false)
     }
@@ -246,7 +306,7 @@ function EditorPage() {
 
   const handleRunQuery = useCallback(async () => {
     if (!sqlQuery.trim()) {
-      toast.error(t.task?.emptyQuery || "Please enter a SQL query")
+      toast.error(t.task?.emptyQuery || 'Please enter a SQL query')
       return
     }
 
@@ -266,12 +326,15 @@ function EditorPage() {
     executeCurrentQuery()
   }, [executeCurrentQuery])
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-      e.preventDefault()
-      handleRunQuery()
-    }
-  }, [handleRunQuery])
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault()
+        handleRunQuery()
+      }
+    },
+    [handleRunQuery],
+  )
 
   if (accessLoading && lessonParam) return null
 
@@ -281,7 +344,9 @@ function EditorPage() {
         <header className="flex items-center justify-between border-b px-4 h-12">
           <div className="flex items-center gap-4">
             <SidebarTrigger />
-            <span className="text-sm text-muted-foreground">{t.breadcrumbs.editor}</span>
+            <span className="text-sm text-muted-foreground">
+              {t.breadcrumbs.editor}
+            </span>
           </div>
           <Notifications />
         </header>
@@ -307,7 +372,9 @@ function EditorPage() {
     )
   }
 
-  const isCompleted = currentTask ? (categoryTasks[selectedTaskIndex] || false) : false
+  const isCompleted = currentTask
+    ? categoryTasks[selectedTaskIndex] || false
+    : false
 
   return (
     <div className="flex flex-col h-full w-full">
@@ -325,7 +392,9 @@ function EditorPage() {
             {isTaskSelected && (
               <>
                 <ChevronRight className="h-4 w-4 mx-1 text-muted-foreground/50" />
-                <span>{t.task.task} {taskParam}</span>
+                <span>
+                  {t.task.task} {taskParam}
+                </span>
               </>
             )}
           </nav>
@@ -339,8 +408,16 @@ function EditorPage() {
           <div className="px-6 py-4 shrink-0">
             <div className="flex items-start justify-between gap-4 mb-2">
               <div className="flex items-center gap-2 min-w-0">
-                <h1 className="text-lg font-semibold truncate">{currentTask.title}</h1>
-                <Badge className={cn(difficultyColors[currentTask.difficulty], "shrink-0 text-[10px]")} variant="secondary">
+                <h1 className="text-lg font-semibold truncate">
+                  {currentTask.title}
+                </h1>
+                <Badge
+                  className={cn(
+                    difficultyColors[currentTask.difficulty],
+                    'shrink-0 text-[10px]',
+                  )}
+                  variant="secondary"
+                >
                   {translateDifficulty(currentTask.difficulty)}
                 </Badge>
                 {isCompleted && (
@@ -368,15 +445,19 @@ function EditorPage() {
                         key={index}
                         onClick={() => selectTask(index)}
                         className={cn(
-                          "h-6 w-6 rounded text-xs font-medium transition-colors",
+                          'h-6 w-6 rounded text-xs font-medium transition-colors',
                           active
-                            ? "bg-primary text-primary-foreground"
+                            ? 'bg-primary text-primary-foreground'
                             : done
-                              ? "bg-primary/15 text-primary"
-                              : "text-muted-foreground hover:bg-muted"
+                              ? 'bg-primary/15 text-primary'
+                              : 'text-muted-foreground hover:bg-muted',
                         )}
                       >
-                        {done && !active ? <CheckCircle2 className="h-3 w-3 mx-auto" /> : index + 1}
+                        {done && !active ? (
+                          <CheckCircle2 className="h-3 w-3 mx-auto" />
+                        ) : (
+                          index + 1
+                        )}
                       </button>
                     )
                   })}
@@ -392,7 +473,7 @@ function EditorPage() {
                 </div>
 
                 <Button
-                  variant={showHint ? "secondary" : "ghost"}
+                  variant={showHint ? 'secondary' : 'ghost'}
                   size="sm"
                   className="h-7 gap-1.5"
                   onClick={() => setShowHint(!showHint)}
@@ -403,7 +484,9 @@ function EditorPage() {
               </div>
             </div>
 
-            <p className="text-sm text-muted-foreground">{currentTask.description}</p>
+            <p className="text-sm text-muted-foreground">
+              {currentTask.description}
+            </p>
 
             {showHint && (
               <div className="mt-3 space-y-3">
@@ -412,21 +495,38 @@ function EditorPage() {
                 </div>
                 {category.tables && category.tables.length > 0 && (
                   <div className="p-3 rounded-md bg-muted/50 border">
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{t.task.availableTables || "Available Tables"}</p>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                      {t.task.availableTables || 'Available Tables'}
+                    </p>
                     <div className="flex flex-wrap gap-2">
                       {category.tables.map((tableKey) => {
-                        const schemaLang = language === "cz" ? "cs" : "en"
+                        const schemaLang = language === 'cz' ? 'cs' : 'en'
                         const tbl = tableNames[tableKey as TableKey]
                         const cols = columnNames[tableKey as TableKey]
                         if (!tbl || !cols) return null
-                        const tableName = tbl[schemaLang as "cs" | "en"]
+                        const tableName = tbl[schemaLang as 'cs' | 'en']
                         const colList = Object.entries(cols)
-                          .filter(([key]) => key !== "user_id" && key !== "created_at")
-                          .map(([, val]) => (val as { cs: string; en: string })[schemaLang as "cs" | "en"])
+                          .filter(
+                            ([key]) =>
+                              key !== 'user_id' && key !== 'created_at',
+                          )
+                          .map(
+                            ([, val]) =>
+                              (val as { cs: string; en: string })[
+                                schemaLang as 'cs' | 'en'
+                              ],
+                          )
                         return (
-                          <div key={tableKey} className="rounded-md border bg-background px-2.5 py-1.5 text-xs">
-                            <span className="font-semibold text-primary">{tableName}</span>
-                            <span className="text-muted-foreground ml-1">({colList.join(", ")})</span>
+                          <div
+                            key={tableKey}
+                            className="rounded-md border bg-background px-2.5 py-1.5 text-xs"
+                          >
+                            <span className="font-semibold text-primary">
+                              {tableName}
+                            </span>
+                            <span className="text-muted-foreground ml-1">
+                              ({colList.join(', ')})
+                            </span>
                           </div>
                         )
                       })}
@@ -461,7 +561,10 @@ function EditorPage() {
                     <TableIcon className="h-3.5 w-3.5" />
                     Output
                     {result && (
-                      <Badge variant="secondary" className="ml-1 h-4 px-1 text-[10px]">
+                      <Badge
+                        variant="secondary"
+                        className="ml-1 h-4 px-1 text-[10px]"
+                      >
                         {result.rowCount}
                       </Badge>
                     )}
@@ -471,17 +574,20 @@ function EditorPage() {
                 <div className="flex items-center gap-2">
                   {result && (
                     <span className="text-xs text-muted-foreground">
-                      {result.rowCount} {result.rowCount === 1 ? 'row' : 'rows'} · {result.executionTime.toFixed(1)}ms
+                      {result.rowCount} {result.rowCount === 1 ? 'row' : 'rows'}{' '}
+                      · {result.executionTime.toFixed(1)}ms
                     </span>
                   )}
                   {isValidated !== null && (
                     <button
-                      onClick={() => !isValidated && setShowValidationDialog(true)}
+                      onClick={() =>
+                        !isValidated && setShowValidationDialog(true)
+                      }
                       className={cn(
-                        "flex items-center gap-1 text-xs px-2 py-0.5 rounded transition-colors",
+                        'flex items-center gap-1 text-xs px-2 py-0.5 rounded transition-colors',
                         isValidated
-                          ? "bg-primary/10 text-primary"
-                          : "bg-destructive/10 text-destructive hover:bg-destructive/20 cursor-pointer"
+                          ? 'bg-primary/10 text-primary'
+                          : 'bg-destructive/10 text-destructive hover:bg-destructive/20 cursor-pointer',
                       )}
                     >
                       {isValidated ? (
@@ -489,7 +595,7 @@ function EditorPage() {
                       ) : (
                         <XCircle className="h-3 w-3" />
                       )}
-                      <span>{isValidated ? "Correct" : "Incorrect"}</span>
+                      <span>{isValidated ? 'Correct' : 'Incorrect'}</span>
                     </button>
                   )}
                   <Button
@@ -517,50 +623,72 @@ function EditorPage() {
                 ) : (
                   <div className="h-full flex flex-col overflow-auto">
                     {error ? (
-                        <div className="p-4">
-                          <div className="p-3 rounded-md bg-destructive/10 border border-destructive/20">
-                            <pre className="font-mono text-xs text-destructive whitespace-pre-wrap">{error}</pre>
-                          </div>
+                      <div className="p-4">
+                        <div className="p-3 rounded-md bg-destructive/10 border border-destructive/20">
+                          <pre className="font-mono text-xs text-destructive whitespace-pre-wrap">
+                            {error}
+                          </pre>
                         </div>
-                      ) : result && result.rowCount > 0 ? (
-                        <ScrollArea className="h-full">
-                          <Table className="table-fixed w-full">
-                            <TableHeader className="sticky top-0 bg-muted/50">
-                              <TableRow>
+                      </div>
+                    ) : result && result.rowCount > 0 ? (
+                      <ScrollArea className="h-full">
+                        <Table className="table-fixed w-full">
+                          <TableHeader className="sticky top-0 z-10 bg-muted/80 backdrop-blur-sm shadow-[0_1px_3px_0_rgba(0,0,0,0.05)]">
+                            <TableRow className="hover:bg-transparent border-b-2 border-border/60">
+                              <TableHead className="w-[52px] text-center text-[10px] font-medium text-muted-foreground/60 normal-case tracking-normal">
+                                #
+                              </TableHead>
+                              {result.columns.map((col) => (
+                                <TableHead
+                                  key={col}
+                                  className="text-xs font-semibold text-primary border-l border-border/30 text-center"
+                                >
+                                  {col}
+                                </TableHead>
+                              ))}
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {result.rows.map((row, i) => (
+                              <TableRow key={i}>
+                                <TableCell className="w-[52px] text-center text-[10px] text-muted-foreground/40 tabular-nums select-none border-r border-border/20">
+                                  {i + 1}
+                                </TableCell>
                                 {result.columns.map((col) => (
-                                  <TableHead key={col} className="text-xs font-semibold text-primary border-r last:border-r-0 text-center">{col}</TableHead>
+                                  <TableCell
+                                    key={col}
+                                    className="text-xs font-mono py-2 border-l border-border/20"
+                                  >
+                                    {row[col] === null ? (
+                                      <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-sans font-medium bg-muted text-muted-foreground/50">
+                                        NULL
+                                      </span>
+                                    ) : (
+                                      String(row[col])
+                                    )}
+                                  </TableCell>
                                 ))}
                               </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {result.rows.map((row, i) => (
-                                <TableRow key={i}>
-                                  {result.columns.map((col) => (
-                                    <TableCell key={col} className="text-xs font-mono py-1.5 border-r last:border-r-0">
-                                      {row[col] === null ? (
-                                        <span className="text-muted-foreground italic">NULL</span>
-                                      ) : (
-                                        String(row[col])
-                                      )}
-                                    </TableCell>
-                                  ))}
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                          <ScrollBar orientation="horizontal" />
-                        </ScrollArea>
-                      ) : result ? (
-                        <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                          <CheckCircle2 className="h-8 w-8 mb-2 opacity-50" />
-                          <span className="text-sm">Query executed (no rows)</span>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                          <Terminal className="h-8 w-8 mb-2 opacity-20" />
-                          <span className="text-xs">Run a query to see results</span>
-                        </div>
-                      )}
+                            ))}
+                          </TableBody>
+                        </Table>
+                        <ScrollBar orientation="horizontal" />
+                      </ScrollArea>
+                    ) : result ? (
+                      <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                        <CheckCircle2 className="h-8 w-8 mb-2 opacity-50" />
+                        <span className="text-sm">
+                          Query executed (no rows)
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                        <Terminal className="h-8 w-8 mb-2 opacity-20" />
+                        <span className="text-xs">
+                          Run a query to see results
+                        </span>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -577,15 +705,19 @@ function EditorPage() {
       )}
 
       {/* Validation Feedback Dialog */}
-      <Dialog open={showValidationDialog} onOpenChange={setShowValidationDialog}>
+      <Dialog
+        open={showValidationDialog}
+        onOpenChange={setShowValidationDialog}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <XCircle className="h-5 w-5 text-destructive" />
-              {t.task?.validationFailed || "Validation Failed"}
+              {t.task?.validationFailed || 'Validation Failed'}
             </DialogTitle>
             <DialogDescription>
-              {t.task?.checkFollowing || "Check the following issues with your query:"}
+              {t.task?.checkFollowing ||
+                'Check the following issues with your query:'}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2 mt-2">
@@ -593,10 +725,10 @@ function EditorPage() {
               <div
                 key={index}
                 className={cn(
-                  "flex items-start gap-2 p-2 rounded text-sm",
+                  'flex items-start gap-2 p-2 rounded text-sm',
                   result.passed
-                    ? "bg-primary/5 text-primary"
-                    : "bg-destructive/5 text-destructive"
+                    ? 'bg-primary/5 text-primary'
+                    : 'bg-destructive/5 text-destructive',
                 )}
               >
                 {result.passed ? (
@@ -612,49 +744,64 @@ function EditorPage() {
       </Dialog>
 
       {/* Destructive Query Confirmation Dialog */}
-      <Dialog open={showDestructiveDialog} onOpenChange={(open) => {
-        setShowDestructiveDialog(open)
-        if (!open) setDestructiveConfirmText('')
-      }}>
+      <Dialog
+        open={showDestructiveDialog}
+        onOpenChange={(open) => {
+          setShowDestructiveDialog(open)
+          if (!open) setDestructiveConfirmText('')
+        }}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-destructive" />
-              {(t.task as any)?.destructiveQuery?.title || "Destructive Query Detected"}
+              {(t.task as any)?.destructiveQuery?.title ||
+                'Destructive Query Detected'}
             </DialogTitle>
             <DialogDescription>
-              {(t.task as any)?.destructiveQuery?.description || "This query will modify or delete data in your local database. This cannot be undone without restoring from backup."}
+              {(t.task as any)?.destructiveQuery?.description ||
+                'This query will modify or delete data in your local database. This cannot be undone without restoring from backup.'}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 mt-2">
             <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3">
-              <pre className="font-mono text-xs text-destructive whitespace-pre-wrap break-all">{sqlQuery}</pre>
+              <pre className="font-mono text-xs text-destructive whitespace-pre-wrap break-all">
+                {sqlQuery}
+              </pre>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">
-                {(t.task as any)?.destructiveQuery?.confirmLabel || "Type DELETE to confirm"}
+                {(t.task as any)?.destructiveQuery?.confirmLabel ||
+                  'Type DELETE to confirm'}
               </label>
               <Input
                 value={destructiveConfirmText}
                 onChange={(e) => setDestructiveConfirmText(e.target.value)}
-                placeholder={(t.task as any)?.destructiveQuery?.confirmPlaceholder || "Type here..."}
+                placeholder={
+                  (t.task as any)?.destructiveQuery?.confirmPlaceholder ||
+                  'Type here...'
+                }
                 className="font-mono"
               />
             </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => {
-              setShowDestructiveDialog(false)
-              setDestructiveConfirmText('')
-            }}>
-              {(t.task as any)?.destructiveQuery?.cancelButton || "Cancel"}
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowDestructiveDialog(false)
+                setDestructiveConfirmText('')
+              }}
+            >
+              {(t.task as any)?.destructiveQuery?.cancelButton || 'Cancel'}
             </Button>
             <Button
               variant="destructive"
               disabled={destructiveConfirmText !== 'DELETE'}
               onClick={handleDestructiveConfirm}
             >
-              {(t.task as any)?.destructiveQuery?.confirmButton || "Execute Query"}
+              {(t.task as any)?.destructiveQuery?.confirmButton ||
+                'Execute Query'}
             </Button>
           </DialogFooter>
         </DialogContent>

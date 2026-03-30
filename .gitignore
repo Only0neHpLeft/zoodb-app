@@ -63,9 +63,13 @@ todos.json
 .claude
 CLAUDE.md
 
-# Samael agent artifacts
+# AI/agent artifacts
 docs/reports/
 docs/skills/
+docs/plans/
+docs/superpowers/
+TODO.md
+.observer.lock
 
 # Security pentest
 security/reports/

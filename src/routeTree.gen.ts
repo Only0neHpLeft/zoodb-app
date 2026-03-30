@@ -10,7 +10,6 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VerifyEmailRouteImport } from './routes/verify-email'
-import { Route as StudentsStudentIdRouteImport } from './routes/students.$studentId'
 import { Route as StudentsRouteImport } from './routes/students'
 import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as SignInRouteImport } from './routes/sign-in'
@@ -20,6 +19,7 @@ import { Route as MembershipRouteImport } from './routes/membership'
 import { Route as EditorRouteImport } from './routes/editor'
 import { Route as ClassesRouteImport } from './routes/classes'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as StudentsStudentIdRouteImport } from './routes/students.$studentId'
 import { Route as SchemeTypesRouteImport } from './routes/scheme.types'
 import { Route as SchemeTreatsRouteImport } from './routes/scheme.treats'
 import { Route as SchemeMenuRouteImport } from './routes/scheme.menu'
@@ -33,11 +33,6 @@ import { Route as EditorTaskRouteImport } from './routes/editor.task'
 const VerifyEmailRoute = VerifyEmailRouteImport.update({
   id: '/verify-email',
   path: '/verify-email',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const StudentsStudentIdRoute = StudentsStudentIdRouteImport.update({
-  id: '/students/$studentId',
-  path: '/students/$studentId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StudentsRoute = StudentsRouteImport.update({
@@ -84,6 +79,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const StudentsStudentIdRoute = StudentsStudentIdRouteImport.update({
+  id: '/$studentId',
+  path: '/$studentId',
+  getParentRoute: () => StudentsRoute,
 } as any)
 const SchemeTypesRoute = SchemeTypesRouteImport.update({
   id: '/types',
@@ -140,8 +140,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
-  '/students': typeof StudentsRoute
-  '/students/$studentId': typeof StudentsStudentIdRoute
+  '/students': typeof StudentsRouteWithChildren
   '/verify-email': typeof VerifyEmailRoute
   '/editor/task': typeof EditorTaskRoute
   '/scheme/animals': typeof SchemeAnimalsRoute
@@ -152,6 +151,7 @@ export interface FileRoutesByFullPath {
   '/scheme/menu': typeof SchemeMenuRoute
   '/scheme/treats': typeof SchemeTreatsRoute
   '/scheme/types': typeof SchemeTypesRoute
+  '/students/$studentId': typeof StudentsStudentIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -162,8 +162,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
-  '/students': typeof StudentsRoute
-  '/students/$studentId': typeof StudentsStudentIdRoute
+  '/students': typeof StudentsRouteWithChildren
   '/verify-email': typeof VerifyEmailRoute
   '/editor/task': typeof EditorTaskRoute
   '/scheme/animals': typeof SchemeAnimalsRoute
@@ -174,6 +173,7 @@ export interface FileRoutesByTo {
   '/scheme/menu': typeof SchemeMenuRoute
   '/scheme/treats': typeof SchemeTreatsRoute
   '/scheme/types': typeof SchemeTypesRoute
+  '/students/$studentId': typeof StudentsStudentIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -185,8 +185,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
-  '/students': typeof StudentsRoute
-  '/students/$studentId': typeof StudentsStudentIdRoute
+  '/students': typeof StudentsRouteWithChildren
   '/verify-email': typeof VerifyEmailRoute
   '/editor/task': typeof EditorTaskRoute
   '/scheme/animals': typeof SchemeAnimalsRoute
@@ -197,6 +196,7 @@ export interface FileRoutesById {
   '/scheme/menu': typeof SchemeMenuRoute
   '/scheme/treats': typeof SchemeTreatsRoute
   '/scheme/types': typeof SchemeTypesRoute
+  '/students/$studentId': typeof StudentsStudentIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -210,7 +210,6 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/students'
-    | '/students/$studentId'
     | '/verify-email'
     | '/editor/task'
     | '/scheme/animals'
@@ -221,6 +220,7 @@ export interface FileRouteTypes {
     | '/scheme/menu'
     | '/scheme/treats'
     | '/scheme/types'
+    | '/students/$studentId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -232,7 +232,6 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/students'
-    | '/students/$studentId'
     | '/verify-email'
     | '/editor/task'
     | '/scheme/animals'
@@ -243,6 +242,7 @@ export interface FileRouteTypes {
     | '/scheme/menu'
     | '/scheme/treats'
     | '/scheme/types'
+    | '/students/$studentId'
   id:
     | '__root__'
     | '/'
@@ -254,7 +254,6 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/students'
-    | '/students/$studentId'
     | '/verify-email'
     | '/editor/task'
     | '/scheme/animals'
@@ -265,6 +264,7 @@ export interface FileRouteTypes {
     | '/scheme/menu'
     | '/scheme/treats'
     | '/scheme/types'
+    | '/students/$studentId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -276,8 +276,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   SignInRoute: typeof SignInRoute
   SignUpRoute: typeof SignUpRoute
-  StudentsRoute: typeof StudentsRoute
-  StudentsStudentIdRoute: typeof StudentsStudentIdRoute
+  StudentsRoute: typeof StudentsRouteWithChildren
   VerifyEmailRoute: typeof VerifyEmailRoute
 }
 
@@ -288,13 +287,6 @@ declare module '@tanstack/react-router' {
       path: '/verify-email'
       fullPath: '/verify-email'
       preLoaderRoute: typeof VerifyEmailRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/students/$studentId': {
-      id: '/students/$studentId'
-      path: '/students/$studentId'
-      fullPath: '/students/$studentId'
-      preLoaderRoute: typeof StudentsStudentIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/students': {
@@ -359,6 +351,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/students/$studentId': {
+      id: '/students/$studentId'
+      path: '/$studentId'
+      fullPath: '/students/$studentId'
+      preLoaderRoute: typeof StudentsStudentIdRouteImport
+      parentRoute: typeof StudentsRoute
     }
     '/scheme/types': {
       id: '/scheme/types'
@@ -462,6 +461,18 @@ const SchemeRouteChildren: SchemeRouteChildren = {
 const SchemeRouteWithChildren =
   SchemeRoute._addFileChildren(SchemeRouteChildren)
 
+interface StudentsRouteChildren {
+  StudentsStudentIdRoute: typeof StudentsStudentIdRoute
+}
+
+const StudentsRouteChildren: StudentsRouteChildren = {
+  StudentsStudentIdRoute: StudentsStudentIdRoute,
+}
+
+const StudentsRouteWithChildren = StudentsRoute._addFileChildren(
+  StudentsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ClassesRoute: ClassesRoute,
@@ -471,8 +482,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   SignInRoute: SignInRoute,
   SignUpRoute: SignUpRoute,
-  StudentsRoute: StudentsRoute,
-  StudentsStudentIdRoute: StudentsStudentIdRoute,
+  StudentsRoute: StudentsRouteWithChildren,
   VerifyEmailRoute: VerifyEmailRoute,
 }
 export const routeTree = rootRouteImport

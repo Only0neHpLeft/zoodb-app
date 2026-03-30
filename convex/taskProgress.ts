@@ -1,6 +1,7 @@
 import { v } from 'convex/values'
 import { query, mutation } from './_generated/server'
 import { checkRateLimit } from './rateLimiter'
+import { audit } from './auditLog'
 
 // Save or update task progress
 export const saveTaskProgress = mutation({
@@ -182,6 +183,9 @@ export const resetStudentProgress = mutation({
       await ctx.db.delete(record._id)
     }
 
+    await audit(ctx, args.userId, 'progress.resetAll', {
+      detail: `Deleted ${progress.length} records`,
+    })
     return { deleted: progress.length }
   },
 })
@@ -230,6 +234,10 @@ export const resetCategoryProgress = mutation({
       await ctx.db.delete(record._id)
     }
 
+    await audit(ctx, args.teacherUserId, 'progress.resetCategory', {
+      targetId: args.studentUserId,
+      detail: `Reset category ${args.categoryLetter} (${toDelete.length} records)`,
+    })
     return { deleted: toDelete.length }
   },
 })

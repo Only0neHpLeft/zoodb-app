@@ -97,6 +97,19 @@ export default defineSchema({
     .index('by_class', ['classId'])
     .index('by_class_and_category', ['classId', 'categoryLetter']),
 
+  // Audit logs
+  auditLogs: defineTable({
+    userId: v.string(),
+    action: v.string(),
+    detail: v.optional(v.string()),
+    targetId: v.optional(v.string()),
+    success: v.boolean(),
+    timestamp: v.number(),
+  })
+    .index('by_user', ['userId'])
+    .index('by_action', ['action'])
+    .index('by_timestamp', ['timestamp']),
+
   // Rate limiting
   rateLimits: defineTable({
     userId: v.string(),

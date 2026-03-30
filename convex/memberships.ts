@@ -1,6 +1,7 @@
 import { v } from 'convex/values'
 import { query, mutation } from './_generated/server'
 import { checkRateLimit } from './rateLimiter'
+import { audit } from './auditLog'
 
 // Get membership for a user
 export const getMembership = query({
@@ -72,6 +73,9 @@ export const updateMembership = mutation({
         licenseStatus: args.licenseStatus,
         licenseExpiresAt: args.licenseExpiresAt,
       })
+      await audit(ctx, args.userId, 'membership.update', {
+        detail: `Plan: ${args.planType}`,
+      })
       return await ctx.db.get(existing._id)
     }
 
@@ -82,6 +86,9 @@ export const updateMembership = mutation({
       licenseKey: args.licenseKey,
       licenseStatus: args.licenseStatus,
       licenseExpiresAt: args.licenseExpiresAt,
+    })
+    await audit(ctx, args.userId, 'membership.update', {
+      detail: `Plan: ${args.planType}`,
     })
     return await ctx.db.get(id)
   },

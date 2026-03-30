@@ -1,6 +1,7 @@
 import { v } from 'convex/values'
 import { query, mutation } from './_generated/server'
 import { checkRateLimit } from './rateLimiter'
+import { audit } from './auditLog'
 
 // Generate a random class code
 function generateClassCode(): string {
@@ -36,6 +37,8 @@ export const createClass = mutation({
       allowJoin: true,
     })
 
+    await audit(ctx, args.teacherUserId, 'class.create', { targetId: id })
+
     return await ctx.db.get(id)
   },
 })
@@ -61,6 +64,10 @@ export const joinClass = mutation({
       .first()
 
     if (!classDoc) {
+      await audit(ctx, args.studentUserId, 'class.join', {
+        detail: `Invalid code: ${args.classCode}`,
+        success: false,
+      })
       throw new Error('Invalid class code')
     }
 
@@ -86,6 +93,10 @@ export const joinClass = mutation({
         removedAt: undefined,
         removedBy: undefined,
       })
+      await audit(ctx, args.studentUserId, 'class.join', {
+        targetId: classDoc._id,
+        detail: `Joined class: ${classDoc.name}`,
+      })
       return existing
     }
 
@@ -108,6 +119,10 @@ export const joinClass = mutation({
       joinedAt: Date.now(),
     })
 
+    await audit(ctx, args.studentUserId, 'class.join', {
+      targetId: classDoc._id,
+      detail: `Joined class: ${classDoc.name}`,
+    })
     return await ctx.db.get(id)
   },
 })
@@ -345,6 +360,10 @@ export const leaveClass = mutation({
       removedAt: Date.now(),
     })
 
+    await audit(ctx, args.studentUserId, 'class.leave', {
+      targetId: args.classId,
+    })
+
     return { success: true }
   },
 })
@@ -402,6 +421,10 @@ export const deleteClass = mutation({
 
     // Delete the class
     await ctx.db.delete(args.classId)
+
+    await audit(ctx, args.teacherUserId, 'class.delete', {
+      targetId: args.classId,
+    })
 
     return { success: true }
   },
@@ -484,6 +507,11 @@ export const removeStudent = mutation({
       status: 'removed',
       removedAt: Date.now(),
       removedBy: args.teacherUserId,
+    })
+
+    await audit(ctx, args.teacherUserId, 'class.removeStudent', {
+      targetId: args.studentUserId,
+      detail: `Removed from class ${args.classId}`,
     })
 
     return { success: true }

@@ -1,6 +1,7 @@
 import { v } from 'convex/values'
 import { query, mutation } from './_generated/server'
 import { checkRateLimit } from './rateLimiter'
+import { audit } from './auditLog'
 
 // Create a teacher note for a student
 export const createNote = mutation({
@@ -117,6 +118,9 @@ export const deleteNote = mutation({
     }
 
     await ctx.db.delete(args.noteId)
+    await audit(ctx, args.teacherUserId, 'note.delete', {
+      targetId: args.noteId,
+    })
     return { success: true }
   },
 })

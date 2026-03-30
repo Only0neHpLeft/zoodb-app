@@ -1,5 +1,6 @@
 import { v } from 'convex/values'
 import { query, mutation } from './_generated/server'
+import { checkRateLimit } from './rateLimiter'
 
 // Generate a random class code
 function generateClassCode(): string {
@@ -20,6 +21,7 @@ export const createClass = mutation({
     if (!identity || identity.subject !== args.teacherUserId) {
       throw new Error('Unauthorized')
     }
+    await checkRateLimit(ctx, identity.subject, 'mutation', 500)
 
     const code = generateClassCode()
 
@@ -49,6 +51,8 @@ export const joinClass = mutation({
     if (!identity || identity.subject !== args.studentUserId) {
       throw new Error('Unauthorized')
     }
+    await checkRateLimit(ctx, identity.subject, 'joinClass', 10)
+    await checkRateLimit(ctx, identity.subject, 'mutation', 500)
 
     // Find the class by code
     const classDoc = await ctx.db
@@ -323,6 +327,7 @@ export const leaveClass = mutation({
     if (!identity || identity.subject !== args.studentUserId) {
       throw new Error('Unauthorized')
     }
+    await checkRateLimit(ctx, identity.subject, 'mutation', 500)
 
     const enrollment = await ctx.db
       .query('classEnrollments')
@@ -355,6 +360,7 @@ export const deleteClass = mutation({
     if (!identity || identity.subject !== args.teacherUserId) {
       throw new Error('Unauthorized')
     }
+    await checkRateLimit(ctx, identity.subject, 'mutation', 500)
 
     const classDoc = await ctx.db.get(args.classId)
 
@@ -417,6 +423,7 @@ export const updateClass = mutation({
     if (!identity || identity.subject !== args.teacherUserId) {
       throw new Error('Unauthorized')
     }
+    await checkRateLimit(ctx, identity.subject, 'mutation', 500)
 
     const classDoc = await ctx.db.get(args.classId)
 
@@ -455,6 +462,7 @@ export const removeStudent = mutation({
     if (!identity || identity.subject !== args.teacherUserId) {
       throw new Error('Unauthorized')
     }
+    await checkRateLimit(ctx, identity.subject, 'mutation', 500)
 
     const classDoc = await ctx.db.get(args.classId)
     if (!classDoc || classDoc.teacherUserId !== args.teacherUserId) {

@@ -1,5 +1,6 @@
 import { v } from 'convex/values'
 import { query, mutation } from './_generated/server'
+import { checkRateLimit } from './rateLimiter'
 
 // Create a teacher note for a student
 export const createNote = mutation({
@@ -16,6 +17,7 @@ export const createNote = mutation({
     if (!identity || identity.subject !== args.teacherUserId) {
       throw new Error('Unauthorized')
     }
+    await checkRateLimit(ctx, identity.subject, 'mutation', 500)
 
     const classDoc = await ctx.db.get(args.classId)
     if (!classDoc || classDoc.teacherUserId !== args.teacherUserId) {
@@ -105,6 +107,7 @@ export const deleteNote = mutation({
     if (!identity || identity.subject !== args.teacherUserId) {
       throw new Error('Unauthorized')
     }
+    await checkRateLimit(ctx, identity.subject, 'mutation', 500)
 
     const note = await ctx.db.get(args.noteId)
     if (!note) throw new Error('Note not found')

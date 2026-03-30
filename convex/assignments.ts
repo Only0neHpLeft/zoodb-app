@@ -1,5 +1,6 @@
 import { v } from 'convex/values'
 import { query, mutation } from './_generated/server'
+import { checkRateLimit } from './rateLimiter'
 
 // Create an assignment for a class
 export const createAssignment = mutation({
@@ -16,6 +17,7 @@ export const createAssignment = mutation({
     if (!identity || identity.subject !== args.teacherUserId) {
       throw new Error('Unauthorized')
     }
+    await checkRateLimit(ctx, identity.subject, 'mutation', 500)
 
     const classDoc = await ctx.db.get(args.classId)
     if (!classDoc || classDoc.teacherUserId !== args.teacherUserId) {
@@ -55,6 +57,7 @@ export const createBulkAssignments = mutation({
     if (!identity || identity.subject !== args.teacherUserId) {
       throw new Error('Unauthorized')
     }
+    await checkRateLimit(ctx, identity.subject, 'mutation', 500)
 
     const classDoc = await ctx.db.get(args.classId)
     if (!classDoc || classDoc.teacherUserId !== args.teacherUserId) {
@@ -163,6 +166,7 @@ export const deleteAssignment = mutation({
     if (!identity || identity.subject !== args.teacherUserId) {
       throw new Error('Unauthorized')
     }
+    await checkRateLimit(ctx, identity.subject, 'mutation', 500)
 
     const assignment = await ctx.db.get(args.assignmentId)
     if (!assignment) throw new Error('Assignment not found')

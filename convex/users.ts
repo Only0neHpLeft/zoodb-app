@@ -1,5 +1,6 @@
 import { v } from 'convex/values'
 import { query, mutation } from './_generated/server'
+import { checkRateLimit } from './rateLimiter'
 
 // Get user profile by user ID
 export const getProfile = query({
@@ -32,6 +33,7 @@ export const upsertProfile = mutation({
     if (!identity || identity.subject !== args.userId) {
       throw new Error('Unauthorized')
     }
+    await checkRateLimit(ctx, identity.subject, 'mutation', 500)
 
     const existing = await ctx.db
       .query('userProfiles')
@@ -97,6 +99,7 @@ export const updateSettings = mutation({
     if (!identity || identity.subject !== args.userId) {
       throw new Error('Unauthorized')
     }
+    await checkRateLimit(ctx, identity.subject, 'mutation', 500)
 
     const profile = await ctx.db
       .query('userProfiles')
@@ -140,6 +143,7 @@ export const updateLastSeen = mutation({
     if (!identity || identity.subject !== args.userId) {
       throw new Error('Unauthorized')
     }
+    await checkRateLimit(ctx, identity.subject, 'mutation', 500)
 
     const profile = await ctx.db
       .query('userProfiles')

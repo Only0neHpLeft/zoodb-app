@@ -1,5 +1,5 @@
-import { defineSchema, defineTable } from "convex/server";
-import { v } from "convex/values";
+import { defineSchema, defineTable } from 'convex/server'
+import { v } from 'convex/values'
 
 export default defineSchema({
   // User profiles
@@ -7,18 +7,22 @@ export default defineSchema({
     userId: v.string(),
     email: v.string(),
     fullName: v.optional(v.string()),
-    role: v.union(v.literal("student"), v.literal("teacher"), v.literal("admin")),
+    role: v.union(
+      v.literal('student'),
+      v.literal('teacher'),
+      v.literal('admin'),
+    ),
     isAdmin: v.optional(v.boolean()),
     // Settings (merged into profile)
-    language: v.optional(v.union(v.literal("en"), v.literal("cz"))),
+    language: v.optional(v.union(v.literal('en'), v.literal('cz'))),
     theme: v.optional(v.string()),
     darkMode: v.optional(v.boolean()),
     customThemeCss: v.optional(v.string()),
     onboardingCompleted: v.optional(v.boolean()),
     lastSeenAt: v.optional(v.number()),
   })
-    .index("by_user_id", ["userId"])
-    .index("by_email", ["email"]),
+    .index('by_user_id', ['userId'])
+    .index('by_email', ['email']),
 
   // User memberships / subscriptions
   userMemberships: defineTable({
@@ -27,7 +31,7 @@ export default defineSchema({
     licenseKey: v.optional(v.string()),
     licenseStatus: v.optional(v.string()),
     licenseExpiresAt: v.optional(v.number()),
-  }).index("by_user_id", ["userId"]),
+  }).index('by_user_id', ['userId']),
 
   // Task progress tracking
   taskProgress: defineTable({
@@ -44,8 +48,8 @@ export default defineSchema({
     hintsUsed: v.number(),
     timeSpentSeconds: v.number(),
   })
-    .index("by_user_id", ["userId"])
-    .index("by_user_and_task", ["userId", "categoryLetter", "taskIndex"]),
+    .index('by_user_id', ['userId'])
+    .index('by_user_and_task', ['userId', 'categoryLetter', 'taskIndex']),
 
   // Classes (for teachers)
   classes: defineTable({
@@ -53,32 +57,36 @@ export default defineSchema({
     name: v.string(),
     description: v.optional(v.string()),
     code: v.string(), // Unique join code
-    language: v.union(v.literal("en"), v.literal("cz")),
+    language: v.union(v.literal('en'), v.literal('cz')),
     maxStudents: v.number(),
     isActive: v.boolean(),
     allowJoin: v.boolean(),
     startDate: v.optional(v.number()),
     endDate: v.optional(v.number()),
   })
-    .index("by_teacher", ["teacherUserId"])
-    .index("by_code", ["code"]),
+    .index('by_teacher', ['teacherUserId'])
+    .index('by_code', ['code']),
 
   // Class enrollments (students in classes)
   classEnrollments: defineTable({
-    classId: v.id("classes"),
+    classId: v.id('classes'),
     studentUserId: v.string(),
-    status: v.union(v.literal("active"), v.literal("inactive"), v.literal("removed")),
+    status: v.union(
+      v.literal('active'),
+      v.literal('inactive'),
+      v.literal('removed'),
+    ),
     joinedAt: v.number(),
     removedAt: v.optional(v.number()),
     removedBy: v.optional(v.string()),
   })
-    .index("by_class", ["classId"])
-    .index("by_student", ["studentUserId"])
-    .index("by_class_and_student", ["classId", "studentUserId"]),
+    .index('by_class', ['classId'])
+    .index('by_student', ['studentUserId'])
+    .index('by_class_and_student', ['classId', 'studentUserId']),
 
   // Assignments (teacher assigns categories/tasks to a class)
   assignments: defineTable({
-    classId: v.id("classes"),
+    classId: v.id('classes'),
     teacherUserId: v.string(),
     categoryLetter: v.string(),
     taskIndex: v.optional(v.number()), // null = entire category
@@ -86,12 +94,20 @@ export default defineSchema({
     note: v.optional(v.string()),
     createdAt: v.number(),
   })
-    .index("by_class", ["classId"])
-    .index("by_class_and_category", ["classId", "categoryLetter"]),
+    .index('by_class', ['classId'])
+    .index('by_class_and_category', ['classId', 'categoryLetter']),
+
+  // Rate limiting
+  rateLimits: defineTable({
+    userId: v.string(),
+    action: v.string(),
+    windowKey: v.number(),
+    count: v.number(),
+  }).index('by_user_action_window', ['userId', 'action', 'windowKey']),
 
   // Teacher notes/feedback for students
   teacherNotes: defineTable({
-    classId: v.id("classes"),
+    classId: v.id('classes'),
     teacherUserId: v.string(),
     studentUserId: v.string(),
     content: v.string(),
@@ -99,6 +115,6 @@ export default defineSchema({
     taskIndex: v.optional(v.number()),
     createdAt: v.number(),
   })
-    .index("by_class_and_student", ["classId", "studentUserId"])
-    .index("by_student", ["studentUserId"]),
-});
+    .index('by_class_and_student', ['classId', 'studentUserId'])
+    .index('by_student', ['studentUserId']),
+})

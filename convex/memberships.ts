@@ -1,5 +1,6 @@
 import { v } from 'convex/values'
 import { query, mutation } from './_generated/server'
+import { checkRateLimit } from './rateLimiter'
 
 // Get membership for a user
 export const getMembership = query({
@@ -25,6 +26,7 @@ export const getOrCreateMembership = mutation({
     if (!identity || identity.subject !== args.userId) {
       throw new Error('Unauthorized')
     }
+    await checkRateLimit(ctx, identity.subject, 'mutation', 500)
 
     const existing = await ctx.db
       .query('userMemberships')
@@ -56,6 +58,7 @@ export const updateMembership = mutation({
     if (!identity || identity.subject !== args.userId) {
       throw new Error('Unauthorized')
     }
+    await checkRateLimit(ctx, identity.subject, 'mutation', 500)
 
     const existing = await ctx.db
       .query('userMemberships')

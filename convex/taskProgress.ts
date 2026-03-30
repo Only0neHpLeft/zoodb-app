@@ -1,5 +1,6 @@
 import { v } from 'convex/values'
 import { query, mutation } from './_generated/server'
+import { checkRateLimit } from './rateLimiter'
 
 // Save or update task progress
 export const saveTaskProgress = mutation({
@@ -17,6 +18,7 @@ export const saveTaskProgress = mutation({
     if (!identity || identity.subject !== args.userId) {
       throw new Error('Unauthorized')
     }
+    await checkRateLimit(ctx, identity.subject, 'mutation', 500)
 
     const now = Date.now()
 
@@ -169,6 +171,7 @@ export const resetStudentProgress = mutation({
     if (!identity || identity.subject !== args.userId) {
       throw new Error('Unauthorized')
     }
+    await checkRateLimit(ctx, identity.subject, 'mutation', 500)
 
     const progress = await ctx.db
       .query('taskProgress')
@@ -196,6 +199,7 @@ export const resetCategoryProgress = mutation({
     if (!identity || identity.subject !== args.teacherUserId) {
       throw new Error('Unauthorized')
     }
+    await checkRateLimit(ctx, identity.subject, 'mutation', 500)
 
     const classDoc = await ctx.db.get(args.classId)
     if (!classDoc || classDoc.teacherUserId !== args.teacherUserId) {

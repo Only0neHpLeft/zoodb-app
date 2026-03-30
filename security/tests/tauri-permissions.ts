@@ -373,7 +373,7 @@ const TOTAL_CHECKS = 11
 // ---------------------------------------------------------------------------
 
 export const tauriPermissions: TestModule = {
-  name: 'Tauri Permissions',
+  name: 'tauri-permissions',
   description:
     'Analyses Tauri capabilities, macOS entitlements, and Cargo features for overly broad or risky permissions that could be exploited by a compromised renderer or malicious input.',
 
